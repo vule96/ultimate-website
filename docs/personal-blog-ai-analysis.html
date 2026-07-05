@@ -1,0 +1,839 @@
+<style>
+  :root {
+    --bg: #F6F8FA;
+    --surface: #FFFFFF;
+    --surface-2: #F0F3F6;
+    --ink: #1A2230;
+    --muted: #5A6472;
+    --faint: #8A94A2;
+    --border: #E3E7EC;
+    --accent: #0E7C86;
+    --accent-soft: #E2F1F2;
+    --accent-ink: #0A5A62;
+    --good: #157F3B;
+    --good-bg: #E5F4EA;
+    --warn: #A96410;
+    --warn-bg: #FBF0DE;
+    --crit: #B4231F;
+    --crit-bg: #FBE7E6;
+    --code-bg: #F4F6F8;
+    --shadow: 0 1px 2px rgba(20,30,48,.05), 0 4px 16px rgba(20,30,48,.05);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono", Consolas, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1116;
+      --surface: #161B22;
+      --surface-2: #1C222B;
+      --ink: #E7EAF0;
+      --muted: #9AA4B2;
+      --faint: #6B7686;
+      --border: #262D38;
+      --accent: #2DD4BF;
+      --accent-soft: #10312F;
+      --accent-ink: #7FE9DA;
+      --good: #46C46E;
+      --good-bg: #10261A;
+      --warn: #E0A44A;
+      --warn-bg: #2C2110;
+      --crit: #F0736E;
+      --crit-bg: #2E1513;
+      --code-bg: #12171E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8FA; --surface: #FFFFFF; --surface-2: #F0F3F6; --ink: #1A2230;
+    --muted: #5A6472; --faint: #8A94A2; --border: #E3E7EC; --accent: #0E7C86;
+    --accent-soft: #E2F1F2; --accent-ink: #0A5A62; --good: #157F3B; --good-bg: #E5F4EA;
+    --warn: #A96410; --warn-bg: #FBF0DE; --crit: #B4231F; --crit-bg: #FBE7E6; --code-bg: #F4F6F8;
+    --shadow: 0 1px 2px rgba(20,30,48,.05), 0 4px 16px rgba(20,30,48,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1116; --surface: #161B22; --surface-2: #1C222B; --ink: #E7EAF0;
+    --muted: #9AA4B2; --faint: #6B7686; --border: #262D38; --accent: #2DD4BF;
+    --accent-soft: #10312F; --accent-ink: #7FE9DA; --good: #46C46E; --good-bg: #10261A;
+    --warn: #E0A44A; --warn-bg: #2C2110; --crit: #F0736E; --crit-bg: #2E1513; --code-bg: #12171E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 20px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 84px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- Top bar ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    max-width: 1180px; margin: 0 auto; padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .brand .dot { color: var(--accent); font-weight: 800; }
+  .brand strong { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  .brand span { color: var(--faint); font-size: 12.5px; font-family: var(--mono); }
+  .spacer { flex: 1; }
+  .theme-toggle {
+    appearance: none; border: 1px solid var(--border); background: var(--surface);
+    color: var(--ink); border-radius: 8px; padding: 7px 12px; font-size: 13px;
+    font-family: var(--mono); cursor: pointer; display: inline-flex; gap: 7px; align-items: center;
+    transition: border-color .15s, background .15s;
+  }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- Shell ---- */
+  .shell {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px 96px;
+    display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: 48px;
+    align-items: start;
+  }
+  nav.toc {
+    position: sticky; top: 72px; align-self: start;
+    max-height: calc(100vh - 92px); overflow-y: auto;
+    padding: 24px 0; font-size: 13.5px;
+  }
+  nav.toc .toc-group { color: var(--faint); text-transform: uppercase; letter-spacing: .08em;
+    font-size: 11px; font-weight: 700; font-family: var(--mono); margin: 20px 0 8px; }
+  nav.toc a {
+    display: block; color: var(--muted); text-decoration: none;
+    padding: 4px 12px; border-left: 2px solid transparent; line-height: 1.4; border-radius: 0 4px 4px 0;
+    transition: color .12s, border-color .12s, background .12s;
+  }
+  nav.toc a:hover { color: var(--ink); background: var(--surface-2); }
+  nav.toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+
+  main { min-width: 0; padding-top: 8px; }
+
+  /* ---- Header / hero ---- */
+  header.doc {
+    padding: 40px 0 28px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent-ink); font-weight: 700; margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 4.5vw, 42px); line-height: 1.1; letter-spacing: -0.025em;
+    font-weight: 800; margin: 0 0 18px; text-wrap: balance;
+  }
+  .lede { color: var(--muted); font-size: 17px; max-width: 62ch; margin: 0 0 22px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--mono); font-size: 12.5px; padding: 5px 11px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+  }
+  .chip b { color: var(--ink); font-weight: 700; }
+
+  /* ---- Verdict panel ---- */
+  .verdict {
+    margin: 32px 0; border: 1px solid var(--border); border-radius: 14px;
+    background: var(--surface); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .verdict-head {
+    padding: 14px 20px; background: var(--accent-soft); border-bottom: 1px solid var(--border);
+    font-weight: 700; font-size: 14px; letter-spacing: .02em; color: var(--accent-ink);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .verdict dl { margin: 0; }
+  .verdict .row {
+    display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 16px;
+    padding: 13px 20px; border-bottom: 1px solid var(--border);
+  }
+  .verdict .row:last-child { border-bottom: 0; }
+  .verdict dt { margin: 0; color: var(--muted); font-size: 14px; }
+  .verdict dd { margin: 0; font-weight: 600; }
+  .verdict .yes { color: var(--good); }
+  @media (max-width: 620px){ .verdict .row { grid-template-columns: 1fr; gap: 4px; } }
+
+  /* ---- Sections ---- */
+  section { padding: 34px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 84px; }
+  section:last-of-type { border-bottom: 0; }
+  h2 {
+    font-size: 25px; letter-spacing: -0.02em; font-weight: 800; line-height: 1.2;
+    margin: 0 0 6px; text-wrap: balance; display: flex; gap: 12px; align-items: baseline;
+  }
+  h2 .num {
+    font-family: var(--mono); font-size: 15px; color: var(--accent); font-weight: 700;
+    flex: none; padding-top: 3px;
+  }
+  h3 { font-size: 17.5px; font-weight: 700; letter-spacing: -0.01em; margin: 26px 0 8px; }
+  p { margin: 12px 0; }
+  a { color: var(--accent-ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent); text-underline-offset: 2px; }
+  a:hover { text-decoration-color: var(--accent); }
+  strong { font-weight: 700; }
+  ul, ol { margin: 12px 0; padding-left: 22px; }
+  li { margin: 6px 0; }
+  .divider-note { color: var(--faint); font-size: 13px; font-family: var(--mono); }
+
+  /* ---- Tables ---- */
+  .table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--surface); }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th { background: var(--surface-2); font-size: 12.5px; letter-spacing: .02em; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--surface-2); }
+  td.num, th.num { font-variant-numeric: tabular-nums; }
+
+  /* ---- Callouts ---- */
+  .call {
+    margin: 18px 0; padding: 14px 16px 14px 18px; border-radius: 10px;
+    background: var(--surface-2); border-left: 3px solid var(--accent); font-size: 14.5px;
+  }
+  .call.rec { background: var(--accent-soft); border-left-color: var(--accent); }
+  .call.warn { background: var(--warn-bg); border-left-color: var(--warn); }
+  .call p:first-child { margin-top: 0; } .call p:last-child { margin-bottom: 0; }
+  .call .tag { font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display:block; margin-bottom: 4px; }
+
+  /* ---- Pills / badges ---- */
+  .pill { display: inline-block; font-family: var(--mono); font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .pill.good { background: var(--good-bg); color: var(--good); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.crit { background: var(--crit-bg); color: var(--crit); }
+  .pill.accent { background: var(--accent-soft); color: var(--accent-ink); }
+  .rank { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+  .stars { color: var(--accent); letter-spacing: 1px; white-space: nowrap; }
+  .yes { color: var(--good); font-weight: 700; } .no { color: var(--crit); font-weight: 700; }
+
+  /* ---- Code ---- */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; overflow-x: auto; margin: 16px 0; font-size: 13px; line-height: 1.55;
+  }
+  code { font-family: var(--mono); font-size: .9em; }
+  p code, li code, td code { background: var(--code-bg); border: 1px solid var(--border); padding: 1px 5px; border-radius: 5px; font-size: .85em; }
+  pre code { background: none; border: 0; padding: 0; color: var(--ink); }
+
+  .linklist { columns: 2; column-gap: 32px; font-size: 13.5px; }
+  .linklist p { break-inside: avoid; margin: 8px 0; }
+  @media (max-width: 640px){ .linklist { columns: 1; } }
+
+  footer { padding: 40px 0 0; color: var(--faint); font-size: 13px; }
+  footer a { color: var(--muted); }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; gap: 0; }
+    nav.toc { position: static; max-height: none; overflow: visible; padding: 0; margin: 20px 0 0; }
+    nav.toc .toc-inner { border: 1px solid var(--border); border-radius: 12px; padding: 8px 6px; background: var(--surface); }
+    nav.toc summary { cursor: pointer; padding: 10px 12px; font-weight: 700; font-family: var(--mono); font-size: 13px; }
+  }
+  @media (min-width: 901px) { nav.toc summary { display: none; } nav.toc .toc-inner { display: block !important; } }
+</style>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot">◆</span><strong>Blog Cá Nhân · FE + BE + AI</strong><span>v2026.07.05</span></div>
+    <div class="spacer"></div>
+    <button class="theme-toggle" id="themeBtn" aria-label="Đổi giao diện sáng/tối"><span id="themeIcon">◐</span><span id="themeLabel">Theme</span></button>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="toc" aria-label="Mục lục">
+    <details class="toc-inner" open>
+      <summary>Mục lục</summary>
+      <div class="toc-group">Cốt lõi</div>
+      <a href="#s0">0 · TL;DR — Kết luận</a>
+      <a href="#s1">1 · Microservice: đánh giá thẳng</a>
+      <a href="#s2">2 · Stack đề xuất</a>
+      <a href="#s3">3 · Phần AI</a>
+      <a href="#s4">4 · Observability</a>
+      <a href="#s5">5 · Chi phí thực tế</a>
+      <a href="#s6">6 · Claude skills/plugins</a>
+      <a href="#s7">7 · Roadmap theo phase</a>
+      <a href="#s8">8 · Rủi ro</a>
+      <a href="#s9">9 · Kết luận</a>
+      <div class="toc-group">Đào sâu kỹ thuật</div>
+      <a href="#s10">10 · UI Library Next.js</a>
+      <a href="#s11">11 · Rich Text Editor</a>
+      <a href="#s12">12 · craft.js / Reka.js</a>
+      <a href="#s13">13 · Cấu trúc code</a>
+      <a href="#s14">14 · Admin Dashboard</a>
+      <a href="#s15">15 · CI/CD</a>
+      <a href="#s16">16 · TypeScript nâng cao</a>
+      <a href="#s17">17 · Link thư viện</a>
+      <a href="#s18">18 · Plugins/Skills thêm</a>
+    </details>
+  </nav>
+
+  <main>
+    <header class="doc">
+      <p class="eyebrow">Phân tích kiến trúc &amp; tính khả thi</p>
+      <h1>Website Blog Cá Nhân: FE + BE + AI</h1>
+      <p class="lede">Đánh giá trung thực tính khả thi, định hướng kiến trúc, chi phí thực tế và roadmap triển khai cho một dự án blog cá nhân do một người xây dựng — cân bằng giữa mục tiêu học và sản phẩm dùng thật.</p>
+      <div class="chips">
+        <span class="chip">Mục tiêu: <b>Cân bằng học + sản phẩm</b></span>
+        <span class="chip">Ngân sách: <b>~15–40 USD/tháng</b></span>
+        <span class="chip">Backend: <b>Golang</b></span>
+        <span class="chip">AI: <b>Toàn diện</b></span>
+      </div>
+    </header>
+
+    <div class="verdict">
+      <div class="verdict-head">◆ Kết luận nhanh</div>
+      <dl>
+        <div class="row"><dt>Có khả quan không?</dt><dd class="yes">CÓ — làm được trọn vẹn trong ngân sách 15–40 USD/tháng.</dd></div>
+        <div class="row"><dt>Có nên dùng microservice?</dt><dd>KHÔNG dùng microservice "thật" → Modular Monolith (Go) + tách 1 AI worker (Python).</dd></div>
+        <div class="row"><dt>Rủi ro lớn nhất?</dt><dd>Scope creep (ôm quá nhiều) &amp; observability ngốn RAM trên VPS rẻ.</dd></div>
+        <div class="row"><dt>AI tự đăng bài có ổn?</dt><dd>Ổn — <b>bắt buộc human-in-the-loop</b> (duyệt qua Telegram trước khi đăng).</dd></div>
+        <div class="row"><dt>Thời gian thực tế?</dt><dd>~3–5 tháng part-time nếu đi theo roadmap phân phase.</dd></div>
+      </dl>
+    </div>
+
+    <section id="s0">
+      <h2><span class="num">00</span> TL;DR — Kết luận trung thực</h2>
+      <p><strong>Dự án hoàn toàn khả thi</strong> cho một người, trong ngân sách đề ra (thực tế chỉ ~$10–25/tháng là đủ). Ba quyết định quan trọng nhất: (1) không làm microservice thật, (2) đi theo roadmap phân phase để chống bỏ dở, (3) AI luôn có con người duyệt trước khi đăng.</p>
+      <div class="call"><span class="tag">Nguyên tắc xuyên suốt</span><strong>YAGNI (You Aren't Gonna Need It).</strong> Mỗi khi định thêm một công nghệ, hãy hỏi: "Nó phục vụ mục tiêu học <em>hay</em> sản phẩm? Nếu không rõ cái nào → bỏ."</p></div>
+    </section>
+
+    <section id="s1">
+      <h2><span class="num">01</span> Đánh giá thẳng thắn về "Microservice"</h2>
+      <h3>Sự thật về microservice cho blog cá nhân</h3>
+      <p>Microservice <strong>thật</strong> (mỗi service một database, giao tiếp qua network, deploy độc lập, service mesh…) sinh ra để giải quyết vấn đề <strong>tổ chức nhiều team</strong> và <strong>scale không đồng đều</strong>. Blog một người dùng <strong>không có</strong> hai vấn đề đó.</p>
+      <p>Nếu bê nguyên microservice lên một VPS 4GB RAM:</p>
+      <ul>
+        <li><span class="no">✗</span> Mỗi Go service ~30–80MB, nhưng Postgres + Redis + Prometheus + Grafana + Loki mới là thứ ngốn RAM (1.5–2.5GB).</li>
+        <li><span class="no">✗</span> Debug khó gấp bội: một request đi qua 3 service = 3 nơi có thể lỗi.</li>
+        <li><span class="no">✗</span> Transaction phân tán, eventual consistency — bài toán khó không cần thiết.</li>
+      </ul>
+      <h3>Giải pháp đúng: Modular Monolith + 1 service tách riêng</h3>
+      <p>Kiến trúc học được đủ điều hay của microservice mà không trả giá vận hành:</p>
+      <pre><code>┌─────────────────────────────────────────────────────────┐
+│  API Core (Go monolith, chia module rõ ràng)            │
+│  [ auth ] [ posts ] [ media ] [ chat/rag ]              │
+│  Mỗi module = 1 package Go, interface rõ ràng            │
+└────────────────────────┬────────────────────────────────┘
+                         │ gRPC / message queue (NATS / Redis Stream)
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│  AI Worker (service RIÊNG — Python, LangChain/LangGraph)│
+│  - Research agent · sinh embeddings · gọi LLM · viết draft
+│  - Chạy cron job 09:00                                    │
+└─────────────────────────────────────────────────────────┘</code></pre>
+      <p><strong>Vì sao tách AI worker là hợp lý (không over-engineer):</strong> hệ sinh thái AI mạnh nhất ở Python (bạn học Go cho core, Python cho AI — đúng thực tế doanh nghiệp); tải research nặng/lâu nên tách để không block API; deploy độc lập; và bạn vẫn học thật inter-service, container, health check.</p>
+      <div class="call rec"><span class="tag">Khuyến nghị</span>Core = Go monolith module hoá. AI worker = Python (LangChain). Đây là mô hình "Hybrid" tốt nhất và trùng đúng việc bạn đang học LangChain.</div>
+    </section>
+
+    <section id="s2">
+      <h2><span class="num">02</span> Stack đề xuất (tối ưu học + chi phí thấp)</h2>
+      <h3>Backend (Go core)</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Thành phần</th><th>Đề xuất</th><th>Lý do</th></tr></thead>
+        <tbody>
+          <tr><td>HTTP framework</td><td><b>chi</b> hoặc Gin</td><td>Chi nhẹ, idiomatic; Gin phổ biến nhiều ví dụ.</td></tr>
+          <tr><td>DB access</td><td><b>sqlc</b> (khuyến nghị) / GORM</td><td>sqlc sinh code từ SQL → học SQL thật, type-safe, nhanh.</td></tr>
+          <tr><td>Database</td><td><b>PostgreSQL</b> (1 instance)</td><td>Đủ cho mọi thứ, tách schema theo module.</td></tr>
+          <tr><td>Vector store</td><td><b>pgvector</b></td><td>Không cần Pinecone/Qdrant riêng → tiết kiệm RAM &amp; tiền.</td></tr>
+          <tr><td>Cache / queue</td><td>Redis (hoặc NATS)</td><td>Cache, rate limit, message core ↔ AI worker.</td></tr>
+          <tr><td>Inter-service</td><td>gRPC (để học)</td><td>Dạy protobuf, contract-first.</td></tr>
+          <tr><td>Migration</td><td>golang-migrate / Atlas</td><td>Versioned schema.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Frontend — 2 app tách biệt</h3>
+      <div class="call rec"><span class="tag">Quyết định</span>Dùng <b>hai app FE riêng</b> trong monorepo: <code>apps/web</code> (blog công khai) → <b>Next.js</b> (cần SSR/SSG cho SEO); <code>apps/admin</code> (dashboard quản trị) → <b>React SPA (Vite)</b>, KHÔNG dùng Next.js. Admin là khu vực đăng nhập, không cần SEO → SPA nhẹ hơn. Cả hai chia sẻ <code>packages/ui</code> + <code>packages/types</code>.</div>
+      <p><b><code>apps/web</code> — blog công khai (Next.js):</b></p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Thành phần</th><th>Lựa chọn</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>Framework</td><td><b>Next.js (App Router)</b></td><td>SSR/SSG cho SEO blog rất tốt.</td></tr>
+          <tr><td>Styling / UI</td><td><b>Tailwind + shadcn/ui</b></td><td>Nhanh, đẹp, tuỳ biến cao.</td></tr>
+          <tr><td>Data fetching</td><td>TanStack Query (+ RSC fetch)</td><td>Cache client-side, mutation.</td></tr>
+          <tr><td>Auth</td><td>Không cần (trang đọc công khai)</td><td>Có comment/like sau này mới thêm.</td></tr>
+        </tbody>
+      </table></div>
+      <p><b><code>apps/admin</code> — dashboard quản trị (React SPA):</b></p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Thành phần</th><th>Lựa chọn</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>Build tool</td><td><b>Vite + React</b> (TypeScript)</td><td>SPA thuần, HMR nhanh, build ra static.</td></tr>
+          <tr><td>Routing</td><td><b>React Router</b></td><td>Client-side routing (thay App Router).</td></tr>
+          <tr><td>Styling / UI</td><td><b>Tailwind + shadcn/ui</b></td><td>shadcn hỗ trợ Vite; dùng chung <code>packages/ui</code>.</td></tr>
+          <tr><td>Data fetching</td><td>TanStack Query</td><td>Cache, mutation, optimistic update.</td></tr>
+          <tr><td>Auth</td><td><b>Google OAuth qua Go core (BFF)</b></td><td>SPA không giữ token trong JS; cookie httpOnly + allowlist email. Xem §14.</td></tr>
+          <tr><td>Editor</td><td><b>Tiptap</b> (hoặc Novel)</td><td>Trình soạn bài nằm trong admin.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Upload ảnh ra S3/R2 (không upload qua server)</h3>
+      <pre><code>1. FE: user chèn/paste ảnh vào Tiptap
+2. FE → API core: xin presigned URL (POST /media/presign)
+3. API core: tạo presigned PUT URL cho R2/S3, trả FE
+4. FE: PUT ảnh TRỰC TIẾP lên R2/S3 (không qua server bạn)
+5. FE: lưu URL công khai vào nội dung bài viết</code></pre>
+      <div class="call rec"><span class="tag">Khuyến nghị</span>Chọn <b>Cloudflare R2</b> thay AWS S3: miễn phí egress (băng thông ra) — với blog nhiều ảnh, đây là khoản tiết kiệm lớn nhất. API tương thích S3 nên code y hệt.</div>
+    </section>
+
+    <section id="s3">
+      <h2><span class="num">03</span> Phần AI — Phân tích chi tiết</h2>
+      <h3>3.1 · Chatbot RAG hỏi về website</h3>
+      <pre><code>Khi đăng/sửa bài:  post → chunk → embedding → lưu pgvector
+Khi user hỏi:      câu hỏi → embedding → similarity search (pgvector)
+                   → top-k chunk liên quan → prompt LLM → trả lời kèm trích dẫn</code></pre>
+      <p>Câu hỏi kiểu "web có bài nào về X" nên xử lý <strong>hybrid</strong>: intent đơn giản → query metadata (không cần LLM); câu hỏi mở → RAG. Model embedding rẻ: <code>text-embedding-3-small</code>, Google <code>text-embedding-004</code> (free tier rộng), hoặc chạy local <code>bge-small</code> (0đ).</p>
+      <h3>3.2 · AI research + tự viết + Telegram 9h sáng (human-in-the-loop)</h3>
+      <p>Tính năng "signature" của dự án:</p>
+      <pre><code>09:00 (cron trong AI worker):
+  1. Lấy danh sách chủ đề quan tâm
+  2. Web search  → Tavily (free tier) / Brave Search
+  3. Fetch &amp; đọc nguồn → tóm tắt, trích dẫn
+  4. LLM viết draft + tiêu đề + tags + meta SEO
+  5. Lưu draft (status = PENDING_APPROVAL)
+  6. Gửi Telegram: tiêu đề + tóm tắt + [✅ Duyệt] [✏️ Sửa] [❌ Bỏ]
+  7. Bạn bấm nút → publish / xoá / mở editor chỉnh</code></pre>
+      <p>Framework: <strong>LangGraph</strong> (thuộc LangChain) — hợp luồng nhiều bước có state + human-in-the-loop. Telegram dùng inline keyboard, webhook về AI worker.</p>
+      <div class="call warn"><span class="tag">Ranh giới bắt buộc</span>AI <b>KHÔNG BAO GIỜ tự đăng</b> khi chưa có approve của bạn — tránh hallucination lên blog công khai.</div>
+      <h3>3.3 · Trợ lý viết trong editor</h3>
+      <p>Streaming completion: bôi đen text → "viết tiếp / tóm tắt / đổi văn phong / dịch". Nếu chọn editor <b>Novel</b> thì có sẵn slash-command AI.</p>
+      <h3>3.4 · Đề xuất thêm tính năng AI phù hợp blog</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="num">#</th><th>Tính năng</th><th>Giá trị</th><th>Độ khó</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>Auto-tagging &amp; phân loại bài</td><td>Khỏi tự gắn tag</td><td><span class="pill good">Thấp</span></td></tr>
+          <tr><td class="num">2</td><td>Tự sinh SEO meta (title, desc, slug)</td><td>SEO tốt, đỡ thủ công</td><td><span class="pill good">Thấp</span></td></tr>
+          <tr><td class="num">3</td><td>TL;DR / tóm tắt đầu bài</td><td>UX đọc tốt hơn</td><td><span class="pill good">Thấp</span></td></tr>
+          <tr><td class="num">4</td><td>"Related posts" bằng embedding</td><td>Giữ chân người đọc</td><td><span class="pill good">Thấp</span></td></tr>
+          <tr><td class="num">5</td><td>Semantic search cho blog</td><td>Tìm theo ý nghĩa</td><td><span class="pill warn">TB</span></td></tr>
+          <tr><td class="num">6</td><td>"Ask this article" hỏi đáp từng bài</td><td>Tương tác cao</td><td><span class="pill warn">TB</span></td></tr>
+          <tr><td class="num">7</td><td>Dịch song ngữ VN↔EN</td><td>Mở rộng người đọc</td><td><span class="pill warn">TB</span></td></tr>
+          <tr><td class="num">8</td><td>Weekly digest tự tổng hợp</td><td>Tái sử dụng content</td><td><span class="pill warn">TB</span></td></tr>
+          <tr><td class="num">9</td><td>Kiểm duyệt bình luận bằng LLM</td><td>Chống spam/toxic</td><td><span class="pill good">Thấp</span></td></tr>
+          <tr><td class="num">10</td><td>Gợi ý chủ đề viết theo xu hướng</td><td>Chống bí ý tưởng</td><td><span class="pill warn">TB</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="call"><span class="tag">Gợi ý</span>#1–4 gần như "free" vì tái dùng pipeline embedding/LLM đã có. Làm ngay trong Phase 3.</div>
+    </section>
+
+    <section id="s4">
+      <h2><span class="num">04</span> Observability / Monitoring (Grafana)</h2>
+      <p>Full stack <strong>LGTM</strong> (Loki + Grafana + Tempo + Prometheus) rất "ngon" để học nhưng ngốn 1.5–2.5GB RAM — cạnh tranh trực tiếp với app trên VPS rẻ.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Lựa chọn</th><th>Nội dung</th><th>Khi nào</th></tr></thead>
+        <tbody>
+          <tr><td><b>A · Self-host gọn</b></td><td>Prometheus + Grafana + Loki (+ Tempo sau). OpenTelemetry instrument Go + Python.</td><td>VPS ≥ 4GB. Học đầy đủ metrics/logs/traces.</td></tr>
+          <tr><td><b>B · Grafana Cloud Free</b> <span class="pill accent">Khuyến nghị</span></td><td>Free tier: 10k series, 50GB logs, 50GB traces/tháng. VPS không tốn RAM cho monitoring.</td><td>VPS ≤ 2GB hoặc muốn tiết kiệm RAM.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="call rec"><span class="tag">Khuyến nghị</span>Bắt đầu với <b>B (Grafana Cloud Free)</b> để dồn RAM cho app, rồi thử self-host A trong một phase riêng để học vận hành. Metrics tối thiểu nên có: RED (rate/error/duration), token LLM + chi phí ước tính, thời gian job research, số bài publish.</div>
+    </section>
+
+    <section id="s5">
+      <h2><span class="num">05</span> Chi phí thực tế (USD/tháng)</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Hạng mục</th><th>Lựa chọn tiết kiệm</th><th class="num">Ước tính</th></tr></thead>
+        <tbody>
+          <tr><td>VPS</td><td>Hetzner CX22 (2 vCPU/4GB) · Contabo</td><td class="num">$5–8</td></tr>
+          <tr><td>Domain</td><td>.com/.dev</td><td class="num">~$1</td></tr>
+          <tr><td>Object storage</td><td>Cloudflare R2 (egress free)</td><td class="num">$0–2</td></tr>
+          <tr><td>CDN / DNS / WAF</td><td>Cloudflare (free)</td><td class="num">$0</td></tr>
+          <tr><td>LLM chat/viết</td><td>Gemini Flash / DeepSeek / Claude Haiku</td><td class="num">$3–10</td></tr>
+          <tr><td>Embeddings</td><td>small model / local</td><td class="num">$0–2</td></tr>
+          <tr><td>Web search research</td><td>Tavily free tier</td><td class="num">$0</td></tr>
+          <tr><td>Monitoring</td><td>Grafana Cloud Free</td><td class="num">$0</td></tr>
+          <tr><td>Telegram Bot</td><td>Miễn phí</td><td class="num">$0</td></tr>
+          <tr><td><b>Tổng</b></td><td></td><td class="num"><b>~$10–25</b> <span class="pill good">trong ngân sách</span></td></tr>
+        </tbody>
+      </table></div>
+      <h3>Mẹo tối ưu chi phí AI (quan trọng nhất)</h3>
+      <ol>
+        <li><strong>Chọn model theo việc:</strong> research/viết dùng model rẻ; model mạnh chỉ khi thật cần.</li>
+        <li><strong>Cache embeddings:</strong> không re-embed bài không đổi.</li>
+        <li><strong>Prompt caching</strong> (Claude/Gemini): cache system prompt/context lặp lại.</li>
+        <li><strong>Giới hạn tần suất:</strong> research 1 lần/ngày; chatbot intent đơn giản → query DB thay vì gọi LLM.</li>
+        <li><strong>Theo dõi token</strong> qua Grafana → biết tính năng nào tốn tiền.</li>
+      </ol>
+    </section>
+
+    <section id="s6">
+      <h2><span class="num">06</span> Claude Code — Skills / Plugins dùng được</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nhu cầu</th><th>Skill / Plugin có sẵn</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>Telegram 9h sáng + duyệt bài</td><td><code>telegram:configure</code>, <code>telegram:access</code></td><td>Cấu hình bot, allowlist — đúng luồng duyệt bài.</td></tr>
+          <tr><td>Lên lịch / cron</td><td><code>schedule</code>, <code>loop</code>, CronCreate</td><td>Tạo routine chạy 09:00.</td></tr>
+          <tr><td>R2 / Cloudflare</td><td>plugin <b>cloudflare</b>, <code>wrangler</code>, <code>turnstile-spin</code></td><td>Cần OAuth <code>claude mcp</code>.</td></tr>
+          <tr><td>AI agent serverless (tuỳ chọn)</td><td><code>cloudflare:agents-sdk</code>, <code>build-agent</code></td><td>Nếu muốn AI worker trên Workers.</td></tr>
+          <tr><td>Tra docs thư viện chuẩn xác</td><td>plugin <b>context7</b></td><td>Docs mới nhất Tiptap/Next.js/LangChain.</td></tr>
+          <tr><td>Nghiên cứu chuyên sâu</td><td><code>deep-research</code></td><td>Giống chính tính năng research bạn xây.</td></tr>
+          <tr><td>Embedding/model local (0đ)</td><td>plugin <b>huggingface-skills</b></td><td>Giảm chi phí API.</td></tr>
+          <tr><td>Thiết kế FE không "template"</td><td><code>frontend-design</code></td><td>Typography/màu/bố cục.</td></tr>
+          <tr><td>Đo hiệu năng / a11y</td><td>plugin <b>playwright</b>, <b>chrome-devtools-mcp</b></td><td>E2E, Core Web Vitals, LCP.</td></tr>
+          <tr><td>Quy trình phát triển</td><td><code>brainstorming → writing-plans → feature-dev → TDD → code-review</code></td><td>Khung làm việc có kỷ luật.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="call warn"><span class="tag">Lưu ý xác thực</span>Một số MCP server (Cloudflare API, HuggingFace, Atlassian) cần đăng nhập OAuth qua <code>claude mcp</code> / <code>/mcp</code>. Các skill như telegram, schedule, deep-research, frontend-design dùng được ngay.</div>
+    </section>
+
+    <section id="s7">
+      <h2><span class="num">07</span> Roadmap đề xuất (phân phase)</h2>
+      <p class="divider-note">Nguyên tắc: mỗi phase ra được thứ chạy thật, demo được, rồi mới sang phase sau.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Phase</th><th>Thời lượng</th><th>Nội dung → Kết quả</th></tr></thead>
+        <tbody>
+          <tr><td><b>0 · Nền móng</b></td><td>1–2 tuần</td><td>VPS + Docker Compose (Postgres, Redis), Cloudflare (DNS, R2, CDN), repo Go core + AI worker, CI đơn giản.</td></tr>
+          <tr><td><b>1 · Blog cơ bản</b></td><td>2–3 tuần</td><td>Module posts/auth/media (presigned R2); <code>apps/web</code> (Next.js) list/detail; <code>apps/admin</code> (React SPA Vite) login Google OAuth + quản lý bài + Tiptap + upload. → <b>Đã có blog dùng thật.</b></td></tr>
+          <tr><td><b>2 · Observability</b></td><td>1 tuần</td><td>OpenTelemetry + Grafana Cloud Free dashboard. → <b>Nhìn được hệ thống.</b></td></tr>
+          <tr><td><b>3 · AI nền tảng</b></td><td>2–3 tuần</td><td>pgvector + embedding, chatbot RAG, semantic search, related posts, auto-tag/SEO/TL;DR. → <b>AI "hiểu" nội dung.</b></td></tr>
+          <tr><td><b>4 · AI research + Telegram</b></td><td>2–3 tuần</td><td>LangGraph research agent → draft → cron 09:00 → Telegram duyệt/đăng. → <b>Tính năng signature.</b></td></tr>
+          <tr><td><b>5 · Nâng cao</b></td><td>liên tục</td><td>Trợ lý viết trong editor, gRPC core↔AI, self-host LGTM, page builder (Puck), tính năng AI còn lại.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s8">
+      <h2><span class="num">08</span> Rủi ro &amp; cách phòng tránh</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Rủi ro</th><th>Mức</th><th>Phòng tránh</th></tr></thead>
+        <tbody>
+          <tr><td>Scope creep (ôm quá nhiều)</td><td><span class="pill crit">Cao</span></td><td>Đi theo phase; mỗi phase phải ra sản phẩm chạy được mới sang tiếp.</td></tr>
+          <tr><td>Observability ngốn RAM</td><td><span class="pill warn">TB</span></td><td>Dùng Grafana Cloud Free trước; self-host sau như bài học riêng.</td></tr>
+          <tr><td>AI hallucination lên bài</td><td><span class="pill warn">TB</span></td><td>Human-in-the-loop bắt buộc; hiện nguồn trích dẫn; không auto-publish.</td></tr>
+          <tr><td>Chi phí LLM vượt kiểm soát</td><td><span class="pill good">Thấp</span></td><td>Model rẻ theo việc, cache, theo dõi token, rate limit.</td></tr>
+          <tr><td>Học Go chậm lúc đầu</td><td><span class="pill good">Thấp</span></td><td>Bắt đầu chi/Gin + sqlc; core nhỏ; AI worker để Python cho nhanh.</td></tr>
+          <tr><td>Lộ secret (R2, LLM key)</td><td><span class="pill warn">TB</span></td><td>Secrets không commit, Cloudflare WAF, rate limit, presigned URL có hạn.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s9">
+      <h2><span class="num">09</span> Kết luận</h2>
+      <p>Dự án <strong>hoàn toàn khả quan</strong> trong ngân sách 15–40 USD/tháng và phục vụ tốt cả mục tiêu học lẫn sản phẩm thật. Ba quyết định quan trọng nhất:</p>
+      <ol>
+        <li><strong>Không làm microservice thật</strong> → Modular Monolith (Go) + 1 AI worker (Python) riêng.</li>
+        <li><strong>Đi theo roadmap phân phase</strong>, mỗi phase ra sản phẩm chạy được.</li>
+        <li><strong>AI luôn có human-in-the-loop</strong> khi đăng bài; tối ưu chi phí bằng model rẻ + cache + theo dõi token.</li>
+      </ol>
+    </section>
+
+    <section id="s10">
+      <h2><span class="num">10</span> UI Library cho Next.js (đẹp, phổ biến, nhẹ)</h2>
+      <div class="call rec"><span class="tag">Khuyến nghị số 1</span><b>shadcn/ui + Tailwind CSS + Radix UI.</b> shadcn không phải npm package — bạn copy code vào repo (CLI), sở hữu code → nhẹ và tuỳ biến vô hạn. Xây trên Radix (headless, accessible sẵn) + Tailwind. Icons: lucide-react · Animation: Motion.</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Lib</th><th>Kiểu</th><th>Nặng/nhẹ</th><th>Khi nào chọn</th></tr></thead>
+        <tbody>
+          <tr><td><b>shadcn/ui</b> ⭐</td><td>Copy-in, headless + Tailwind</td><td><span class="pill good">Rất nhẹ</span></td><td>Mặc định. Đẹp, tuỳ biến cao, phổ biến nhất.</td></tr>
+          <tr><td>Radix UI</td><td>Primitive headless</td><td><span class="pill good">Nhẹ</span></td><td>Dùng trực tiếp nếu không thích class của shadcn.</td></tr>
+          <tr><td>Mantine</td><td>Full component lib</td><td><span class="pill warn">TB</span></td><td>Muốn "pin sẵn" nhiều component.</td></tr>
+          <tr><td>HeroUI (NextUI cũ)</td><td>Component lib đẹp</td><td><span class="pill warn">TB</span></td><td>Muốn đẹp ngay, ít cấu hình.</td></tr>
+          <tr><td>Park UI</td><td>shadcn-style trên Ark UI</td><td><span class="pill good">Nhẹ</span></td><td>Muốn đa framework.</td></tr>
+          <tr><td>Chakra v3</td><td>Component lib</td><td><span class="pill warn">TB–nặng</span></td><td>Thích API prop-based.</td></tr>
+          <tr><td>MUI / Ant Design</td><td>Enterprise lib</td><td><span class="pill crit">Nặng</span></td><td><span class="no">✗</span> Nặng, khó thoát "template".</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="s11">
+      <h2><span class="num">11</span> Rich Text Editor — So sánh &amp; xếp hạng</h2>
+      <p class="divider-note">Bối cảnh: blog cá nhân, cần AI hỗ trợ, upload ảnh R2, markdown-friendly, tuỳ biến cao, solo dev.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th class="num">Hạng</th><th>Editor</th><th>Nền tảng</th><th>Ưu · Nhược</th><th>Phù hợp</th></tr></thead>
+        <tbody>
+          <tr><td class="num">🥇 1</td><td><b>Tiptap</b></td><td>ProseMirror</td><td>Docs xuất sắc, extension nhiều nhất, cộng đồng lớn · vài extension Pro trả phí</td><td><span class="stars">★★★★★</span></td></tr>
+          <tr><td class="num">🥈 2</td><td><b>Novel</b></td><td>Tiptap + Vercel AI</td><td>AI viết/slash-command sẵn, UX Notion, dựng blog-AI nhanh nhất · ít linh hoạt hơn Tiptap thuần</td><td><span class="stars">★★★★★</span></td></tr>
+          <tr><td class="num">🥉 3</td><td><b>BlockNote</b></td><td>ProseMirror/Tiptap</td><td>Block như Notion, dùng ngay, đẹp · kém tự do layout lạ</td><td><span class="stars">★★★★☆</span></td></tr>
+          <tr><td class="num">4</td><td><b>Lexical</b></td><td>Meta (riêng)</td><td>Hiệu năng top, Meta hậu thuẫn, React binding chính chủ · nhiều boilerplate, hệ sinh thái nhỏ hơn, docs "ngợp"</td><td><span class="stars">★★★★☆</span></td></tr>
+          <tr><td class="num">5</td><td>Plate</td><td>Slate</td><td>Tích hợp shadcn đẹp, nhiều plugin + AI · Slate đôi khi edge-case</td><td><span class="stars">★★★★☆</span></td></tr>
+          <tr><td class="num">6</td><td>Milkdown</td><td>ProseMirror</td><td>Markdown-first, plugin-driven · cộng đồng nhỏ hơn</td><td><span class="stars">★★★☆☆</span></td></tr>
+          <tr><td class="num">7</td><td>Editor.js</td><td>Riêng (block)</td><td>Output JSON sạch · paradigm khác, plugin rời rạc</td><td><span class="stars">★★★☆☆</span></td></tr>
+          <tr><td class="num">8</td><td>Quill</td><td>Riêng</td><td>Đơn giản, nhẹ, ổn định · khó mở rộng sâu, kiến trúc cũ</td><td><span class="stars">★★☆☆☆</span></td></tr>
+          <tr><td class="num">9</td><td>Slate</td><td>Toolkit low-level</td><td>Tự do tuyệt đối · phải tự xây nhiều</td><td><span class="stars">★★☆☆☆</span></td></tr>
+          <tr><td class="num">10</td><td>TinyMCE / CKEditor</td><td>Classic WYSIWYG</td><td>Rất mạnh, đầy đủ · nặng, vấn đề license, kiểu cũ</td><td><span class="stars">★★☆☆☆</span></td></tr>
+        </tbody>
+      </table></div>
+      <h3>Đánh giá riêng về Lexical</h3>
+      <p>Lexical rất tốt về hiệu năng, ổn định, được Meta dùng thật. Nhưng cho <strong>solo dev cần đi nhanh + nhiều ví dụ cộng đồng + AI</strong>, Lexical thua Tiptap: phải viết nhiều code hơn, plugin bên thứ ba ít hơn, docs dày dễ "ngợp". <strong>Chọn Lexical khi</strong> hiệu năng/mobile là ưu tiên tối cao. Với blog cá nhân → <strong>Tiptap (hoặc Novel) vẫn tối ưu.</strong></p>
+    </section>
+
+    <section id="s12">
+      <h2><span class="num">12</span> craft.js, Reka.js &amp; Visual Page Builder</h2>
+      <h3>12.1 · craft.js là gì (chính xác)</h3>
+      <p>craft.js <strong>không phải rich text editor, cũng không phải page builder sẵn dùng</strong>. Nó là <strong>framework/toolkit React để BẠN TỰ XÂY một page builder</strong>: drag &amp; drop component vào canvas, node tree, settings panel, serialize ra JSON. Bạn tự dựng UI của builder → đổi lại là tự do tuyệt đối.</p>
+      <div class="call"><span class="tag">Phân biệt</span>Rich text editor (Tiptap) lo <b>nội dung chữ trong 1 bài</b>; page builder (craft.js/Puck) lo <b>bố cục cả trang bằng kéo-thả block/component</b>. Hai thứ bổ sung, không thay thế nhau.</div>
+      <h3>12.2 · Vấn đề của craft.js (kiểm chứng 2026-07)</h3>
+      <ul>
+        <li>Vẫn hoạt động nhưng <strong>bảo trì chậm lại rõ rệt</strong>.</li>
+        <li><strong>Lý do:</strong> tác giả (Prev Wong) dồn sức cho dự án kế thừa <strong>Reka.js</strong>.</li>
+        <li><strong>Hệ quả:</strong> hỗ trợ React 19 còn lấn cấn; rủi ro production lâu dài cao hơn lib đang active.</li>
+      </ul>
+      <div class="call rec"><span class="tag">Khuyến nghị thay thế</span>Dùng <b>Puck</b> — visual editor cho React, đang bảo trì tích cực (~13K sao), hợp Next.js App Router, có UI sẵn dùng ngay (craft.js phải tự dựng nhiều hơn).</div>
+      <h3>12.3 · Reka.js là gì &amp; khác craft.js</h3>
+      <p><strong>Reka.js</strong> = hệ thống quản lý state để xây trình no-code/page builder (cùng tác giả). Dựa trên một <strong>AST</strong>, cho phép người dùng cuối tạo component <strong>có logic động</strong> (props, state, if, loop) — như "mini-React" trong builder.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th></th><th>craft.js</th><th>Reka.js</th></tr></thead>
+        <tbody>
+          <tr><td><b>Vai trò</b></td><td>Framework dựng UI của builder</td><td>Engine state bên dưới</td></tr>
+          <tr><td><b>Người dùng cuối</b></td><td>Kéo-thả component tĩnh</td><td>Tạo component có logic động</td></tr>
+          <tr><td><b>Output</b></td><td>JSON node-tree</td><td>View tree JSON framework-agnostic</td></tr>
+          <tr><td><b>Cộng thêm</b></td><td>—</td><td>Collaboration realtime (CRDT/Yjs)</td></tr>
+          <tr><td><b>Trạng thái</b></td><td>Bảo trì chậm</td><td>Mới, mạnh hơn nhưng phức tạp &amp; ngách</td></tr>
+        </tbody>
+      </table></div>
+      <h3>12.4 · Ứng dụng "hay ho" cho blog</h3>
+      <ol>
+        <li>Trình dựng trang chủ / landing / about tuỳ biến (lưu layout JSON).</li>
+        <li>Custom layout cho từng bài đặc biệt (showcase) — vượt giới hạn rich text.</li>
+        <li><strong>🌟 AI sinh layout:</strong> vì output là JSON, cho LLM sinh JSON layout. <em>"AI, tạo landing cho series bài Go"</em> → AI trả JSON → builder render. Kết nối đẹp giữa AI và page builder.</li>
+        <li>Trình tạo template newsletter/email kéo-thả.</li>
+        <li>Widget/section builder cho trang chủ/sidebar.</li>
+      </ol>
+      <h3>12.5 · Lời khuyên (chốt)</h3>
+      <p>Đáng làm, nhưng <strong>để Phase 5</strong> — sau khi blog + Tiptap + AI cơ bản đã chạy. Thứ tự lựa chọn giảm dần:</p>
+      <ol>
+        <li><strong>Puck</strong> — bắt đầu bằng cái này (active, có UI sẵn, hợp Next.js).</li>
+        <li><strong>craft.js</strong> — chỉ khi cần tuỳ biến UX builder sâu hơn Puck (chấp nhận rủi ro bảo trì).</li>
+        <li><strong>Reka.js</strong> — chỉ khi tham vọng làm nền tảng no-code động thật sự (vượt nhu cầu blog).</li>
+      </ol>
+      <div class="call warn"><span class="tag">Không làm sớm</span>Đừng đưa page builder vào giai đoạn đầu. Ưu tiên rich text (Tiptap) cho việc viết bài trước. Điểm chung cả ba: đều serialize ra JSON → giữ được ý tưởng "AI sinh layout".</div>
+    </section>
+
+    <section id="s13">
+      <h2><span class="num">13</span> Cấu trúc code &amp; Design Pattern</h2>
+      <h3>13.1 · Monorepo hay không?</h3>
+      <p>Với mục tiêu học + nhiều app, khuyên <strong>monorepo (pnpm workspaces + Turborepo)</strong> cho JS/TS; Go và Python để thư mục riêng trong cùng monorepo:</p>
+      <pre><code>blog/
+├── apps/
+│   ├── web/            # Next.js — blog công khai (SSR/SSG, SEO)
+│   └── admin/          # React SPA (Vite + React Router) — dashboard (mục 14)
+├── packages/
+│   ├── ui/             # shadcn components dùng chung
+│   ├── types/          # type dùng chung (sinh từ OpenAPI/proto)
+│   └── api-client/     # client gọi Go API, type-safe
+├── services/
+│   ├── core/           # Go monolith module hoá
+│   └── ai-worker/      # Python (LangChain/LangGraph) + FastAPI
+├── infra/              # docker-compose, deploy, monitoring
+└── turbo.json</code></pre>
+      <h3>13.2 · Go core — Modular Monolith + Clean Architecture-lite</h3>
+      <pre><code>services/core/
+├── cmd/api/main.go              # entrypoint, wiring
+├── internal/
+│   ├── modules/
+│   │   ├── posts/
+│   │   │   ├── handler.go       # transport (HTTP/gRPC)
+│   │   │   ├── service.go       # business logic — lõi
+│   │   │   ├── repository.go    # data access (interface + sqlc)
+│   │   │   └── domain.go        # entity, error domain
+│   │   ├── auth/  media/  chat/
+│   ├── platform/                # db, redis, config, logger, otel
+│   └── shared/                  # middleware, errors, response
+└── pkg/</code></pre>
+      <p>Nguyên tắc: <code>handler → service → repository</code>, phụ thuộc đi vào trong. Service định nghĩa <strong>interface</strong> repository, không biết DB nào → dễ test, dễ đổi. Dùng google/wire hoặc DI thủ công. Đừng over-abstract.</p>
+      <h3>13.3 · Python AI worker — Hexagonal + LangGraph</h3>
+      <pre><code>services/ai-worker/src/
+├── api/          # FastAPI (webhook Telegram, health)
+├── graphs/       # LangGraph state machines
+├── agents/  tools/  prompts/
+├── adapters/
+│   ├── llm/          # interface LLMProvider + impl (gemini/claude/deepseek)
+│   ├── vectorstore/  # pgvector adapter
+│   └── core_client/  # gọi Go core API
+├── domain/       # pydantic models
+└── config.py     # quản lý bằng uv</code></pre>
+      <p>Trừu tượng hoá LLM sau interface <code>LLMProvider</code> → đổi model chỉ sửa 1 chỗ. Pydantic cho mọi I/O → type-safe.</p>
+      <h3>13.4 · FE — Feature-based (bulletproof-react) — cho cả web &amp; admin</h3>
+      <pre><code>apps/web/src/              # Next.js — App Router
+├── app/                # routes, layouts
+├── features/           # posts/{api,components,hooks,types}.ts · chat/
+├── components/ui/      # shadcn
+├── lib/  hooks/  types/  styles/
+
+apps/admin/src/            # React SPA — Vite + React Router
+├── main.tsx            # entry SPA
+├── router.tsx          # React Router (routes + protected route)
+├── features/           # posts/ · editor/ · auth/ · media/
+├── components/ui/      # shadcn (import từ packages/ui)
+├── lib/  hooks/  types/  styles/</code></pre>
+      <p>Nguyên tắc: colocation, tính năng độc lập, không import chéo lộn xộn. Khác biệt: <code>web</code> route bằng App Router (file-based), <code>admin</code> route bằng React Router (khai báo trong <code>router.tsx</code>).</p>
+    </section>
+
+    <section id="s14">
+      <h2><span class="num">14</span> Admin Dashboard — App React SPA riêng</h2>
+      <div class="call rec"><span class="tag">Quyết định (đã chốt)</span>Admin dashboard là <b>app React SPA riêng</b> (<code>apps/admin</code>, Vite + React + React Router) trong cùng monorepo — <b>KHÔNG dùng Next.js</b>. Next.js chỉ dành cho <code>apps/web</code> (blog công khai cần SEO/SSR).</div>
+      <h3>14.1 · Vì sao SPA riêng hợp lý cho admin</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Lý do</th><th>Giải thích</th></tr></thead>
+        <tbody>
+          <tr><td><b>Không cần SEO/SSR</b></td><td>Admin là khu vực đăng nhập, không index Google → SSR của Next.js là chi phí thừa.</td></tr>
+          <tr><td><b>Nhẹ &amp; đơn giản</b></td><td>Vite build ra static thuần, HMR nhanh, cấu hình ít hơn Next.js cho một dashboard.</td></tr>
+          <tr><td><b>Học SPA đúng nghĩa</b></td><td>Client routing (React Router), quản lý auth, protected route.</td></tr>
+          <tr><td><b>Tách deploy</b></td><td>Sửa admin không cần build/deploy lại web công khai và ngược lại.</td></tr>
+          <tr><td><b>Vẫn chia sẻ code</b></td><td>Monorepo → dùng chung <code>packages/ui</code>, <code>packages/types</code>, <code>packages/api-client</code>.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>14.2 · So sánh các phương án</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Phương án</th><th>Đánh giá</th></tr></thead>
+        <tbody>
+          <tr><td><b>App <code>apps/admin</code> = React SPA (Vite)</b> ⭐</td><td><b>Đã chọn.</b> Tách deploy, không SEO thừa, học SPA, vẫn share package qua monorepo.</td></tr>
+          <tr><td>Cùng Next.js, route group <code>(admin)</code></td><td>Ít việc nhất nhưng gộp admin vào bundle web, kéo theo SSR không cần, không học SPA. Không chọn.</td></tr>
+          <tr><td>Repo hoàn toàn tách biệt</td><td><span class="no">✗</span> Thừa cho dự án cá nhân — mất khả năng share package, thêm gánh CI/CD.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>14.3 · Điểm cần lưu ý khi làm admin SPA</h3>
+      <ul>
+        <li><strong>Auth:</strong> Google OAuth theo BFF pattern (đã chốt) — SPA không tự giữ token, chỉ gọi API kèm <code>credentials: 'include'</code> + bọc <strong>protected route</strong>. Chi tiết ở 14.4.</li>
+        <li><strong>Routing:</strong> React Router (khai báo trong <code>router.tsx</code>), không có file-based routing như Next.</li>
+        <li><strong>shadcn/ui:</strong> hỗ trợ Vite tốt — cấu hình <code>components.json</code> trỏ về <code>packages/ui</code> để dùng chung với web.</li>
+        <li><strong>Editor Tiptap</strong> và luồng <strong>presigned URL upload R2</strong> nằm trong app admin.</li>
+        <li><strong>Deploy:</strong> build static → Cloudflare Pages / Vercel (static) hoặc phục vụ qua Coolify. Không cần Node runtime SSR.</li>
+      </ul>
+      <h3>14.4 · Luồng Google OAuth (BFF pattern)</h3>
+      <div class="call"><span class="tag">Nguyên tắc</span>SPA <b>không bao giờ chạm vào token</b>. Go core đóng vai <b>Backend-for-Frontend (BFF)</b>: là OAuth client, đổi code, chỉ trả về trình duyệt một <b>session cookie httpOnly</b>. Đây là khuyến nghị chính thức trong <em>OAuth 2.0 for Browser-Based Apps (BCP)</em> — an toàn hơn hẳn SPA tự giữ JWT (miễn nhiễm XSS đánh cắp token).</div>
+      <pre><code>1. User bấm "Đăng nhập với Google"  → SPA điều hướng: GET {core}/auth/google/login
+2. Go core tạo state + PKCE, redirect sang trang consent của Google
+3. User đồng ý → Google redirect: GET {core}/auth/google/callback?code=...&amp;state=...
+4. Go core:
+     - kiểm tra state (chống CSRF)
+     - đổi code → token với Google (client_secret + code_verifier)
+     - đọc email + email_verified từ ID token
+     - ✅ KIỂM TRA ALLOWLIST: email có thuộc danh sách admin? không thì 403
+     - tạo session (Redis/DB), set cookie:
+         Set-Cookie: sid=&lt;...&gt;; HttpOnly; Secure; SameSite=Lax; Path=/
+5. Go core redirect về admin SPA (đã đăng nhập)
+6. Mọi request sau: SPA gọi API với credentials:'include' → cookie tự đính kèm
+7. Logout: POST {core}/auth/logout → xoá session + clear cookie</code></pre>
+      <div class="call warn"><span class="tag">Điểm mấu chốt</span><b>Allowlist email là bắt buộc</b> — nếu không, bất kỳ ai có tài khoản Google đều login được. <b><code>client_secret</code> chỉ nằm ở Go core</b> (lý do phải dùng BFF). Nếu admin &amp; core khác origin → cần CORS <code>Allow-Credentials: true</code> + <code>SameSite=None; Secure</code>. Thư viện Go: <code>golang.org/x/oauth2</code> + <code>oauth2/google</code>, tự thêm PKCE + state.</div>
+    </section>
+
+    <section id="s15">
+      <h2><span class="num">15</span> CI/CD</h2>
+      <p><strong>GitHub Actions</strong> (free, quá đủ). Pipeline:</p>
+      <pre><code>push/PR →
+  ├── lint    (golangci-lint / eslint+prettier / ruff)
+  ├── test    (go test / vitest / pytest)
+  ├── build   (Next.js, go build, docker build)
+  ├── push    → GHCR (free)
+  └── deploy  → VPS (khi merge main)</code></pre>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Cách deploy VPS</th><th>Mô tả</th><th>Khuyến nghị</th></tr></thead>
+        <tbody>
+          <tr><td><b>Coolify / Dokploy</b> ⭐</td><td>Self-hosted PaaS: Git push → tự build &amp; deploy, quản lý Docker/DB/SSL/env, có UI</td><td><span class="pill accent">Số 1</span> Giảm nhiều việc ops, vẫn self-host, free.</td></tr>
+          <tr><td>Kamal</td><td>Deploy Docker zero-downtime bằng YAML (37signals)</td><td>Số 2. Học sâu deploy, không cần UI.</td></tr>
+          <tr><td>docker-compose + SSH / Watchtower</td><td>Tự viết deploy script</td><td>Nền tảng nhất nhưng nhiều việc tay.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Frontend deploy</h3>
+      <p><strong><code>apps/web</code> (Next.js):</strong> <strong>Vercel Free</strong> (DX tuyệt, SSR/ISR sẵn, tiết kiệm RAM VPS) hoặc <strong>Cloudflare Pages</strong> (hợp hệ R2), hoặc self-host qua Coolify.</p>
+      <p><strong><code>apps/admin</code> (React SPA Vite):</strong> build ra <strong>static</strong> → deploy cực nhẹ trên <strong>Cloudflare Pages / Vercel (static)</strong> (không cần Node runtime SSR), hoặc phục vụ static qua Coolify/Nginx. Nhớ cấu hình <strong>SPA fallback</strong> (mọi route → <code>index.html</code>) cho React Router.</p>
+      <p><strong>Nên có thêm:</strong> Renovate/Dependabot (tự cập nhật deps), pre-commit hooks (Husky + lint-staged / pre-commit), secrets qua GitHub Actions + Coolify (không commit <code>.env</code>).</p>
+    </section>
+
+    <section id="s16">
+      <h2><span class="num">16</span> TypeScript nâng cao</h2>
+      <p>Đoạn type nội bộ của react-hook-form dùng conditional/mapped/template-literal/recursive types. <strong>Hoàn toàn nên viết ở tầm đó</strong> và rất đáng học. Áp dụng cụ thể:</p>
+      <pre><code>// 1) Branded types — ID an toàn kiểu
+type Brand&lt;T, B&gt; = T &amp; { readonly __brand: B };
+type PostId = Brand&lt;string, 'PostId'&gt;;
+type UserId = Brand&lt;string, 'UserId'&gt;;
+
+// 2) Zod = single source of truth
+const PostSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1),
+  status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'PUBLISHED']),
+});
+type Post = z.infer&lt;typeof PostSchema&gt;;   // type tự sinh, luôn khớp validation
+
+// 3) Recursive/mapped types (giống DeepRequired)
+type DeepReadonly&lt;T&gt; = T extends BrowserNativeObject
+  ? T : { readonly [K in keyof T]: DeepReadonly&lt;T[K]&gt; };
+
+// 4) Template literal types
+type Permission = `post:${'read' | 'write' | 'delete'}`;
+
+// 5) Discriminated unions cho state AI draft
+type DraftState =
+  | { status: 'researching' }
+  | { status: 'ready'; draft: Post; sources: string[] }
+  | { status: 'failed'; error: string };</code></pre>
+      <h3>Thư viện hỗ trợ</h3>
+      <ul>
+        <li><strong>Zod</strong> — validation + suy ra type. Nền tảng mọi thứ.</li>
+        <li><strong>type-fest</strong> — kho utility type nâng cao (đúng loại trong đoạn code bạn dán).</li>
+        <li><strong>ts-reset</strong> — vá type built-in "lỏng" của TS thành chặt hơn.</li>
+      </ul>
+      <div class="call rec"><span class="tag">Vũ khí quan trọng nhất</span><b>End-to-end type safety Go ↔ TypeScript.</b> Vì BE là Go (không dùng tRPC), dùng contract-first codegen: <b>(A)</b> REST + OpenAPI (swaggo → openapi-typescript/orval sinh client + TanStack hooks), hoặc <b>(B)</b> gRPC + Protobuf (buf + Connect sinh type Go <em>và</em> TS từ cùng file <code>.proto</code>). Đổi field trong Go → FE compile lỗi ngay.</div>
+    </section>
+
+    <section id="s17">
+      <h2><span class="num">17</span> Tổng hợp link thư viện</h2>
+      <div class="linklist">
+        <p><b>UI / FE:</b> <a href="https://ui.shadcn.com">shadcn/ui</a> · <a href="https://www.radix-ui.com">Radix UI</a> · <a href="https://tailwindcss.com">Tailwind</a> · <a href="https://mantine.dev">Mantine</a> · <a href="https://www.heroui.com">HeroUI</a> · <a href="https://park-ui.com">Park UI</a> · <a href="https://lucide.dev">lucide</a> · <a href="https://motion.dev">Motion</a> · <a href="https://tanstack.com/query">TanStack Query</a> · <a href="https://nextjs.org">Next.js</a> · <a href="https://vite.dev">Vite</a> · <a href="https://reactrouter.com">React Router</a> · <a href="https://github.com/alan2207/bulletproof-react">bulletproof-react</a> · <a href="https://turbo.build">Turborepo</a> · <a href="https://pnpm.io/workspaces">pnpm workspaces</a></p>
+        <p><b>Rich text / Page builder:</b> <a href="https://tiptap.dev">Tiptap</a> · <a href="https://novel.sh">Novel</a> · <a href="https://www.blocknotejs.org">BlockNote</a> · <a href="https://lexical.dev">Lexical</a> · <a href="https://platejs.org">Plate</a> · <a href="https://milkdown.dev">Milkdown</a> · <a href="https://docs.slatejs.org">Slate</a> · <a href="https://prosemirror.net">ProseMirror</a> · <a href="https://editorjs.io">Editor.js</a> · <a href="https://quilljs.com">Quill</a> · <a href="https://puckeditor.com">Puck</a> · <a href="https://craft.js.org">craft.js</a> · <a href="https://reka.js.org">Reka.js</a> · <a href="https://grapesjs.com">GrapesJS</a></p>
+        <p><b>Backend Go:</b> <a href="https://github.com/go-chi/chi">chi</a> · <a href="https://gin-gonic.com">Gin</a> · <a href="https://sqlc.dev">sqlc</a> · <a href="https://gorm.io">GORM</a> · <a href="https://github.com/golang-migrate/migrate">golang-migrate</a> · <a href="https://atlasgo.io">Atlas</a> · <a href="https://github.com/google/wire">wire</a> · <a href="https://github.com/pgvector/pgvector">pgvector</a> · <a href="https://golangci-lint.run">golangci-lint</a> · <a href="https://github.com/golang-standards/project-layout">project-layout</a> · <a href="https://github.com/swaggo/swag">swaggo</a> · <a href="https://pkg.go.dev/golang.org/x/oauth2">oauth2 (Go)</a> · <a href="https://developers.google.com/identity/protocols/oauth2">Google OAuth 2.0</a></p>
+        <p><b>Python AI:</b> <a href="https://python.langchain.com">LangChain</a> · <a href="https://langchain-ai.github.io/langgraph">LangGraph</a> · <a href="https://fastapi.tiangolo.com">FastAPI</a> · <a href="https://docs.pydantic.dev">Pydantic</a> · <a href="https://tavily.com">Tavily</a> · <a href="https://docs.astral.sh/uv">uv</a> · <a href="https://docs.astral.sh/ruff">Ruff</a></p>
+        <p><b>TypeScript nâng cao:</b> <a href="https://zod.dev">Zod</a> · <a href="https://github.com/sindresorhus/type-fest">type-fest</a> · <a href="https://github.com/total-typescript/ts-reset">ts-reset</a> · <a href="https://github.com/openapi-ts/openapi-typescript">openapi-typescript</a> · <a href="https://orval.dev">orval</a> · <a href="https://connectrpc.com">Connect</a> · <a href="https://buf.build">buf</a></p>
+        <p><b>CI/CD &amp; Deploy:</b> <a href="https://docs.github.com/actions">GitHub Actions</a> · <a href="https://docs.github.com/packages">GHCR</a> · <a href="https://coolify.io">Coolify</a> · <a href="https://dokploy.com">Dokploy</a> · <a href="https://kamal-deploy.org">Kamal</a> · <a href="https://containrrr.dev/watchtower">Watchtower</a> · <a href="https://docs.renovatebot.com">Renovate</a> · <a href="https://typicode.github.io/husky">Husky</a> · <a href="https://github.com/lint-staged/lint-staged">lint-staged</a></p>
+      </div>
+    </section>
+
+    <section id="s18">
+      <h2><span class="num">18</span> Plugins / Skills bổ sung cần thêm</h2>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Nhu cầu</th><th>Có sẵn dùng được</th><th>Cần thêm?</th></tr></thead>
+        <tbody>
+          <tr><td>Tra docs Tiptap/Puck/shadcn/LangGraph</td><td><code>context7</code></td><td><span class="yes">Không</span></td></tr>
+          <tr><td>Thiết kế UI đẹp</td><td><code>frontend-design</code></td><td><span class="yes">Không</span></td></tr>
+          <tr><td>Hiệu năng editor/blog (LCP, CWV), a11y</td><td>chrome-devtools-mcp, playwright</td><td><span class="yes">Không</span></td></tr>
+          <tr><td>Thiết lập CI/CD, hooks tự động</td><td><code>claude-automation-recommender</code></td><td><span class="yes">Không</span></td></tr>
+          <tr><td>Commit / PR chuẩn</td><td>commit-commands, code-review, security-review</td><td><span class="yes">Không</span></td></tr>
+          <tr><td>Deploy Cloudflare (Pages, R2, Workers)</td><td>plugin cloudflare + wrangler</td><td><span class="pill warn">OAuth</span></td></tr>
+          <tr><td>Query Postgres khi dev (tuỳ chọn)</td><td>—</td><td>Có thể cài Postgres MCP</td></tr>
+          <tr><td>Embedding/model local 0đ</td><td>huggingface-skills</td><td><span class="pill warn">OAuth</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="call rec"><span class="tag">Kết luận</span>Không bắt buộc cài thêm plugin nào để bắt đầu. Việc nên làm: <b>bật OAuth</b> cho Cloudflare MCP (tự động hoá R2/Pages) và (tuỳ chọn) thêm <b>Postgres MCP</b>. Skill đã đủ: context7, frontend-design, feature-dev, writing-plans, TDD, code-review, claude-automation-recommender.</div>
+    </section>
+
+    <footer>
+      <p>Tài liệu phân tích kiến trúc · cập nhật 2026-07-05 · nguồn markdown: <code>docs/personal-blog-ai-analysis.md</code></p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    var icon = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    function systemDark() { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+    function apply(mode) {
+      root.setAttribute('data-theme', mode);
+      icon.textContent = mode === 'dark' ? '☾' : '☀';
+      label.textContent = mode === 'dark' ? 'Tối' : 'Sáng';
+    }
+    apply(systemDark() ? 'dark' : 'light');
+    btn.addEventListener('click', function () {
+      apply(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+
+    // Scrollspy for TOC
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+    if ('IntersectionObserver' in window) {
+      var current = null;
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            if (current) current.classList.remove('active');
+            var a = map[e.target.id];
+            if (a) { a.classList.add('active'); current = a; }
+          }
+        });
+      }, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
+      sections.forEach(function (s) { obs.observe(s); });
+    }
+  })();
+</script>
