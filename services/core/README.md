@@ -56,14 +56,23 @@ Mỗi module trong `internal/modules/<name>`:
 - `repository.go` — cài đặt GORM (map domain ↔ model)
 - `handler.go` — Gin handlers + DTO
 
-## API (Slice 1)
+## API
 
-| Method | Path | Ghi chú |
-|---|---|---|
-| GET | `/healthz` | health |
-| GET | `/api/v1/posts` | list (`page`,`page_size`,`status`,`tag`) |
-| GET | `/api/v1/posts/:slug` | chi tiết theo slug |
-| POST | `/api/v1/posts` | tạo (chưa auth — Slice 2) |
-| PUT | `/api/v1/posts/:id` | sửa (chưa auth — Slice 2) |
-| DELETE | `/api/v1/posts/:id` | xoá |
-| GET | `/api/v1/tags` | list tags |
+| Method | Path | Auth | Ghi chú |
+|---|---|---|---|
+| GET | `/healthz` | – | health |
+| GET | `/auth/google/login` | – | 302 tới Google (OAuth BFF) |
+| GET | `/auth/google/callback` | – | đổi code → session cookie |
+| POST | `/auth/logout` | – | xoá session |
+| GET | `/auth/me` | session | email admin đang đăng nhập |
+| GET | `/api/v1/posts` | – | list (`page`,`page_size`,`status`,`tag`) |
+| GET | `/api/v1/posts/:slug` | – | chi tiết theo slug |
+| POST | `/api/v1/posts` | **✔** | tạo bài (yêu cầu đăng nhập) |
+| PUT | `/api/v1/posts/:id` | **✔** | sửa bài (yêu cầu đăng nhập) |
+| DELETE | `/api/v1/posts/:id` | **✔** | xoá bài (yêu cầu đăng nhập) |
+| GET | `/api/v1/tags` | – | list tags |
+
+**Auth (Slice 2):** Google OAuth theo BFF — session server-side (Postgres qua scs),
+cookie httpOnly, allowlist email qua env. Xem `.env.example` (`GOOGLE_*`, `ADMIN_ALLOWLIST`,
+`SESSION_COOKIE_*`) và spec `docs/superpowers/specs/2026-07-05-slice2-auth-oauth-design.md`
+(kèm hướng dẫn tạo Google OAuth client).

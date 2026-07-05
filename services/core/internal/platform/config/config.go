@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config chứa toàn bộ cấu hình runtime của core service.
@@ -11,14 +12,35 @@ type Config struct {
 	AppEnv      string // development | production
 	Port        string // cổng HTTP, vd "8080"
 	DatabaseURL string // DSN Postgres
+
+	// Auth / OAuth (Slice 2)
+	GoogleClientID     string
+	GoogleClientSecret string
+	GoogleRedirectURL  string
+	AdminAllowlist     string // CSV email
+	AppBaseURL         string // redirect về sau khi login
+
+	// Session cookie
+	SessionSameSite string // lax | none | strict
+	SessionSecure   bool
 }
 
 // Load đọc cấu hình từ env. DatabaseURL là bắt buộc; các giá trị khác có mặc định.
 func Load() (Config, error) {
+	appEnv := getEnv("APP_ENV", "development")
 	cfg := Config{
-		AppEnv:      getEnv("APP_ENV", "development"),
+		AppEnv:      appEnv,
 		Port:        getEnv("PORT", "8080"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
+
+		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/google/callback"),
+		AdminAllowlist:     os.Getenv("ADMIN_ALLOWLIST"),
+		AppBaseURL:         getEnv("APP_BASE_URL", "http://localhost:8080"),
+
+		SessionSameSite: getEnv("SESSION_COOKIE_SAMESITE", "lax"),
+		SessionSecure:   getBoolEnv("SESSION_COOKIE_SECURE", appEnv == "production"),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")
@@ -34,4 +56,16 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func getBoolEnv(key string, fallback bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return b
 }

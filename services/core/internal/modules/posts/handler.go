@@ -22,14 +22,17 @@ type Handler struct {
 // NewHandler tạo Handler từ Service.
 func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 
-// RegisterRoutes gắn các route của module posts vào router group cho trước.
-func (h *Handler) RegisterRoutes(rg gin.IRouter) {
+// RegisterRoutes gắn các route của module posts. GET công khai; các endpoint ghi
+// (POST/PUT/DELETE) được bọc bởi writeMW (vd auth.RequireAuth).
+func (h *Handler) RegisterRoutes(rg gin.IRouter, writeMW ...gin.HandlerFunc) {
 	rg.GET("/posts", h.list)
 	rg.GET("/posts/:slug", h.getBySlug)
-	rg.POST("/posts", h.create)    // TODO(slice-2): require auth
-	rg.PUT("/posts/:id", h.update) // TODO(slice-2): require auth
-	rg.DELETE("/posts/:id", h.delete)
 	rg.GET("/tags", h.listTags)
+
+	write := rg.Group("", writeMW...)
+	write.POST("/posts", h.create)
+	write.PUT("/posts/:id", h.update)
+	write.DELETE("/posts/:id", h.delete)
 }
 
 // --- DTOs ---
