@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c 'import sys,json,subprocess; d=json.load(sys.stdin); ti=d.get(\"tool_input\") or {}; tr=d.get(\"tool_response\") or {}; f=ti.get(\"file_path\") or tr.get(\"filePath\") or \"\"; f.endswith(\".go\") and subprocess.run([\"gofmt\",\"-w\",f])' 2>/dev/null || true",
+            "statusMessage": "gofmt"
+          }
+        ]
+      }
+    ]
+  }
+}
