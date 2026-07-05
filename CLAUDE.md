@@ -24,12 +24,14 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
 
 - ✅ **Slice 1 — DONE**: nền móng Go core + module `posts` (CRUD + tags), chạy end-to-end.
   Spec: `docs/superpowers/specs/2026-07-05-slice1-posts-foundation-design.md`.
-- ⏳ Slice 2: auth Google OAuth (BFF) + middleware bọc endpoint ghi (hiện đang mở, đánh dấu `TODO(slice-2)` trong code).
+- ✅ **Slice 2 — DONE**: auth Google OAuth (BFF) — `internal/modules/auth` + session server-side (scs + Postgres), allowlist email qua env, middleware `RequireAuth` bọc POST/PUT/DELETE `/posts`. Verify end-to-end với Google thật.
+  Spec: `docs/superpowers/specs/2026-07-05-slice2-auth-oauth-design.md`.
 - ⏳ Slice 3: module `media` (presigned R2/MinIO) + `apps/admin` (Vite SPA + Tiptap).
 - ⏳ Slice 4: `apps/web` (Next.js) public.
 
 **Stack core đã chốt khi code (khác đề xuất ban đầu trong analysis doc):**
 - Backend `services/core`: **Gin + GORM + Atlas** (analysis doc gợi ý chi + sqlc; đã chọn Gin/GORM/Atlas — xem spec Slice 1). Kiến trúc mỗi module: **Clean-lite / Hexagonal** (domain → service → repository → handler).
+- Auth: **Google OAuth (`golang.org/x/oauth2`) + session server-side qua `alexedwards/scs` (Postgres store)**; allowlist email + cookie SameSite/Secure cấu hình qua env (xem `.env.example`).
 - DB dev: Postgres 16 + pgvector qua `docker-compose.yml` ở gốc repo.
 
 **Chạy & test core:** xem `services/core/README.md` (quickstart, Atlas migration, test).
