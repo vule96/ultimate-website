@@ -1,0 +1,268 @@
+package posts
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+// --- GORM models (tầng ngoài; chỉ file này biết về GORM) ---
+
+type gormPost struct {
+	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Title       string         `gorm:"not null"`
+	Slug        string         `gorm:"uniqueIndex;not null"`
+	ContentJSON datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'"`
+	ContentHTML string         `gorm:"not null;default:''"`
+	Excerpt     *string
+	CoverImage  *string
+	Status      string `gorm:"not null;default:'DRAFT';index;check:posts_status_check,status IN ('DRAFT','PENDING_APPROVAL','PUBLISHED')"`
+	MetaTitle   *string
+	MetaDesc    *string
+	PublishedAt *time.Time `gorm:"index"`
+	Tags        []gormTag  `gorm:"many2many:post_tags;joinForeignKey:PostID;joinReferences:TagID;constraint:OnDelete:CASCADE;"`
+	CreatedAt   time.Time  `gorm:"not null;default:now()"`
+	UpdatedAt   time.Time  `gorm:"not null;default:now()"`
+}
+
+func (gormPost) TableName() string { return "posts" }
+
+type gormTag struct {
+	ID   uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name string    `gorm:"uniqueIndex;not null"`
+	Slug string    `gorm:"uniqueIndex;not null"`
+}
+
+func (gormTag) TableName() string { return "tags" }
+
+// --- Repository ---
+
+// GormRepository cài đặt Repository bằng GORM/Postgres.
+type GormRepository struct {
+	db *gorm.DB
+}
+
+// NewGormRepository tạo repository từ *gorm.DB.
+func NewGormRepository(db *gorm.DB) *GormRepository { return &GormRepository{db: db} }
+
+// Models trả về các GORM model của module để công cụ migration (Atlas) nạp schema.
+// Giữ model unexported nhưng vẫn cho phép loader bên ngoài tham chiếu.
+func Models() []any { return []any{&gormPost{}, &gormTag{}} }
+
+var _ Repository = (*GormRepository)(nil)
+
+// Create lưu bài viết + upsert tags + gắn quan hệ trong 1 transaction.
+func (r *GormRepository) Create(ctx context.Context, p *Post) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		gp := toGormModel(p)
+		gp.Tags = nil
+		if err := tx.Omit("Tags").Create(&gp).Error; err != nil {
+			return translateErr(err)
+		}
+		tags, err := upsertTags(tx, p.Tags)
+		if err != nil {
+			return err
+		}
+		if err := tx.Model(&gp).Association("Tags").Replace(tags); err != nil {
+			return err
+		}
+		applyGenerated(p, gp, tags)
+		return nil
+	})
+}
+
+// Update ghi đè bài viết theo ID + thay toàn bộ tags.
+func (r *GormRepository) Update(ctx context.Context, p *Post) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		gp := toGormModel(p)
+		gp.Tags = nil
+		if err := tx.Omit("Tags").Save(&gp).Error; err != nil {
+			return translateErr(err)
+		}
+		tags, err := upsertTags(tx, p.Tags)
+		if err != nil {
+			return err
+		}
+		if err := tx.Model(&gp).Association("Tags").Replace(tags); err != nil {
+			return err
+		}
+		applyGenerated(p, gp, tags)
+		return nil
+	})
+}
+
+// GetByID trả về bài viết theo id (kèm tags).
+func (r *GormRepository) GetByID(ctx context.Context, id uuid.UUID) (*Post, error) {
+	var gp gormPost
+	err := r.db.WithContext(ctx).Preload("Tags").First(&gp, "id = ?", id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrPostNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return toDomain(gp), nil
+}
+
+// GetBySlug trả về bài viết theo slug (kèm tags).
+func (r *GormRepository) GetBySlug(ctx context.Context, slug string) (*Post, error) {
+	var gp gormPost
+	err := r.db.WithContext(ctx).Preload("Tags").First(&gp, "slug = ?", slug).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrPostNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return toDomain(gp), nil
+}
+
+// List trả về danh sách bài viết theo filter + tổng số bản ghi khớp.
+func (r *GormRepository) List(ctx context.Context, f ListFilter) ([]Post, int64, error) {
+	// applyFilters dựng điều kiện lọc trên một query mới, tránh rò rỉ clause
+	// (vd DISTINCT) giữa truy vấn Count và Find.
+	applyFilters := func(db *gorm.DB) *gorm.DB {
+		db = db.Model(&gormPost{})
+		if f.Status != "" {
+			db = db.Where("posts.status = ?", f.Status)
+		}
+		if f.Tag != "" {
+			db = db.
+				Joins("JOIN post_tags pt ON pt.post_id = posts.id").
+				Joins("JOIN tags t ON t.id = pt.tag_id").
+				Where("t.slug = ?", f.Tag)
+		}
+		return db
+	}
+
+	var total int64
+	if err := applyFilters(r.db.WithContext(ctx)).Distinct("posts.id").Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var rows []gormPost
+	err := applyFilters(r.db.WithContext(ctx)).
+		Preload("Tags").
+		Order("posts.created_at DESC").
+		Limit(f.Limit).
+		Offset(f.Offset).
+		Find(&rows).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	posts := make([]Post, len(rows))
+	for i, gp := range rows {
+		posts[i] = *toDomain(gp)
+	}
+	return posts, total, nil
+}
+
+// Delete xoá bài viết + quan hệ tags; trả ErrPostNotFound nếu không có.
+func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	res := r.db.WithContext(ctx).Select(clause.Associations).Delete(&gormPost{ID: id})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrPostNotFound
+	}
+	return nil
+}
+
+// ListTags trả về toàn bộ tag, sắp theo tên.
+func (r *GormRepository) ListTags(ctx context.Context) ([]Tag, error) {
+	var rows []gormTag
+	if err := r.db.WithContext(ctx).Order("name ASC").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	tags := make([]Tag, len(rows))
+	for i, gt := range rows {
+		tags[i] = Tag{ID: gt.ID, Name: gt.Name, Slug: gt.Slug}
+	}
+	return tags, nil
+}
+
+// --- helpers ---
+
+// upsertTags đảm bảo mỗi tag tồn tại (theo slug) và trả về bản ghi có ID.
+func upsertTags(tx *gorm.DB, tags []Tag) ([]gormTag, error) {
+	result := make([]gormTag, 0, len(tags))
+	for _, t := range tags {
+		gt := gormTag{Name: t.Name, Slug: t.Slug}
+		err := tx.Where(gormTag{Slug: t.Slug}).
+			Attrs(gormTag{Name: t.Name}).
+			FirstOrCreate(&gt).Error
+		if err != nil {
+			return nil, translateErr(err)
+		}
+		result = append(result, gt)
+	}
+	return result, nil
+}
+
+func toGormModel(p *Post) gormPost {
+	return gormPost{
+		ID:          p.ID,
+		Title:       p.Title,
+		Slug:        p.Slug,
+		ContentJSON: datatypes.JSON(defaultJSON(p.ContentJSON)),
+		ContentHTML: p.ContentHTML,
+		Excerpt:     p.Excerpt,
+		CoverImage:  p.CoverImage,
+		Status:      string(p.Status),
+		MetaTitle:   p.MetaTitle,
+		MetaDesc:    p.MetaDesc,
+		PublishedAt: p.PublishedAt,
+		// Giữ lại timestamps để Save (update) không ghi đè created_at về zero.
+		// Khi tạo mới, giá trị zero sẽ được GORM autoCreateTime điền.
+		CreatedAt: p.CreatedAt,
+		UpdatedAt: p.UpdatedAt,
+	}
+}
+
+func toDomain(gp gormPost) *Post {
+	p := &Post{
+		ID:          gp.ID,
+		Title:       gp.Title,
+		Slug:        gp.Slug,
+		ContentJSON: []byte(gp.ContentJSON),
+		ContentHTML: gp.ContentHTML,
+		Excerpt:     gp.Excerpt,
+		CoverImage:  gp.CoverImage,
+		Status:      PostStatus(gp.Status),
+		MetaTitle:   gp.MetaTitle,
+		MetaDesc:    gp.MetaDesc,
+		PublishedAt: gp.PublishedAt,
+		CreatedAt:   gp.CreatedAt,
+		UpdatedAt:   gp.UpdatedAt,
+	}
+	for _, gt := range gp.Tags {
+		p.Tags = append(p.Tags, Tag{ID: gt.ID, Name: gt.Name, Slug: gt.Slug})
+	}
+	return p
+}
+
+// applyGenerated copy các giá trị DB sinh ra (ID, timestamps, tag IDs) về domain.
+func applyGenerated(p *Post, gp gormPost, tags []gormTag) {
+	p.ID = gp.ID
+	p.CreatedAt = gp.CreatedAt
+	p.UpdatedAt = gp.UpdatedAt
+	p.Tags = make([]Tag, len(tags))
+	for i, gt := range tags {
+		p.Tags[i] = Tag{ID: gt.ID, Name: gt.Name, Slug: gt.Slug}
+	}
+}
+
+// translateErr chuyển lỗi GORM sang lỗi domain khi phù hợp.
+func translateErr(err error) error {
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return ErrSlugTaken
+	}
+	return err
+}

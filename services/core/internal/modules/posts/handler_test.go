@@ -1,0 +1,170 @@
+package posts
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+)
+
+func init() { gin.SetMode(gin.TestMode) }
+
+// newTestServer dựng engine Gin nối với service + repo chạy trong tx (rollback sau test).
+func newTestServer(t *testing.T) *gin.Engine {
+	t.Helper()
+	repo := newRepoTx(t) // t.Skip nếu không có TEST_DATABASE_URL
+	svc := NewService(repo)
+	r := gin.New()
+	NewHandler(svc).RegisterRoutes(r.Group("/api/v1"))
+	return r
+}
+
+func doJSON(t *testing.T, r *gin.Engine, method, path string, body any) *httptest.ResponseRecorder {
+	t.Helper()
+	var buf bytes.Buffer
+	if body != nil {
+		if err := json.NewEncoder(&buf).Encode(body); err != nil {
+			t.Fatalf("encode body: %v", err)
+		}
+	}
+	req := httptest.NewRequest(method, path, &buf)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	return w
+}
+
+func decode(t *testing.T, w *httptest.ResponseRecorder) map[string]any {
+	t.Helper()
+	var m map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &m); err != nil {
+		t.Fatalf("decode response %q: %v", w.Body.String(), err)
+	}
+	return m
+}
+
+func TestHandler_CreatePost(t *testing.T) {
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{
+		"title": "Lập trình Go",
+		"tags":  []string{"Go", "Backend"},
+	})
+	if w.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want 201; body=%s", w.Code, w.Body.String())
+	}
+	body := decode(t, w)
+	if body["slug"] != "lap-trinh-go" {
+		t.Errorf("slug = %v, want lap-trinh-go", body["slug"])
+	}
+	if body["id"] == nil || body["id"] == "" {
+		t.Errorf("expected id in response")
+	}
+}
+
+func TestHandler_CreatePost_EmptyTitle400(t *testing.T) {
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "   "})
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400; body=%s", w.Code, w.Body.String())
+	}
+	body := decode(t, w)
+	if body["error"] == nil {
+		t.Errorf("expected error envelope, got %s", w.Body.String())
+	}
+}
+
+func TestHandler_GetBySlug(t *testing.T) {
+	r := newTestServer(t)
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "My Post"})
+
+	w := doJSON(t, r, http.MethodGet, "/api/v1/posts/my-post", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
+	}
+	if decode(t, w)["title"] != "My Post" {
+		t.Errorf("unexpected body: %s", w.Body.String())
+	}
+}
+
+func TestHandler_GetBySlug_404(t *testing.T) {
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodGet, "/api/v1/posts/nope", nil)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", w.Code)
+	}
+}
+
+func TestHandler_ListPosts(t *testing.T) {
+	r := newTestServer(t)
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "One"})
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Two"})
+
+	w := doJSON(t, r, http.MethodGet, "/api/v1/posts?page=1&page_size=10", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	body := decode(t, w)
+	if body["total"].(float64) != 2 {
+		t.Errorf("total = %v, want 2", body["total"])
+	}
+	if data, ok := body["data"].([]any); !ok || len(data) != 2 {
+		t.Errorf("data len = %v, want 2", body["data"])
+	}
+}
+
+func TestHandler_UpdatePost(t *testing.T) {
+	r := newTestServer(t)
+	cw := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Orig"})
+	id := decode(t, cw)["id"].(string)
+
+	w := doJSON(t, r, http.MethodPut, "/api/v1/posts/"+id, map[string]any{
+		"title":  "Changed",
+		"status": "PUBLISHED",
+	})
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
+	}
+	body := decode(t, w)
+	if body["title"] != "Changed" {
+		t.Errorf("title = %v, want Changed", body["title"])
+	}
+	if body["published_at"] == nil {
+		t.Errorf("expected published_at to be set")
+	}
+}
+
+func TestHandler_DeletePost(t *testing.T) {
+	r := newTestServer(t)
+	cw := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Del Me"})
+	id := decode(t, cw)["id"].(string)
+
+	w := doJSON(t, r, http.MethodDelete, "/api/v1/posts/"+id, nil)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204", w.Code)
+	}
+	gw := doJSON(t, r, http.MethodGet, "/api/v1/posts/del-me", nil)
+	if gw.Code != http.StatusNotFound {
+		t.Errorf("after delete status = %d, want 404", gw.Code)
+	}
+}
+
+func TestHandler_CreateDuplicateSlug_409(t *testing.T) {
+	r := newTestServer(t)
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Dup", "slug": "dup"})
+	w := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Dup2", "slug": "dup"})
+	if w.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want 409; body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_ListTags(t *testing.T) {
+	r := newTestServer(t)
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "T", "tags": []string{"Go"}})
+	w := doJSON(t, r, http.MethodGet, "/api/v1/tags", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+}

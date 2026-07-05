@@ -1,0 +1,14 @@
+# Env
+.env
+
+# Build output
+/bin/
+/tmp/
+*.exe
+
+# Go
+*.test
+*.out
+
+# Atlas CLI binary (downloaded locally, not committed)
+atlas.exe

@@ -1,0 +1,241 @@
+package posts
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"testing"
+
+	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
+	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
+)
+
+var testGormDB *gorm.DB
+
+func TestMain(m *testing.M) {
+	if dsn := os.Getenv("TEST_DATABASE_URL"); dsn != "" {
+		db, err := database.Open(dsn, false)
+		if err != nil {
+			fmt.Println("cannot connect TEST_DATABASE_URL:", err)
+			os.Exit(1)
+		}
+		if err := db.AutoMigrate(&gormPost{}, &gormTag{}); err != nil {
+			fmt.Println("automigrate failed:", err)
+			os.Exit(1)
+		}
+		db.Logger = gormlogger.Default.LogMode(gormlogger.Silent)
+		testGormDB = db
+	}
+	os.Exit(m.Run())
+}
+
+// newRepoTx trả về repository chạy trong 1 transaction sẽ được rollback sau test.
+func newRepoTx(t *testing.T) *GormRepository {
+	t.Helper()
+	if testGormDB == nil {
+		t.Skip("set TEST_DATABASE_URL to run repository integration tests")
+	}
+	tx := testGormDB.Begin()
+	t.Cleanup(func() { tx.Rollback() })
+	return NewGormRepository(tx)
+}
+
+func samplePost(title, slug string, status PostStatus, tags ...string) *Post {
+	p := &Post{
+		Title:       title,
+		Slug:        slug,
+		ContentJSON: json.RawMessage(`{"type":"doc"}`),
+		ContentHTML: "<p>hi</p>",
+		Status:      status,
+	}
+	for _, tg := range tags {
+		p.Tags = append(p.Tags, Tag{Name: tg, Slug: Slugify(tg)})
+	}
+	return p
+}
+
+func TestRepo_CreateAndGetBySlug(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Hello", "hello", StatusDraft, "Go", "Backend")
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if p.ID.String() == "00000000-0000-0000-0000-000000000000" {
+		t.Fatal("expected ID to be assigned")
+	}
+
+	got, err := repo.GetBySlug(ctx, "hello")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.Title != "Hello" || got.ContentHTML != "<p>hi</p>" {
+		t.Errorf("unexpected post: %+v", got)
+	}
+	if len(got.Tags) != 2 {
+		t.Errorf("expected 2 tags, got %d", len(got.Tags))
+	}
+}
+
+func TestRepo_CreateDuplicateSlug_ReturnsErrSlugTaken(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	if err := repo.Create(ctx, samplePost("A", "dup", StatusDraft)); err != nil {
+		t.Fatalf("first create: %v", err)
+	}
+	err := repo.Create(ctx, samplePost("B", "dup", StatusDraft))
+	if !errors.Is(err, ErrSlugTaken) {
+		t.Fatalf("expected ErrSlugTaken, got %v", err)
+	}
+}
+
+func TestRepo_GetBySlug_NotFound(t *testing.T) {
+	repo := newRepoTx(t)
+	_, err := repo.GetBySlug(context.Background(), "does-not-exist")
+	if !errors.Is(err, ErrPostNotFound) {
+		t.Fatalf("expected ErrPostNotFound, got %v", err)
+	}
+}
+
+func TestRepo_ReusesExistingTagBySlug(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	if err := repo.Create(ctx, samplePost("A", "a", StatusPublished, "Go")); err != nil {
+		t.Fatalf("create a: %v", err)
+	}
+	if err := repo.Create(ctx, samplePost("B", "b", StatusPublished, "Go")); err != nil {
+		t.Fatalf("create b: %v", err)
+	}
+	tags, err := repo.ListTags(ctx)
+	if err != nil {
+		t.Fatalf("list tags: %v", err)
+	}
+	count := 0
+	for _, tg := range tags {
+		if tg.Slug == "go" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected tag 'go' to exist once, found %d", count)
+	}
+}
+
+func TestRepo_List_FilterAndPaginate(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	_ = repo.Create(ctx, samplePost("P1", "p1", StatusPublished, "Go"))
+	_ = repo.Create(ctx, samplePost("P2", "p2", StatusPublished, "Rust"))
+	_ = repo.Create(ctx, samplePost("P3", "p3", StatusDraft, "Go"))
+
+	// Filter by status=PUBLISHED
+	pub, total, err := repo.List(ctx, ListFilter{Status: string(StatusPublished), Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if total != 2 || len(pub) != 2 {
+		t.Errorf("published: total=%d len=%d, want 2/2", total, len(pub))
+	}
+
+	// Filter by tag=go
+	byTag, total, err := repo.List(ctx, ListFilter{Tag: "go", Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list tag: %v", err)
+	}
+	if total != 2 || len(byTag) != 2 {
+		t.Errorf("tag go: total=%d len=%d, want 2/2", total, len(byTag))
+	}
+
+	// Pagination: page size 1
+	page1, total, err := repo.List(ctx, ListFilter{Limit: 1, Offset: 0})
+	if err != nil {
+		t.Fatalf("list page: %v", err)
+	}
+	if total != 3 || len(page1) != 1 {
+		t.Errorf("page1: total=%d len=%d, want 3/1", total, len(page1))
+	}
+}
+
+func TestRepo_Update_ReplacesTags(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Orig", "orig", StatusDraft, "Go", "Old")
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	p.Title = "Updated"
+	p.Tags = []Tag{{Name: "New", Slug: "new"}}
+	if err := repo.Update(ctx, p); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	got, err := repo.GetBySlug(ctx, "orig")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.Title != "Updated" {
+		t.Errorf("title = %q, want Updated", got.Title)
+	}
+	if len(got.Tags) != 1 || got.Tags[0].Slug != "new" {
+		t.Errorf("tags = %+v, want single 'new'", got.Tags)
+	}
+}
+
+func TestRepo_Update_PreservesCreatedAt(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Orig", "keep-created", StatusDraft)
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	created := p.CreatedAt
+	if created.IsZero() {
+		t.Fatal("created_at should be set after create")
+	}
+
+	p.Title = "Changed"
+	if err := repo.Update(ctx, p); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	got, err := repo.GetBySlug(ctx, "keep-created")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if got.CreatedAt.IsZero() {
+		t.Errorf("created_at was wiped on update")
+	}
+	if !got.CreatedAt.Equal(created) {
+		t.Errorf("created_at changed on update: got %v, want %v", got.CreatedAt, created)
+	}
+}
+
+func TestRepo_Delete(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Del", "del", StatusDraft, "Go")
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if err := repo.Delete(ctx, p.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	if _, err := repo.GetBySlug(ctx, "del"); !errors.Is(err, ErrPostNotFound) {
+		t.Errorf("expected ErrPostNotFound after delete, got %v", err)
+	}
+	// Deleting again → ErrPostNotFound
+	if err := repo.Delete(ctx, p.ID); !errors.Is(err, ErrPostNotFound) {
+		t.Errorf("expected ErrPostNotFound on second delete, got %v", err)
+	}
+}

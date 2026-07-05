@@ -1,0 +1,22 @@
+# DEV ONLY — Postgres cho phát triển local (Slice 1).
+# Phase 0 sẽ mở rộng thêm Redis, app services, v.v.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ultimate_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-blog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-blog}
+      POSTGRES_DB: ${POSTGRES_DB:-blog}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blog} -d ${POSTGRES_DB:-blog}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

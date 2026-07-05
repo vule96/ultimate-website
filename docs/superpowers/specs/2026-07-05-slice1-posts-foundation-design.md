@@ -112,8 +112,8 @@ post_tags
 ```
 
 ### Quy ước
-- `status`: dùng `text + CHECK` (dễ thêm giá trị, dễ migrate) thay vì Postgres enum type.
-- Extension: migration đầu chạy `CREATE EXTENSION IF NOT EXISTS vector;` (pgvector dùng ở Phase 3).
+- `status`: dùng `text + CHECK` (dễ thêm giá trị, dễ migrate) thay vì Postgres enum type. **Đã hiện thực** qua constraint `posts_status_check`.
+- Extension `pgvector`: **dời sang Phase 3** (khi thêm cột vector). Lý do: thêm extension chưa dùng làm phức tạp bước diff của Atlas (dev DB dùng image `postgres` chuẩn). Docker Postgres của dev vẫn là image `pgvector/pgvector:pg16` nên bật extension khi cần rất dễ.
 - Index: `slug` UNIQUE (đã có), thêm index `status` và `published_at` để list/filter nhanh.
 - **Atlas workflow:** khai báo GORM model → `atlas migrate diff` sinh SQL versioned trong `migrations/` → `atlas migrate apply` chạy lên DB. Có history + rollback.
   - Atlas cài bằng `go install ariga.io/atlas/cmd/atlas@latest` (community).
