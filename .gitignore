@@ -1,0 +1,5 @@
+# Claude Code local (personal) settings — không commit
+.claude/settings.local.json
+
+# Env
+.env
