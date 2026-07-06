@@ -77,7 +77,7 @@ function NavItem({
   to,
   label,
   icon: Icon,
-  end,
+  end = false,
 }: {
   to: string;
   label: string;

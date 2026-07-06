@@ -7,5 +7,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "type-fest": "^5.8.0",
+    "zod": "^4.4.3"
   }
 }
