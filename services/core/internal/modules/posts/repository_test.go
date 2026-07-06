@@ -163,6 +163,69 @@ func TestRepo_List_FilterAndPaginate(t *testing.T) {
 	}
 }
 
+func TestRepo_List_SearchByTitle(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	_ = repo.Create(ctx, samplePost("Học Golang cơ bản", "hoc-golang", StatusPublished))
+	_ = repo.Create(ctx, samplePost("Golang nâng cao", "golang-nang-cao", StatusDraft))
+	_ = repo.Create(ctx, samplePost("Rust cho người mới", "rust-moi", StatusPublished))
+
+	// Khớp một phần, không phân biệt hoa thường.
+	got, total, err := repo.List(ctx, ListFilter{Search: "golang", Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list search: %v", err)
+	}
+	if total != 2 || len(got) != 2 {
+		t.Errorf("search 'golang': total=%d len=%d, want 2/2", total, len(got))
+	}
+
+	// Khớp tiếng Việt có dấu.
+	got, total, err = repo.List(ctx, ListFilter{Search: "người mới", Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list search vi: %v", err)
+	}
+	if total != 1 || len(got) != 1 || got[0].Slug != "rust-moi" {
+		t.Errorf("search 'người mới': total=%d len=%d, want 1/1 rust-moi", total, len(got))
+	}
+
+	// Search kết hợp status filter.
+	_, total, err = repo.List(ctx, ListFilter{Search: "golang", Status: string(StatusDraft), Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list search+status: %v", err)
+	}
+	if total != 1 {
+		t.Errorf("search 'golang' + DRAFT: total=%d, want 1", total)
+	}
+}
+
+func TestRepo_Stats(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	_ = repo.Create(ctx, samplePost("A", "a", StatusPublished, "Go"))
+	_ = repo.Create(ctx, samplePost("B", "b", StatusPublished, "Rust"))
+	_ = repo.Create(ctx, samplePost("C", "c", StatusDraft, "Go"))
+	_ = repo.Create(ctx, samplePost("D", "d", StatusPendingApproval))
+
+	s, err := repo.Stats(ctx)
+	if err != nil {
+		t.Fatalf("stats: %v", err)
+	}
+	if s.Total != 4 {
+		t.Errorf("Total = %d, want 4", s.Total)
+	}
+	if s.Published != 2 {
+		t.Errorf("Published = %d, want 2", s.Published)
+	}
+	if s.Draft != 1 {
+		t.Errorf("Draft = %d, want 1", s.Draft)
+	}
+	if s.Tags != 2 { // Go, Rust (phân biệt)
+		t.Errorf("Tags = %d, want 2", s.Tags)
+	}
+}
+
 func TestRepo_Update_ReplacesTags(t *testing.T) {
 	repo := newRepoTx(t)
 	ctx := context.Background()

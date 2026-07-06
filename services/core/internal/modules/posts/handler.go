@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,7 @@ func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 // (POST/PUT/DELETE) được bọc bởi writeMW (vd auth.RequireAuth).
 func (h *Handler) RegisterRoutes(rg gin.IRouter, writeMW ...gin.HandlerFunc) {
 	rg.GET("/posts", h.list)
+	rg.GET("/posts/stats", h.stats)
 	rg.GET("/posts/:slug", h.getBySlug)
 	rg.GET("/tags", h.listTags)
 
@@ -80,6 +82,13 @@ type listResponse struct {
 	Total    int64          `json:"total"`
 }
 
+type statsResponse struct {
+	Total     int64 `json:"total"`
+	Published int64 `json:"published"`
+	Draft     int64 `json:"draft"`
+	Tags      int64 `json:"tags"`
+}
+
 // --- Handlers ---
 
 func (h *Handler) list(c *gin.Context) {
@@ -90,6 +99,7 @@ func (h *Handler) list(c *gin.Context) {
 	posts, total, err := h.svc.List(c.Request.Context(), ListFilter{
 		Status: c.Query("status"),
 		Tag:    c.Query("tag"),
+		Search: strings.TrimSpace(c.Query("q")),
 		Limit:  p.PageSize,
 		Offset: p.Offset(),
 	})
@@ -103,6 +113,20 @@ func (h *Handler) list(c *gin.Context) {
 		data[i] = toResponse(posts[i])
 	}
 	c.JSON(http.StatusOK, listResponse{Data: data, Page: p.Page, PageSize: p.PageSize, Total: total})
+}
+
+func (h *Handler) stats(c *gin.Context) {
+	s, err := h.svc.Stats(c.Request.Context())
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, statsResponse{
+		Total:     s.Total,
+		Published: s.Published,
+		Draft:     s.Draft,
+		Tags:      s.Tags,
+	})
 }
 
 func (h *Handler) getBySlug(c *gin.Context) {
