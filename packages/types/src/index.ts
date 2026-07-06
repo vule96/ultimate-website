@@ -60,6 +60,21 @@ export const PostStatsSchema = z.object({
 });
 export type PostStats = z.infer<typeof PostStatsSchema>;
 
+/** Một điểm dữ liệu chart theo tháng (GET /posts/stats/timeseries). */
+export const PostTimeseriesSchema = z.array(
+  z.object({ month: z.string(), count: z.number().int() }),
+);
+export type PostTimeseries = z.infer<typeof PostTimeseriesSchema>;
+
+/** Kết quả xin presigned URL upload ảnh (POST /media/presign). */
+export const PresignResponseSchema = z.object({
+  upload_url: z.string(),
+  public_url: z.string(),
+  key: z.string(),
+  expires_in: z.number().int(),
+});
+export type PresignResponse = z.infer<typeof PresignResponseSchema>;
+
 /** Admin đang đăng nhập (GET /auth/me). */
 export const AdminUserSchema = z.object({ email: z.string() });
 export type AdminUser = z.infer<typeof AdminUserSchema>;
