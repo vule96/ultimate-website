@@ -26,7 +26,11 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
   Spec: `docs/superpowers/specs/2026-07-05-slice1-posts-foundation-design.md`.
 - ✅ **Slice 2 — DONE**: auth Google OAuth (BFF) — `internal/modules/auth` + session server-side (scs + Postgres), allowlist email qua env, middleware `RequireAuth` bọc POST/PUT/DELETE `/posts`. Verify end-to-end với Google thật.
   Spec: `docs/superpowers/specs/2026-07-05-slice2-auth-oauth-design.md`.
-- ⏳ Slice 3: module `media` (presigned R2/MinIO) + `apps/admin` (Vite SPA + Tiptap).
+- ✅ **Slice 3a — DONE**: monorepo (pnpm + Turborepo) + `apps/admin` (Vite + React + TS + Tailwind + shadcn/ui, theme HiveQ) + auth BFF (LoginPage, AuthProvider, ProtectedRoute) + Dashboard placeholder + CORS ở core. Advanced TS: Zod (`packages/types`) + branded IDs + type-fest + ts-reset.
+  Spec: `docs/superpowers/specs/2026-07-06-slice3a-admin-shell-design.md`.
+- ✅ **Slice 3b — DONE**: quản lý posts qua UI (TanStack Query + react-hook-form + zodResolver) — danh sách (bảng, filter status/tag, search debounce, phân trang qua URL), form tạo/sửa, xoá (confirm); Dashboard nối API thật (stat cards + recent). Core: thêm `q` search (ILIKE) + `GET /posts/stats`. Content tạm bằng textarea → `content_html`.
+  Spec: `docs/superpowers/specs/2026-07-07-slice3b-posts-crud-design.md`.
+- ⏳ Slice 3c: rich editor **Tiptap + Lexical** (interface chung, chọn qua flag `VITE_EDITOR`) + module `media` (presigned R2/MinIO) + chart Dashboard nối aggregate thật.
 - ⏳ Slice 4: `apps/web` (Next.js) public.
 
 **Stack core đã chốt khi code (khác đề xuất ban đầu trong analysis doc):**
