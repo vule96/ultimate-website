@@ -9,7 +9,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const name = user?.email?.split("@")[0] ?? "bạn";
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">
           Chào mừng trở lại, {name} 👋

@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export function Placeholder({ title }: { title: string }) {
   return (
-    <div className="mx-auto max-w-6xl">
+    <div>
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-2 p-16 text-center">
           <h2 className="text-lg font-semibold">{title}</h2>
