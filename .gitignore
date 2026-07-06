@@ -3,3 +3,13 @@
 
 # Env
 .env
+
+# Node / monorepo
+node_modules/
+dist/
+.turbo/
+*.local
+.vite/
+
+# Playwright MCP artifacts
+.playwright-mcp/
