@@ -19,6 +19,7 @@ type Config struct {
 	GoogleRedirectURL  string
 	AdminAllowlist     string // CSV email
 	AppBaseURL         string // redirect về sau khi login
+	CORSAllowedOrigins string // CSV origin được phép gọi API (admin SPA)
 
 	// Session cookie
 	SessionSameSite string // lax | none | strict
@@ -38,6 +39,7 @@ func Load() (Config, error) {
 		GoogleRedirectURL:  getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/google/callback"),
 		AdminAllowlist:     os.Getenv("ADMIN_ALLOWLIST"),
 		AppBaseURL:         getEnv("APP_BASE_URL", "http://localhost:8080"),
+		CORSAllowedOrigins: os.Getenv("CORS_ALLOWED_ORIGINS"),
 
 		SessionSameSite: getEnv("SESSION_COOKIE_SAMESITE", "lax"),
 		SessionSecure:   getBoolEnv("SESSION_COOKIE_SECURE", appEnv == "production"),

@@ -4,6 +4,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
 )
 
 func main() {
@@ -59,6 +61,7 @@ func main() {
 	}
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
 
 	r.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
