@@ -13,7 +13,12 @@ export function PostsChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bài viết theo thời gian</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Bài viết theo thời gian</CardTitle>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            dữ liệu mẫu
+          </span>
+        </div>
         <p className="text-sm text-muted-foreground">8 tháng gần nhất</p>
       </CardHeader>
       <CardContent>

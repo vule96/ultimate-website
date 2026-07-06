@@ -30,8 +30,9 @@ func (m *mockRepo) GetBySlug(_ context.Context, _ string) (*Post, error) {
 func (m *mockRepo) List(_ context.Context, _ ListFilter) ([]Post, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error { return nil }
-func (m *mockRepo) ListTags(_ context.Context) ([]Tag, error)   { return nil, nil }
+func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error  { return nil }
+func (m *mockRepo) ListTags(_ context.Context) ([]Tag, error)    { return nil, nil }
+func (m *mockRepo) Stats(_ context.Context) (StatsResult, error) { return StatsResult{}, nil }
 
 var fixedNow = time.Date(2026, 7, 5, 9, 0, 0, 0, time.UTC)
 

@@ -1,27 +1,28 @@
 import { FileText, CheckCircle2, PencilLine, Tags } from "lucide-react";
 import { useAuth } from "@/features/auth/context";
+import { useStatsQuery } from "@/features/posts/queries";
 import { StatCard } from "./widgets/StatCard";
 import { PostsChart } from "./widgets/PostsChart";
 import { RecentPosts } from "./widgets/RecentPosts";
-import { stats } from "./mockData";
 
 export function DashboardPage() {
   const { user } = useAuth();
   const name = user?.email?.split("@")[0] ?? "bạn";
+  const stats = useStatsQuery();
+  const v = (n: number | undefined) => (stats.isSuccess ? String(n) : "—");
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          Chào mừng trở lại, {name} 👋
-        </h2>
+        <h2 className="text-2xl font-bold tracking-tight">Chào mừng trở lại, {name} 👋</h2>
         <p className="mt-1 text-muted-foreground">Tổng quan nội dung blog của bạn.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Tổng bài viết" value={stats.total} icon={FileText} chip="blue" />
-        <StatCard label="Đã đăng" value={stats.published} icon={CheckCircle2} chip="green" />
-        <StatCard label="Bản nháp" value={stats.draft} icon={PencilLine} chip="orange" />
-        <StatCard label="Tags" value={stats.tags} icon={Tags} chip="violet" />
+        <StatCard label="Tổng bài viết" value={v(stats.data?.total)} icon={FileText} chip="blue" />
+        <StatCard label="Đã đăng" value={v(stats.data?.published)} icon={CheckCircle2} chip="green" />
+        <StatCard label="Bản nháp" value={v(stats.data?.draft)} icon={PencilLine} chip="orange" />
+        <StatCard label="Tags" value={v(stats.data?.tags)} icon={Tags} chip="violet" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

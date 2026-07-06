@@ -137,6 +137,9 @@ func (r *GormRepository) List(ctx context.Context, f ListFilter) ([]Post, int64,
 				Joins("JOIN tags t ON t.id = pt.tag_id").
 				Where("t.slug = ?", f.Tag)
 		}
+		if f.Search != "" {
+			db = db.Where("posts.title ILIKE ?", "%"+f.Search+"%")
+		}
 		return db
 	}
 
@@ -186,6 +189,26 @@ func (r *GormRepository) ListTags(ctx context.Context) ([]Tag, error) {
 		tags[i] = Tag{ID: gt.ID, Name: gt.Name, Slug: gt.Slug}
 	}
 	return tags, nil
+}
+
+// Stats đếm tổng số bài, số bài theo trạng thái PUBLISHED/DRAFT và số tag phân biệt.
+func (r *GormRepository) Stats(ctx context.Context) (StatsResult, error) {
+	db := r.db.WithContext(ctx)
+	var res StatsResult
+
+	if err := db.Model(&gormPost{}).Count(&res.Total).Error; err != nil {
+		return StatsResult{}, err
+	}
+	if err := db.Model(&gormPost{}).Where("status = ?", string(StatusPublished)).Count(&res.Published).Error; err != nil {
+		return StatsResult{}, err
+	}
+	if err := db.Model(&gormPost{}).Where("status = ?", string(StatusDraft)).Count(&res.Draft).Error; err != nil {
+		return StatsResult{}, err
+	}
+	if err := db.Model(&gormTag{}).Count(&res.Tags).Error; err != nil {
+		return StatsResult{}, err
+	}
+	return res, nil
 }
 
 // --- helpers ---

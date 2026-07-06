@@ -47,6 +47,19 @@ export const PostListResponseSchema = z.object({
 });
 export type PostListResponse = z.infer<typeof PostListResponseSchema>;
 
+/** Danh sách tag (GET /tags) — bọc trong { data }. */
+export const TagListResponseSchema = z.object({ data: z.array(TagSchema) });
+export type TagListResponse = z.infer<typeof TagListResponseSchema>;
+
+/** Số liệu tổng hợp bài viết cho Dashboard (GET /posts/stats). */
+export const PostStatsSchema = z.object({
+  total: z.number().int(),
+  published: z.number().int(),
+  draft: z.number().int(),
+  tags: z.number().int(),
+});
+export type PostStats = z.infer<typeof PostStatsSchema>;
+
 /** Admin đang đăng nhập (GET /auth/me). */
 export const AdminUserSchema = z.object({ email: z.string() });
 export type AdminUser = z.infer<typeof AdminUserSchema>;

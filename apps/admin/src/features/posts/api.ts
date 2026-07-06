@@ -1,0 +1,65 @@
+import {
+  PostSchema,
+  PostListResponseSchema,
+  PostStatsSchema,
+  type Post,
+  type PostListResponse,
+  type PostStats,
+  type PostStatus,
+  type UpsertPostInput,
+} from "@ultimate/types";
+import { apiFetch } from "@/lib/apiClient";
+
+/** Tham số truy vấn danh sách bài viết. */
+export interface ListPostsParams {
+  page?: number;
+  pageSize?: number;
+  status?: PostStatus | "";
+  tag?: string;
+  q?: string;
+}
+
+/** Dựng query string, bỏ qua các field rỗng/không xác định. */
+export function buildPostsQuery(params: ListPostsParams): string {
+  const sp = new URLSearchParams();
+  if (params.page && params.page > 0) sp.set("page", String(params.page));
+  if (params.pageSize && params.pageSize > 0) sp.set("page_size", String(params.pageSize));
+  if (params.status) sp.set("status", params.status);
+  if (params.tag) sp.set("tag", params.tag);
+  const q = params.q?.trim();
+  if (q) sp.set("q", q);
+  const s = sp.toString();
+  return s ? `?${s}` : "";
+}
+
+export function listPosts(params: ListPostsParams): Promise<PostListResponse> {
+  return apiFetch(`/api/v1/posts${buildPostsQuery(params)}`, PostListResponseSchema);
+}
+
+export function getPostBySlug(slug: string): Promise<Post> {
+  return apiFetch(`/api/v1/posts/${encodeURIComponent(slug)}`, PostSchema);
+}
+
+export function fetchStats(): Promise<PostStats> {
+  return apiFetch("/api/v1/posts/stats", PostStatsSchema);
+}
+
+export function createPost(input: UpsertPostInput): Promise<Post> {
+  return apiFetch("/api/v1/posts", PostSchema, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updatePost(id: string, input: UpsertPostInput): Promise<Post> {
+  return apiFetch(`/api/v1/posts/${encodeURIComponent(id)}`, PostSchema, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function deletePost(id: string): Promise<void> {
+  return apiFetch(`/api/v1/posts/${encodeURIComponent(id)}`, null, {
+    method: "DELETE",
+  });
+}

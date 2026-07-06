@@ -19,14 +19,24 @@ type Repository interface {
 	List(ctx context.Context, f ListFilter) ([]Post, int64, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListTags(ctx context.Context) ([]Tag, error)
+	Stats(ctx context.Context) (StatsResult, error)
 }
 
 // ListFilter là điều kiện lọc + phân trang cho danh sách bài viết.
 type ListFilter struct {
 	Status string // lọc theo trạng thái (rỗng = tất cả)
 	Tag    string // lọc theo slug tag (rỗng = tất cả)
+	Search string // tìm theo tiêu đề (ILIKE, rỗng = tất cả)
 	Limit  int
 	Offset int
+}
+
+// StatsResult là số liệu tổng hợp về bài viết cho Dashboard.
+type StatsResult struct {
+	Total     int64 // tổng số bài (mọi trạng thái)
+	Published int64 // số bài PUBLISHED
+	Draft     int64 // số bài DRAFT
+	Tags      int64 // số tag phân biệt
 }
 
 // CreateInput là dữ liệu đầu vào tạo bài viết.
@@ -178,6 +188,11 @@ func (s *Service) Delete(ctx context.Context, id uuid.UUID) error {
 // ListTags trả về toàn bộ tag.
 func (s *Service) ListTags(ctx context.Context) ([]Tag, error) {
 	return s.repo.ListTags(ctx)
+}
+
+// Stats trả về số liệu tổng hợp bài viết cho Dashboard.
+func (s *Service) Stats(ctx context.Context) (StatsResult, error) {
+	return s.repo.Stats(ctx)
 }
 
 // deriveSlug chọn nguồn slug (ưu tiên explicit) rồi slugify.
