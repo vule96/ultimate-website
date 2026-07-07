@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Post } from "@ultimate/types";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,11 @@ export function PostsTable({
           {posts.map((p) => (
             <tr key={p.id} className="hover:bg-secondary/30">
               <td className="max-w-xs px-4 py-3">
-                <Link to={`/posts/${p.slug}/edit`} className="font-medium hover:underline">
+                <Link
+                  to="/posts/$slug/edit"
+                  params={{ slug: p.slug }}
+                  className="font-medium hover:underline"
+                >
                   {p.title}
                 </Link>
                 <p className="truncate text-xs text-muted-foreground">/{p.slug}</p>
@@ -68,7 +72,7 @@ export function PostsTable({
               <td className="px-4 py-3">
                 <div className="flex justify-end gap-1">
                   <Button asChild variant="ghost" size="icon" aria-label="Sửa">
-                    <Link to={`/posts/${p.slug}/edit`}>
+                    <Link to="/posts/$slug/edit" params={{ slug: p.slug }}>
                       <Pencil />
                     </Link>
                   </Button>

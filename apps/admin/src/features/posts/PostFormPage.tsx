@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { PostStatus } from "@ultimate/types";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,7 @@ const statusOptions: { value: PostStatus; label: string }[] = [
   { value: "PUBLISHED", label: "Đã đăng" },
 ];
 
-export function PostFormPage() {
-  const { slug } = useParams();
+export function PostFormPage({ slug }: { slug?: string }) {
   const isEdit = Boolean(slug);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -84,7 +83,7 @@ export function PostFormPage() {
         {
           onSuccess: () => {
             toast("Đã cập nhật bài viết.");
-            navigate("/posts");
+            void navigate({ to: "/posts" });
           },
           onError,
         },
@@ -93,7 +92,7 @@ export function PostFormPage() {
       createMutation.mutate(input, {
         onSuccess: () => {
           toast("Đã tạo bài viết.");
-          navigate("/posts");
+          void navigate({ to: "/posts" });
         },
         onError,
       });

@@ -1,5 +1,7 @@
 import {
+  queryOptions,
   useQuery,
+  useSuspenseQuery,
   useMutation,
   useQueryClient,
   keepPreviousData,
@@ -15,47 +17,40 @@ import {
   deletePost,
   type ListPostsParams,
 } from "./api";
-import { listTags } from "@/features/tags/api";
-import { postKeys, tagKeys } from "./keys";
+import { postKeys } from "./keys";
 
-export function usePostsQuery(params: ListPostsParams) {
-  return useQuery({
+// --- queryOptions (dùng chung cho route loader + component) ---
+export const postsListQueryOptions = (params: ListPostsParams) =>
+  queryOptions({
     queryKey: postKeys.list(params),
     queryFn: () => listPosts(params),
-    placeholderData: keepPreviousData, // giữ trang cũ khi đổi filter/trang → đỡ nhấp nháy
+    placeholderData: keepPreviousData,
   });
-}
 
-export function usePostQuery(slug: string | undefined) {
-  return useQuery({
-    queryKey: postKeys.detail(slug ?? ""),
-    queryFn: () => getPostBySlug(slug as string),
-    enabled: Boolean(slug),
-  });
-}
+export const postQueryOptions = (slug: string) =>
+  queryOptions({ queryKey: postKeys.detail(slug), queryFn: () => getPostBySlug(slug) });
 
-export function useStatsQuery() {
-  return useQuery({ queryKey: postKeys.stats(), queryFn: fetchStats });
-}
+export const statsQueryOptions = () =>
+  queryOptions({ queryKey: postKeys.stats(), queryFn: fetchStats });
 
-export function useTimeseriesQuery(months = 8) {
-  return useQuery({
-    queryKey: postKeys.timeseries(months),
-    queryFn: () => fetchTimeseries(months),
-  });
-}
+export const timeseriesQueryOptions = (months = 8) =>
+  queryOptions({ queryKey: postKeys.timeseries(months), queryFn: () => fetchTimeseries(months) });
 
-export function useTagsQuery() {
-  return useQuery({ queryKey: tagKeys.list(), queryFn: listTags });
-}
+// --- hooks component ---
+export const usePostsQuery = (params: ListPostsParams) => useQuery(postsListQueryOptions(params));
+export const usePostsListSuspense = (params: ListPostsParams) =>
+  useSuspenseQuery(postsListQueryOptions(params));
+export const usePostQuery = (slug: string | undefined) =>
+  useQuery({ ...postQueryOptions(slug ?? ""), enabled: Boolean(slug) });
+export const useStatsSuspense = () => useSuspenseQuery(statsQueryOptions());
+export const useTimeseriesSuspense = (months = 8) =>
+  useSuspenseQuery(timeseriesQueryOptions(months));
 
 export function useCreatePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpsertPostInput) => createPost(input),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: postKeys.all });
-    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: postKeys.all }),
   });
 }
 
@@ -63,9 +58,7 @@ export function useUpdatePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpsertPostInput }) => updatePost(id, input),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: postKeys.all });
-    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: postKeys.all }),
   });
 }
 
@@ -73,8 +66,6 @@ export function useDeletePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deletePost(id),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: postKeys.all });
-    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: postKeys.all }),
   });
 }
