@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { PostSortFieldSchema, SortOrderSchema } from "@ultimate/types";
 import { PostsListPage } from "@/features/posts/PostsListPage";
 import { postsListQueryOptions } from "@/features/posts/queries";
 import { tagsQueryOptions } from "@/features/tags/api";
@@ -10,6 +11,8 @@ const searchSchema = z.object({
   status: z.enum(["DRAFT", "PENDING_APPROVAL", "PUBLISHED"]).or(z.literal("")).default("").catch(""),
   tag: z.string().default("").catch(""),
   q: z.string().default("").catch(""),
+  sort: PostSortFieldSchema.default("created_at").catch("created_at"),
+  order: SortOrderSchema.default("desc").catch("desc"),
 });
 
 const PAGE_SIZE = 10;
@@ -26,6 +29,8 @@ export const Route = createFileRoute("/_authed/posts/")({
         status: deps.status,
         tag: deps.tag,
         q: deps.q,
+        sort: deps.sort,
+        order: deps.order,
       }),
     );
   },

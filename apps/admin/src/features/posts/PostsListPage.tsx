@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
+import type { OnChangeFn, SortingState } from "@tanstack/react-table";
 import type { Post, PostStatus } from "@ultimate/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
@@ -23,7 +24,24 @@ export function PostsListPage() {
     status: search.status as PostStatus | "",
     tag: search.tag,
     q: search.q,
+    sort: search.sort,
+    order: search.order,
   });
+
+  // Sorting server-side: state suy từ URL, đổi → điều hướng cập nhật sort/order.
+  const sorting: SortingState = [{ id: search.sort, desc: search.order === "desc" }];
+  const onSortingChange: OnChangeFn<SortingState> = (updater) => {
+    const next = typeof updater === "function" ? updater(sorting) : updater;
+    const first = next[0];
+    void navigate({
+      search: (p) => ({
+        ...p,
+        sort: (first?.id as typeof p.sort) ?? "created_at",
+        order: first ? (first.desc ? "desc" : "asc") : "desc",
+        page: 1,
+      }),
+    });
+  };
   const tagsQuery = useTagsSuspense();
   const deleteMutation = useDeletePost();
   const { toast } = useToast();
@@ -75,7 +93,12 @@ export function PostsListPage() {
         tags={tagsQuery.data}
       />
 
-      <PostsTable posts={postsQuery.data.data} onDelete={setToDelete} />
+      <PostsTable
+        posts={postsQuery.data.data}
+        onDelete={setToDelete}
+        sorting={sorting}
+        onSortingChange={onSortingChange}
+      />
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
