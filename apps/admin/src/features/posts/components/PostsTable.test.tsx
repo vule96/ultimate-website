@@ -36,9 +36,10 @@ function renderTable(posts: Post[], onDelete = vi.fn()) {
   const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/",
-    component: () => <PostsTable posts={posts} onDelete={onDelete} />,
+    component: () => (
+      <PostsTable posts={posts} onDelete={onDelete} sorting={[]} onSortingChange={vi.fn()} />
+    ),
   });
-  // Route đích của <Link> để path "/posts/$slug/edit" hợp lệ khi render.
   const editRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/posts/$slug/edit",
