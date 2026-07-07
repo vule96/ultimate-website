@@ -227,6 +227,55 @@ func TestRepo_Stats(t *testing.T) {
 	}
 }
 
+func TestRepo_List_SortByTitleAsc(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+	_ = repo.Create(ctx, samplePost("Banana", "s-b", StatusPublished))
+	_ = repo.Create(ctx, samplePost("Apple", "s-a", StatusPublished))
+	_ = repo.Create(ctx, samplePost("Cherry", "s-c", StatusPublished))
+
+	got, _, err := repo.List(ctx, ListFilter{Sort: "title", Order: "asc", Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	titles := []string{got[0].Title, got[1].Title, got[2].Title}
+	if titles[0] != "Apple" || titles[1] != "Banana" || titles[2] != "Cherry" {
+		t.Errorf("title asc order = %v, want [Apple Banana Cherry]", titles)
+	}
+}
+
+func TestRepo_List_SortFallbackOnInvalid(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+	_ = repo.Create(ctx, samplePost("Old", "f-old", StatusPublished))
+	_ = repo.Create(ctx, samplePost("New", "f-new", StatusPublished))
+
+	// Field/order ngoài whitelist → fallback an toàn (không injection, không lỗi), trả đủ rows.
+	got, total, err := repo.List(ctx, ListFilter{Sort: "id; DROP TABLE posts", Order: "sideways", Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list with invalid sort should not error: %v", err)
+	}
+	if total != 2 || len(got) != 2 {
+		t.Errorf("fallback: total=%d len=%d, want 2/2", total, len(got))
+	}
+}
+
+func TestRepo_List_SortByTitleDesc(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+	_ = repo.Create(ctx, samplePost("Apple", "d-a", StatusPublished))
+	_ = repo.Create(ctx, samplePost("Cherry", "d-c", StatusPublished))
+	_ = repo.Create(ctx, samplePost("Banana", "d-b", StatusPublished))
+
+	got, _, err := repo.List(ctx, ListFilter{Sort: "title", Order: "desc", Limit: 10, Offset: 0})
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if got[0].Title != "Cherry" || got[1].Title != "Banana" || got[2].Title != "Apple" {
+		t.Errorf("title desc = [%s %s %s], want [Cherry Banana Apple]", got[0].Title, got[1].Title, got[2].Title)
+	}
+}
+
 func TestRepo_CountByMonth(t *testing.T) {
 	repo := newRepoTx(t)
 	ctx := context.Background()

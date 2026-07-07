@@ -3,6 +3,7 @@ package posts
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,6 +11,26 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+// sortColumns whitelist cột được phép ORDER BY (chống SQL injection).
+var sortColumns = map[string]string{
+	"title":      "posts.title",
+	"status":     "posts.status",
+	"updated_at": "posts.updated_at",
+	"created_at": "posts.created_at",
+}
+
+// orderClause dựng mệnh đề ORDER BY an toàn từ field/order do client gửi.
+func orderClause(sort, order string) string {
+	col, ok := sortColumns[sort]
+	if !ok {
+		col = "posts.created_at"
+	}
+	if strings.ToLower(order) == "asc" {
+		return col + " ASC"
+	}
+	return col + " DESC"
+}
 
 // --- GORM models (tầng ngoài; chỉ file này biết về GORM) ---
 
@@ -151,7 +172,7 @@ func (r *GormRepository) List(ctx context.Context, f ListFilter) ([]Post, int64,
 	var rows []gormPost
 	err := applyFilters(r.db.WithContext(ctx)).
 		Preload("Tags").
-		Order("posts.created_at DESC").
+		Order(orderClause(f.Sort, f.Order)).
 		Limit(f.Limit).
 		Offset(f.Offset).
 		Find(&rows).Error

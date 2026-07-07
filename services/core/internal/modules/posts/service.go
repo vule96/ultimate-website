@@ -28,6 +28,8 @@ type ListFilter struct {
 	Status string // lọc theo trạng thái (rỗng = tất cả)
 	Tag    string // lọc theo slug tag (rỗng = tất cả)
 	Search string // tìm theo tiêu đề (ILIKE, rỗng = tất cả)
+	Sort   string // cột sắp xếp (whitelist; rỗng/lạ = created_at)
+	Order  string // asc | desc (mặc định desc)
 	Limit  int
 	Offset int
 }

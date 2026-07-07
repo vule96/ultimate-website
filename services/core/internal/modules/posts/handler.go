@@ -101,6 +101,8 @@ func (h *Handler) list(c *gin.Context) {
 		Status: c.Query("status"),
 		Tag:    c.Query("tag"),
 		Search: strings.TrimSpace(c.Query("q")),
+		Sort:   c.Query("sort"),
+		Order:  c.Query("order"),
 		Limit:  p.PageSize,
 		Offset: p.Offset(),
 	})
