@@ -8,6 +8,8 @@ import {
   type PostStats,
   type PostTimeseries,
   type PostStatus,
+  type PostSortField,
+  type SortOrder,
   type UpsertPostInput,
 } from "@ultimate/types";
 import { apiFetch } from "@/lib/apiClient";
@@ -19,6 +21,8 @@ export interface ListPostsParams {
   status?: PostStatus | "";
   tag?: string;
   q?: string;
+  sort?: PostSortField;
+  order?: SortOrder;
 }
 
 /** Dựng query string, bỏ qua các field rỗng/không xác định. */
@@ -30,6 +34,11 @@ export function buildPostsQuery(params: ListPostsParams): string {
   if (params.tag) sp.set("tag", params.tag);
   const q = params.q?.trim();
   if (q) sp.set("q", q);
+  // Chỉ gửi sort/order khi khác mặc định (created_at desc) để URL gọn.
+  if (params.sort && !(params.sort === "created_at" && (params.order ?? "desc") === "desc")) {
+    sp.set("sort", params.sort);
+    sp.set("order", params.order ?? "desc");
+  }
   const s = sp.toString();
   return s ? `?${s}` : "";
 }

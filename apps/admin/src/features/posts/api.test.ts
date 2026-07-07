@@ -31,4 +31,14 @@ describe("buildPostsQuery", () => {
   it("ignores non-positive page/page_size", () => {
     expect(buildPostsQuery({ page: 0, pageSize: -1 })).toBe("");
   });
+
+  it("includes sort and order", () => {
+    const sp = new URLSearchParams(buildPostsQuery({ sort: "title", order: "asc" }));
+    expect(sp.get("sort")).toBe("title");
+    expect(sp.get("order")).toBe("asc");
+  });
+
+  it("omits default sort/order (created_at desc)", () => {
+    expect(buildPostsQuery({ sort: "created_at", order: "desc" })).toBe("");
+  });
 });

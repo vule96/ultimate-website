@@ -66,6 +66,13 @@ export const PostTimeseriesSchema = z.array(
 );
 export type PostTimeseries = z.infer<typeof PostTimeseriesSchema>;
 
+/** Cột được phép sắp xếp cho danh sách bài viết (khớp whitelist ở core). */
+export const PostSortFieldSchema = z.enum(["title", "status", "updated_at", "created_at"]);
+export type PostSortField = z.infer<typeof PostSortFieldSchema>;
+
+export const SortOrderSchema = z.enum(["asc", "desc"]);
+export type SortOrder = z.infer<typeof SortOrderSchema>;
+
 /** Kết quả xin presigned URL upload ảnh (POST /media/presign). */
 export const PresignResponseSchema = z.object({
   upload_url: z.string(),
