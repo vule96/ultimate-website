@@ -211,6 +211,29 @@ func (r *GormRepository) Stats(ctx context.Context) (StatsResult, error) {
 	return res, nil
 }
 
+// CountByMonth đếm số bài viết theo tháng ("YYYY-MM") cho các bài created_at >= since.
+func (r *GormRepository) CountByMonth(ctx context.Context, since time.Time) (map[string]int64, error) {
+	type row struct {
+		M string
+		C int64
+	}
+	var rows []row
+	err := r.db.WithContext(ctx).
+		Model(&gormPost{}).
+		Select("to_char(date_trunc('month', created_at), 'YYYY-MM') as m, count(*) as c").
+		Where("created_at >= ?", since).
+		Group("date_trunc('month', created_at)").
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]int64, len(rows))
+	for _, r := range rows {
+		out[r.M] = r.C
+	}
+	return out, nil
+}
+
 // --- helpers ---
 
 // upsertTags đảm bảo mỗi tag tồn tại (theo slug) và trả về bản ghi có ID.

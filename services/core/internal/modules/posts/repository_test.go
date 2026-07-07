@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"gorm.io/gorm"
@@ -223,6 +224,25 @@ func TestRepo_Stats(t *testing.T) {
 	}
 	if s.Tags != 2 { // Go, Rust (phân biệt)
 		t.Errorf("Tags = %d, want 2", s.Tags)
+	}
+}
+
+func TestRepo_CountByMonth(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	// Tạo 2 bài trong tháng hiện tại (created_at mặc định = now).
+	_ = repo.Create(ctx, samplePost("A", "cbm-a", StatusPublished))
+	_ = repo.Create(ctx, samplePost("B", "cbm-b", StatusDraft))
+
+	since := time.Now().UTC().AddDate(0, -1, 0)
+	counts, err := repo.CountByMonth(ctx, since)
+	if err != nil {
+		t.Fatalf("count by month: %v", err)
+	}
+	thisMonth := time.Now().UTC().Format("2006-01")
+	if counts[thisMonth] != 2 {
+		t.Errorf("counts[%s] = %d, want 2", thisMonth, counts[thisMonth])
 	}
 }
 

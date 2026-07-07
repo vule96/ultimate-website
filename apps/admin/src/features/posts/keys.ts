@@ -8,6 +8,7 @@ export const postKeys = {
   details: () => [...postKeys.all, "detail"] as const,
   detail: (slug: string) => [...postKeys.details(), slug] as const,
   stats: () => [...postKeys.all, "stats"] as const,
+  timeseries: (months: number) => [...postKeys.all, "timeseries", months] as const,
 };
 
 export const tagKeys = {

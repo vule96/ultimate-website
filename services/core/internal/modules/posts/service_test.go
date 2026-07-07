@@ -11,9 +11,10 @@ import (
 
 // mockRepo là mock thủ công của Repository cho unit test service.
 type mockRepo struct {
-	created   *Post
-	updated   *Post
-	createErr error
+	created     *Post
+	updated     *Post
+	createErr   error
+	monthCounts map[string]int64
 }
 
 func (m *mockRepo) Create(_ context.Context, p *Post) error {
@@ -33,6 +34,9 @@ func (m *mockRepo) List(_ context.Context, _ ListFilter) ([]Post, int64, error) 
 func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error  { return nil }
 func (m *mockRepo) ListTags(_ context.Context) ([]Tag, error)    { return nil, nil }
 func (m *mockRepo) Stats(_ context.Context) (StatsResult, error) { return StatsResult{}, nil }
+func (m *mockRepo) CountByMonth(_ context.Context, _ time.Time) (map[string]int64, error) {
+	return m.monthCounts, nil
+}
 
 var fixedNow = time.Date(2026, 7, 5, 9, 0, 0, 0, time.UTC)
 
@@ -40,6 +44,37 @@ func newTestService(repo Repository) *Service {
 	s := NewService(repo)
 	s.now = func() time.Time { return fixedNow }
 	return s
+}
+
+func TestServiceTimeSeries_ZeroFillsMonths(t *testing.T) {
+	// fixedNow = 2026-07 → 3 tháng gần nhất: 2026-05, 2026-06, 2026-07.
+	repo := &mockRepo{monthCounts: map[string]int64{"2026-05": 2, "2026-07": 5}}
+	svc := newTestService(repo)
+
+	series, err := svc.TimeSeries(context.Background(), 3)
+	if err != nil {
+		t.Fatalf("timeseries: %v", err)
+	}
+	want := []MonthCount{{"2026-05", 2}, {"2026-06", 0}, {"2026-07", 5}}
+	if len(series) != len(want) {
+		t.Fatalf("len = %d, want %d", len(series), len(want))
+	}
+	for i, w := range want {
+		if series[i] != w {
+			t.Errorf("series[%d] = %+v, want %+v", i, series[i], w)
+		}
+	}
+}
+
+func TestServiceTimeSeries_ClampsMonths(t *testing.T) {
+	repo := &mockRepo{}
+	svc := newTestService(repo)
+	if s, _ := svc.TimeSeries(context.Background(), 0); len(s) != 8 {
+		t.Errorf("months=0 → len %d, want default 8", len(s))
+	}
+	if s, _ := svc.TimeSeries(context.Background(), 100); len(s) != 24 {
+		t.Errorf("months=100 → len %d, want clamp 24", len(s))
+	}
 }
 
 func TestServiceCreate_EmptyTitleIsValidationError(t *testing.T) {

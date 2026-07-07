@@ -28,6 +28,7 @@ func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
 func (h *Handler) RegisterRoutes(rg gin.IRouter, writeMW ...gin.HandlerFunc) {
 	rg.GET("/posts", h.list)
 	rg.GET("/posts/stats", h.stats)
+	rg.GET("/posts/stats/timeseries", h.timeseries)
 	rg.GET("/posts/:slug", h.getBySlug)
 	rg.GET("/tags", h.listTags)
 
@@ -127,6 +128,25 @@ func (h *Handler) stats(c *gin.Context) {
 		Draft:     s.Draft,
 		Tags:      s.Tags,
 	})
+}
+
+type monthCountResponse struct {
+	Month string `json:"month"`
+	Count int64  `json:"count"`
+}
+
+func (h *Handler) timeseries(c *gin.Context) {
+	months, _ := strconv.Atoi(c.Query("months"))
+	series, err := h.svc.TimeSeries(c.Request.Context(), months)
+	if err != nil {
+		respondError(c, err)
+		return
+	}
+	data := make([]monthCountResponse, len(series))
+	for i, mc := range series {
+		data[i] = monthCountResponse{Month: mc.Month, Count: mc.Count}
+	}
+	c.JSON(http.StatusOK, data)
 }
 
 func (h *Handler) getBySlug(c *gin.Context) {

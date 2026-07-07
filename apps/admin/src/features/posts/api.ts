@@ -2,9 +2,11 @@ import {
   PostSchema,
   PostListResponseSchema,
   PostStatsSchema,
+  PostTimeseriesSchema,
   type Post,
   type PostListResponse,
   type PostStats,
+  type PostTimeseries,
   type PostStatus,
   type UpsertPostInput,
 } from "@ultimate/types";
@@ -42,6 +44,10 @@ export function getPostBySlug(slug: string): Promise<Post> {
 
 export function fetchStats(): Promise<PostStats> {
   return apiFetch("/api/v1/posts/stats", PostStatsSchema);
+}
+
+export function fetchTimeseries(months = 8): Promise<PostTimeseries> {
+  return apiFetch(`/api/v1/posts/stats/timeseries?months=${months}`, PostTimeseriesSchema);
 }
 
 export function createPost(input: UpsertPostInput): Promise<Post> {

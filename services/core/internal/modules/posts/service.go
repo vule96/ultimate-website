@@ -20,6 +20,7 @@ type Repository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListTags(ctx context.Context) ([]Tag, error)
 	Stats(ctx context.Context) (StatsResult, error)
+	CountByMonth(ctx context.Context, since time.Time) (map[string]int64, error)
 }
 
 // ListFilter là điều kiện lọc + phân trang cho danh sách bài viết.
@@ -37,6 +38,12 @@ type StatsResult struct {
 	Published int64 // số bài PUBLISHED
 	Draft     int64 // số bài DRAFT
 	Tags      int64 // số tag phân biệt
+}
+
+// MonthCount là số bài viết trong một tháng ("YYYY-MM").
+type MonthCount struct {
+	Month string
+	Count int64
 }
 
 // CreateInput là dữ liệu đầu vào tạo bài viết.
@@ -193,6 +200,32 @@ func (s *Service) ListTags(ctx context.Context) ([]Tag, error) {
 // Stats trả về số liệu tổng hợp bài viết cho Dashboard.
 func (s *Service) Stats(ctx context.Context) (StatsResult, error) {
 	return s.repo.Stats(ctx)
+}
+
+// TimeSeries trả về số bài viết theo tháng cho `months` tháng gần nhất (tính cả
+// tháng hiện tại), zero-fill các tháng không có bài. months bị chặn trong [1, 24].
+func (s *Service) TimeSeries(ctx context.Context, months int) ([]MonthCount, error) {
+	if months < 1 {
+		months = 8
+	}
+	if months > 24 {
+		months = 24
+	}
+
+	now := s.now().UTC()
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, -(months - 1), 0)
+
+	counts, err := s.repo.CountByMonth(ctx, start)
+	if err != nil {
+		return nil, err
+	}
+
+	series := make([]MonthCount, months)
+	for i := 0; i < months; i++ {
+		m := start.AddDate(0, i, 0).Format("2006-01")
+		series[i] = MonthCount{Month: m, Count: counts[m]}
+	}
+	return series, nil
 }
 
 // deriveSlug chọn nguồn slug (ưu tiên explicit) rồi slugify.

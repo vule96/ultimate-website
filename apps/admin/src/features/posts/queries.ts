@@ -9,6 +9,7 @@ import {
   listPosts,
   getPostBySlug,
   fetchStats,
+  fetchTimeseries,
   createPost,
   updatePost,
   deletePost,
@@ -35,6 +36,13 @@ export function usePostQuery(slug: string | undefined) {
 
 export function useStatsQuery() {
   return useQuery({ queryKey: postKeys.stats(), queryFn: fetchStats });
+}
+
+export function useTimeseriesQuery(months = 8) {
+  return useQuery({
+    queryKey: postKeys.timeseries(months),
+    queryFn: () => fetchTimeseries(months),
+  });
 }
 
 export function useTagsQuery() {
