@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   FileText,
@@ -9,10 +9,10 @@ import {
   ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { useAuth } from "@/features/auth/context";
+import { useAuth } from "@/features/auth/hooks";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/posts", label: "Bài viết", icon: FileText },
   { to: "/tags", label: "Tags", icon: Tags },
   { to: "/media", label: "Media", icon: Image },
@@ -77,28 +77,25 @@ function NavItem({
   to,
   label,
   icon: Icon,
-  end = false,
 }: {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
-  end?: boolean;
 }) {
   return (
-    <NavLink
+    <Link
       to={to}
-      end={end}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-          isActive
-            ? "bg-accent text-accent-foreground"
-            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-        )
-      }
+      activeOptions={{ exact: to === "/" }}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+        "text-muted-foreground hover:bg-secondary hover:text-foreground",
+      )}
+      activeProps={{
+        className: "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
+      }}
     >
       <Icon className="size-[18px]" />
       {label}
-    </NavLink>
+    </Link>
   );
 }

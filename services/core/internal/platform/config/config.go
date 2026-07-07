@@ -24,6 +24,15 @@ type Config struct {
 	// Session cookie
 	SessionSameSite string // lax | none | strict
 	SessionSecure   bool
+
+	// Object storage (Slice 3c) — S3-compatible (MinIO dev / R2 prod)
+	StorageEndpoint     string // vd http://localhost:9000 (MinIO); rỗng = AWS mặc định
+	StorageRegion       string
+	StorageAccessKey    string
+	StorageSecretKey    string
+	StorageBucket       string
+	StoragePublicURL    string // base URL công khai để hiển thị ảnh
+	StorageUsePathStyle bool   // true cho MinIO
 }
 
 // Load đọc cấu hình từ env. DatabaseURL là bắt buộc; các giá trị khác có mặc định.
@@ -43,6 +52,14 @@ func Load() (Config, error) {
 
 		SessionSameSite: getEnv("SESSION_COOKIE_SAMESITE", "lax"),
 		SessionSecure:   getBoolEnv("SESSION_COOKIE_SECURE", appEnv == "production"),
+
+		StorageEndpoint:     os.Getenv("STORAGE_ENDPOINT"),
+		StorageRegion:       getEnv("STORAGE_REGION", "auto"),
+		StorageAccessKey:    os.Getenv("STORAGE_ACCESS_KEY"),
+		StorageSecretKey:    os.Getenv("STORAGE_SECRET_KEY"),
+		StorageBucket:       os.Getenv("STORAGE_BUCKET"),
+		StoragePublicURL:    os.Getenv("STORAGE_PUBLIC_URL"),
+		StorageUsePathStyle: getBoolEnv("STORAGE_USE_PATH_STYLE", false),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")

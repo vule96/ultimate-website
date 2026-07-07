@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { PostStatus } from "@ultimate/types";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { ApiError } from "@/lib/apiClient";
+import { EditorSwitch } from "@/features/editor/EditorSwitch";
+import { uploadImage } from "@/features/media/api";
 import { usePostQuery, useCreatePost, useUpdatePost } from "./queries";
 import {
   postFormSchema,
@@ -33,8 +35,7 @@ const statusOptions: { value: PostStatus; label: string }[] = [
   { value: "PUBLISHED", label: "Đã đăng" },
 ];
 
-export function PostFormPage() {
-  const { slug } = useParams();
+export function PostFormPage({ slug }: { slug?: string }) {
   const isEdit = Boolean(slug);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -49,23 +50,30 @@ export function PostFormPage() {
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<PostFormValues>({
     resolver: zodResolver(postFormSchema),
     defaultValues: emptyPostForm,
   });
 
-  // Khi post đã load (chế độ sửa) → prefill form.
+  // content_json native của editor (best-effort); HTML vẫn là nguồn nạp chung.
+  const [contentJson, setContentJson] = useState<unknown>({});
+
+  // Khi post đã load (chế độ sửa) → prefill form + json.
   const loaded = postQuery.data;
   useEffect(() => {
-    if (loaded) reset(postToFormValues(loaded));
+    if (loaded) {
+      reset(postToFormValues(loaded));
+      setContentJson(loaded.content_json ?? {});
+    }
   }, [loaded, reset]);
 
   const saving = createMutation.isPending || updateMutation.isPending;
 
   function onSubmit(values: PostFormValues) {
     setFormError(null);
-    const input = toUpsertInput(values);
+    const input = toUpsertInput(values, contentJson);
     const onError = (err: unknown) => {
       setFormError(err instanceof ApiError ? err.message : "Lưu bài viết thất bại.");
     };
@@ -75,7 +83,7 @@ export function PostFormPage() {
         {
           onSuccess: () => {
             toast("Đã cập nhật bài viết.");
-            navigate("/posts");
+            void navigate({ to: "/posts" });
           },
           onError,
         },
@@ -84,7 +92,7 @@ export function PostFormPage() {
       createMutation.mutate(input, {
         onSuccess: () => {
           toast("Đã tạo bài viết.");
-          navigate("/posts");
+          void navigate({ to: "/posts" });
         },
         onError,
       });
@@ -138,8 +146,16 @@ export function PostFormPage() {
               <Field label="Tóm tắt">
                 <Textarea {...register("excerpt")} rows={2} placeholder="Mô tả ngắn…" />
               </Field>
-              <Field label="Nội dung (HTML tạm — editor ở 3c)">
-                <Textarea {...register("content")} rows={12} placeholder="<p>Nội dung…</p>" />
+              <Field label="Nội dung">
+                <input type="hidden" {...register("content")} />
+                <EditorSwitch
+                  initialHtml={loaded?.content_html ?? ""}
+                  onChange={({ html, json }) => {
+                    setValue("content", html, { shouldDirty: true });
+                    setContentJson(json);
+                  }}
+                  uploadImage={uploadImage}
+                />
               </Field>
             </CardContent>
           </Card>

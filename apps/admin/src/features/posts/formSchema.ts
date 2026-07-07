@@ -39,8 +39,11 @@ export function parseTagsCsv(csv: string): string[] {
     .filter((t) => t.length > 0);
 }
 
-/** Map giá trị form → payload gửi API. */
-export function toUpsertInput(v: PostFormValues): UpsertPostInput {
+/**
+ * Map giá trị form → payload gửi API. `contentJson` là JSON native của editor
+ * đang dùng (best-effort); mặc định {} khi chưa có editor.
+ */
+export function toUpsertInput(v: PostFormValues, contentJson: unknown = {}): UpsertPostInput {
   const slug = v.slug.trim();
   const excerpt = v.excerpt.trim();
   const metaTitle = v.metaTitle.trim();
@@ -49,7 +52,7 @@ export function toUpsertInput(v: PostFormValues): UpsertPostInput {
   const input: UpsertPostInput = {
     title: v.title.trim(),
     content_html: v.content,
-    content_json: {},
+    content_json: contentJson,
     status: v.status,
     excerpt: excerpt || null,
     meta_title: metaTitle || null,

@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useRouterState } from "@tanstack/react-router";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -11,7 +11,7 @@ const titles: Record<string, string> = {
 };
 
 export function AppShell() {
-  const { pathname } = useLocation();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const title = titles[pathname] ?? "Dashboard";
   return (
     <div className="flex h-screen overflow-hidden bg-background">

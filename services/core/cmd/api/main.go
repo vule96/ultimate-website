@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
+	"github.com/vule96/ultimate-website/services/core/internal/modules/media"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/posts"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
@@ -56,6 +57,18 @@ func main() {
 	// Wiring module posts.
 	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)))
 
+	// Wiring module media (presigned upload S3-compatible).
+	mediaStorage := media.NewS3Storage(media.S3Config{
+		Endpoint:     cfg.StorageEndpoint,
+		Region:       cfg.StorageRegion,
+		AccessKey:    cfg.StorageAccessKey,
+		SecretKey:    cfg.StorageSecretKey,
+		Bucket:       cfg.StorageBucket,
+		PublicURL:    cfg.StoragePublicURL,
+		UsePathStyle: cfg.StorageUsePathStyle,
+	})
+	mediaHandler := media.NewHandler(media.NewService(mediaStorage))
+
 	if cfg.IsProduction() {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -71,6 +84,7 @@ func main() {
 
 	api := r.Group("/api/v1")
 	postsHandler.RegisterRoutes(api, auth.RequireAuth(sm)) // bảo vệ endpoint ghi
+	mediaHandler.RegisterRoutes(api, auth.RequireAuth(sm)) // presign cần đăng nhập
 
 	if cfg.GoogleClientID == "" || cfg.AdminAllowlist == "" {
 		log.Warn("auth not fully configured — set GOOGLE_CLIENT_ID/SECRET and ADMIN_ALLOWLIST to enable login")

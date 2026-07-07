@@ -357,7 +357,9 @@
         <thead><tr><th>Thành phần</th><th>Lựa chọn</th><th>Ghi chú</th></tr></thead>
         <tbody>
           <tr><td>Build tool</td><td><b>Vite + React</b> (TypeScript)</td><td>SPA thuần, HMR nhanh, build ra static.</td></tr>
-          <tr><td>Routing</td><td><b>React Router</b></td><td>Client-side routing (thay App Router).</td></tr>
+          <tr><td>Routing</td><td><b>TanStack Router</b> (file-based)</td><td>Client-side routing type-safe (search params + loaders); thay App Router.</td></tr>
+          <tr><td>Data table</td><td><b>TanStack Table</b> (headless)</td><td>Bảng typed qua <code>DataTable&lt;TData&gt;</code>; server-side sort/pagination/filter, ẩn/hiện cột.</td></tr>
+          <tr><td>Data table</td><td><b>TanStack Table</b> (headless)</td><td>Bảng typed qua <code>DataTable&lt;TData&gt;</code>; server-side sort/pagination/filter, ẩn/hiện cột.</td></tr>
           <tr><td>Styling / UI</td><td><b>Tailwind + shadcn/ui</b></td><td>shadcn hỗ trợ Vite; dùng chung <code>packages/ui</code>.</td></tr>
           <tr><td>Data fetching</td><td>TanStack Query</td><td>Cache, mutation, optimistic update.</td></tr>
           <tr><td>Auth</td><td><b>Google OAuth qua Go core (BFF)</b></td><td>SPA không giữ token trong JS; cookie httpOnly + allowlist email. Xem §14.</td></tr>
@@ -602,7 +604,7 @@ Khi user hỏi:      câu hỏi → embedding → similarity search (pgvector)
       <pre><code>blog/
 ├── apps/
 │   ├── web/            # Next.js — blog công khai (SSR/SSG, SEO)
-│   └── admin/          # React SPA (Vite + React Router) — dashboard (mục 14)
+│   └── admin/          # React SPA (Vite + TanStack Router) — dashboard (mục 14)
 ├── packages/
 │   ├── ui/             # shadcn components dùng chung
 │   ├── types/          # type dùng chung (sinh từ OpenAPI/proto)
@@ -646,25 +648,26 @@ Khi user hỏi:      câu hỏi → embedding → similarity search (pgvector)
 ├── components/ui/      # shadcn
 ├── lib/  hooks/  types/  styles/
 
-apps/admin/src/            # React SPA — Vite + React Router
-├── main.tsx            # entry SPA
-├── router.tsx          # React Router (routes + protected route)
+apps/admin/src/            # React SPA — Vite + TanStack Router
+├── main.tsx            # entry SPA (tạo router + RouterProvider)
+├── routes/             # TanStack Router file-based (__root, login, _authed + con)
+├── routeTree.gen.ts    # route tree do plugin sinh (commit)
 ├── features/           # posts/ · editor/ · auth/ · media/
 ├── components/ui/      # shadcn (import từ packages/ui)
-├── lib/  hooks/  types/  styles/</code></pre>
-      <p>Nguyên tắc: colocation, tính năng độc lập, không import chéo lộn xộn. Khác biệt: <code>web</code> route bằng App Router (file-based), <code>admin</code> route bằng React Router (khai báo trong <code>router.tsx</code>).</p>
+├── lib/  styles/</code></pre>
+      <p>Nguyên tắc: colocation, tính năng độc lập, không import chéo lộn xộn. Khác biệt: <code>web</code> route bằng App Router (file-based của Next), <code>admin</code> route bằng TanStack Router (file-based trong <code>src/routes/</code>, type-safe + loaders).</p>
     </section>
 
     <section id="s14">
       <h2><span class="num">14</span> Admin Dashboard — App React SPA riêng</h2>
-      <div class="call rec"><span class="tag">Quyết định (đã chốt)</span>Admin dashboard là <b>app React SPA riêng</b> (<code>apps/admin</code>, Vite + React + React Router) trong cùng monorepo — <b>KHÔNG dùng Next.js</b>. Next.js chỉ dành cho <code>apps/web</code> (blog công khai cần SEO/SSR).</div>
+      <div class="call rec"><span class="tag">Quyết định (đã chốt)</span>Admin dashboard là <b>app React SPA riêng</b> (<code>apps/admin</code>, Vite + React + TanStack Router) trong cùng monorepo — <b>KHÔNG dùng Next.js</b>. Next.js chỉ dành cho <code>apps/web</code> (blog công khai cần SEO/SSR).</div>
       <h3>14.1 · Vì sao SPA riêng hợp lý cho admin</h3>
       <div class="table-wrap"><table>
         <thead><tr><th>Lý do</th><th>Giải thích</th></tr></thead>
         <tbody>
           <tr><td><b>Không cần SEO/SSR</b></td><td>Admin là khu vực đăng nhập, không index Google → SSR của Next.js là chi phí thừa.</td></tr>
           <tr><td><b>Nhẹ &amp; đơn giản</b></td><td>Vite build ra static thuần, HMR nhanh, cấu hình ít hơn Next.js cho một dashboard.</td></tr>
-          <tr><td><b>Học SPA đúng nghĩa</b></td><td>Client routing (React Router), quản lý auth, protected route.</td></tr>
+          <tr><td><b>Học SPA đúng nghĩa</b></td><td>Client routing (TanStack Router: type-safe routes/search + loaders), quản lý auth, route guard.</td></tr>
           <tr><td><b>Tách deploy</b></td><td>Sửa admin không cần build/deploy lại web công khai và ngược lại.</td></tr>
           <tr><td><b>Vẫn chia sẻ code</b></td><td>Monorepo → dùng chung <code>packages/ui</code>, <code>packages/types</code>, <code>packages/api-client</code>.</td></tr>
         </tbody>
@@ -673,7 +676,7 @@ apps/admin/src/            # React SPA — Vite + React Router
       <div class="table-wrap"><table>
         <thead><tr><th>Phương án</th><th>Đánh giá</th></tr></thead>
         <tbody>
-          <tr><td><b>App <code>apps/admin</code> = React SPA (Vite)</b> ⭐</td><td><b>Đã chọn.</b> Tách deploy, không SEO thừa, học SPA, vẫn share package qua monorepo.</td></tr>
+          <tr><td><b>App <code>apps/admin</code> = React SPA (Vite + TanStack Router)</b> ⭐</td><td><b>Đã chọn.</b> Tách deploy, không SEO thừa, học SPA, vẫn share package qua monorepo.</td></tr>
           <tr><td>Cùng Next.js, route group <code>(admin)</code></td><td>Ít việc nhất nhưng gộp admin vào bundle web, kéo theo SSR không cần, không học SPA. Không chọn.</td></tr>
           <tr><td>Repo hoàn toàn tách biệt</td><td><span class="no">✗</span> Thừa cho dự án cá nhân — mất khả năng share package, thêm gánh CI/CD.</td></tr>
         </tbody>
@@ -681,7 +684,8 @@ apps/admin/src/            # React SPA — Vite + React Router
       <h3>14.3 · Điểm cần lưu ý khi làm admin SPA</h3>
       <ul>
         <li><strong>Auth:</strong> Google OAuth theo BFF pattern (đã chốt) — SPA không tự giữ token, chỉ gọi API kèm <code>credentials: 'include'</code> + bọc <strong>protected route</strong>. Chi tiết ở 14.4.</li>
-        <li><strong>Routing:</strong> React Router (khai báo trong <code>router.tsx</code>), không có file-based routing như Next.</li>
+        <li><strong>Routing:</strong> TanStack Router <strong>file-based</strong> (<code>src/routes/</code>, <code>routeTree.gen.ts</code> sinh tự động), search params type-safe + route loaders tích hợp TanStack Query.</li>
+        <li><strong>Bảng dữ liệu:</strong> TanStack Table (headless) qua <code>DataTable&lt;TData&gt;</code> dùng chung — sort server-side theo URL search, ẩn/hiện cột.</li>
         <li><strong>shadcn/ui:</strong> hỗ trợ Vite tốt — cấu hình <code>components.json</code> trỏ về <code>packages/ui</code> để dùng chung với web.</li>
         <li><strong>Editor Tiptap</strong> và luồng <strong>presigned URL upload R2</strong> nằm trong app admin.</li>
         <li><strong>Deploy:</strong> build static → Cloudflare Pages / Vercel (static) hoặc phục vụ qua Coolify. Không cần Node runtime SSR.</li>
@@ -723,7 +727,7 @@ apps/admin/src/            # React SPA — Vite + React Router
       </table></div>
       <h3>Frontend deploy</h3>
       <p><strong><code>apps/web</code> (Next.js):</strong> <strong>Vercel Free</strong> (DX tuyệt, SSR/ISR sẵn, tiết kiệm RAM VPS) hoặc <strong>Cloudflare Pages</strong> (hợp hệ R2), hoặc self-host qua Coolify.</p>
-      <p><strong><code>apps/admin</code> (React SPA Vite):</strong> build ra <strong>static</strong> → deploy cực nhẹ trên <strong>Cloudflare Pages / Vercel (static)</strong> (không cần Node runtime SSR), hoặc phục vụ static qua Coolify/Nginx. Nhớ cấu hình <strong>SPA fallback</strong> (mọi route → <code>index.html</code>) cho React Router.</p>
+      <p><strong><code>apps/admin</code> (React SPA Vite):</strong> build ra <strong>static</strong> → deploy cực nhẹ trên <strong>Cloudflare Pages / Vercel (static)</strong> (không cần Node runtime SSR), hoặc phục vụ static qua Coolify/Nginx. Nhớ cấu hình <strong>SPA fallback</strong> (mọi route → <code>index.html</code>) cho client router (TanStack Router).</p>
       <p><strong>Nên có thêm:</strong> Renovate/Dependabot (tự cập nhật deps), pre-commit hooks (Husky + lint-staged / pre-commit), secrets qua GitHub Actions + Coolify (không commit <code>.env</code>).</p>
     </section>
 
@@ -767,7 +771,7 @@ type DraftState =
     <section id="s17">
       <h2><span class="num">17</span> Tổng hợp link thư viện</h2>
       <div class="linklist">
-        <p><b>UI / FE:</b> <a href="https://ui.shadcn.com">shadcn/ui</a> · <a href="https://www.radix-ui.com">Radix UI</a> · <a href="https://tailwindcss.com">Tailwind</a> · <a href="https://mantine.dev">Mantine</a> · <a href="https://www.heroui.com">HeroUI</a> · <a href="https://park-ui.com">Park UI</a> · <a href="https://lucide.dev">lucide</a> · <a href="https://motion.dev">Motion</a> · <a href="https://tanstack.com/query">TanStack Query</a> · <a href="https://nextjs.org">Next.js</a> · <a href="https://vite.dev">Vite</a> · <a href="https://reactrouter.com">React Router</a> · <a href="https://github.com/alan2207/bulletproof-react">bulletproof-react</a> · <a href="https://turbo.build">Turborepo</a> · <a href="https://pnpm.io/workspaces">pnpm workspaces</a></p>
+        <p><b>UI / FE:</b> <a href="https://ui.shadcn.com">shadcn/ui</a> · <a href="https://www.radix-ui.com">Radix UI</a> · <a href="https://tailwindcss.com">Tailwind</a> · <a href="https://mantine.dev">Mantine</a> · <a href="https://www.heroui.com">HeroUI</a> · <a href="https://park-ui.com">Park UI</a> · <a href="https://lucide.dev">lucide</a> · <a href="https://motion.dev">Motion</a> · <a href="https://tanstack.com/query">TanStack Query</a> · <a href="https://nextjs.org">Next.js</a> · <a href="https://vite.dev">Vite</a> · <a href="https://tanstack.com/router">TanStack Router</a> ·<a href="https://github.com/alan2207/bulletproof-react">bulletproof-react</a> · <a href="https://turbo.build">Turborepo</a> · <a href="https://pnpm.io/workspaces">pnpm workspaces</a></p>
         <p><b>Rich text / Page builder:</b> <a href="https://tiptap.dev">Tiptap</a> · <a href="https://novel.sh">Novel</a> · <a href="https://www.blocknotejs.org">BlockNote</a> · <a href="https://lexical.dev">Lexical</a> · <a href="https://platejs.org">Plate</a> · <a href="https://milkdown.dev">Milkdown</a> · <a href="https://docs.slatejs.org">Slate</a> · <a href="https://prosemirror.net">ProseMirror</a> · <a href="https://editorjs.io">Editor.js</a> · <a href="https://quilljs.com">Quill</a> · <a href="https://puckeditor.com">Puck</a> · <a href="https://craft.js.org">craft.js</a> · <a href="https://reka.js.org">Reka.js</a> · <a href="https://grapesjs.com">GrapesJS</a></p>
         <p><b>Backend Go:</b> <a href="https://github.com/go-chi/chi">chi</a> · <a href="https://gin-gonic.com">Gin</a> · <a href="https://sqlc.dev">sqlc</a> · <a href="https://gorm.io">GORM</a> · <a href="https://github.com/golang-migrate/migrate">golang-migrate</a> · <a href="https://atlasgo.io">Atlas</a> · <a href="https://github.com/google/wire">wire</a> · <a href="https://github.com/pgvector/pgvector">pgvector</a> · <a href="https://golangci-lint.run">golangci-lint</a> · <a href="https://github.com/golang-standards/project-layout">project-layout</a> · <a href="https://github.com/swaggo/swag">swaggo</a> · <a href="https://pkg.go.dev/golang.org/x/oauth2">oauth2 (Go)</a> · <a href="https://developers.google.com/identity/protocols/oauth2">Google OAuth 2.0</a></p>
         <p><b>Python AI:</b> <a href="https://python.langchain.com">LangChain</a> · <a href="https://langchain-ai.github.io/langgraph">LangGraph</a> · <a href="https://fastapi.tiangolo.com">FastAPI</a> · <a href="https://docs.pydantic.dev">Pydantic</a> · <a href="https://tavily.com">Tavily</a> · <a href="https://docs.astral.sh/uv">uv</a> · <a href="https://docs.astral.sh/ruff">Ruff</a></p>

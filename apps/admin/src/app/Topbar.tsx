@@ -1,10 +1,11 @@
 import { Plus, Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useAuth } from "@/features/auth/context";
+import { useAuth, useSignOut } from "@/features/auth/hooks";
 
 export function Topbar({ title }: { title: string }) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
+  const signOut = useSignOut();
   return (
     <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
       <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
