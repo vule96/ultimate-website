@@ -358,6 +358,8 @@
         <tbody>
           <tr><td>Build tool</td><td><b>Vite + React</b> (TypeScript)</td><td>SPA thuần, HMR nhanh, build ra static.</td></tr>
           <tr><td>Routing</td><td><b>TanStack Router</b> (file-based)</td><td>Client-side routing type-safe (search params + loaders); thay App Router.</td></tr>
+          <tr><td>Data table</td><td><b>TanStack Table</b> (headless)</td><td>Bảng typed qua <code>DataTable&lt;TData&gt;</code>; server-side sort/pagination/filter, ẩn/hiện cột.</td></tr>
+          <tr><td>Data table</td><td><b>TanStack Table</b> (headless)</td><td>Bảng typed qua <code>DataTable&lt;TData&gt;</code>; server-side sort/pagination/filter, ẩn/hiện cột.</td></tr>
           <tr><td>Styling / UI</td><td><b>Tailwind + shadcn/ui</b></td><td>shadcn hỗ trợ Vite; dùng chung <code>packages/ui</code>.</td></tr>
           <tr><td>Data fetching</td><td>TanStack Query</td><td>Cache, mutation, optimistic update.</td></tr>
           <tr><td>Auth</td><td><b>Google OAuth qua Go core (BFF)</b></td><td>SPA không giữ token trong JS; cookie httpOnly + allowlist email. Xem §14.</td></tr>
@@ -683,6 +685,7 @@ apps/admin/src/            # React SPA — Vite + TanStack Router
       <ul>
         <li><strong>Auth:</strong> Google OAuth theo BFF pattern (đã chốt) — SPA không tự giữ token, chỉ gọi API kèm <code>credentials: 'include'</code> + bọc <strong>protected route</strong>. Chi tiết ở 14.4.</li>
         <li><strong>Routing:</strong> TanStack Router <strong>file-based</strong> (<code>src/routes/</code>, <code>routeTree.gen.ts</code> sinh tự động), search params type-safe + route loaders tích hợp TanStack Query.</li>
+        <li><strong>Bảng dữ liệu:</strong> TanStack Table (headless) qua <code>DataTable&lt;TData&gt;</code> dùng chung — sort server-side theo URL search, ẩn/hiện cột.</li>
         <li><strong>shadcn/ui:</strong> hỗ trợ Vite tốt — cấu hình <code>components.json</code> trỏ về <code>packages/ui</code> để dùng chung với web.</li>
         <li><strong>Editor Tiptap</strong> và luồng <strong>presigned URL upload R2</strong> nằm trong app admin.</li>
         <li><strong>Deploy:</strong> build static → Cloudflare Pages / Vercel (static) hoặc phục vụ qua Coolify. Không cần Node runtime SSR.</li>

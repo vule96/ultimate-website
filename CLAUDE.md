@@ -34,6 +34,8 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
   Spec: `docs/superpowers/specs/2026-07-07-slice3c-editor-media-design.md`.
 - ✅ **Slice 3d — DONE**: admin routing chuyển sang **TanStack Router** (file-based `src/routes/`, type-safe search params qua `validateSearch`, route loaders + `ensureQueryData`, auth guard `beforeLoad`, `useSuspenseQuery` + `pendingComponent`/`errorComponent`). Bỏ `react-router-dom`, `AuthProvider`, `ProtectedRoute`.
   Spec: `docs/superpowers/specs/2026-07-07-slice3d-tanstack-router-design.md`.
+- ✅ **Slice 3e — DONE**: bảng dữ liệu dùng **TanStack Table** qua component `DataTable<TData>` chung (headless, manual server-side sort/pagination/filter, column visibility toggle); `PostsTable` migrate sang column defs typed (`createColumnHelper`, module augmentation `TableMeta.onDelete`); core thêm `sort`/`order` (whitelist ORDER BY); sort state ở URL search.
+  Spec: `docs/superpowers/specs/2026-07-08-slice3e-tanstack-table-design.md`.
 - ⏳ Slice 4: `apps/web` (Next.js) public.
 
 **Storage & editor (từ 3c):**

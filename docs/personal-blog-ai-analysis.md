@@ -128,6 +128,7 @@ Nếu bê nguyên microservice lên 1 VPS 4GB RAM:
 |---|---|---|
 | Build tool | **Vite + React** (TypeScript) | SPA thuần, HMR nhanh, build ra static. |
 | Routing | **TanStack Router** (file-based) | Client-side routing type-safe (search params + loaders); thay App Router của Next. |
+| Data table | **TanStack Table** (headless) | Bảng typed qua `DataTable<TData>` dùng chung; server-side sort/pagination/filter (manual mode), ẩn/hiện cột. |
 | Styling | **Tailwind CSS + shadcn/ui** | shadcn hỗ trợ Vite; dùng chung `packages/ui`. |
 | Data fetching | **TanStack Query** | Cache, mutation, optimistic update. |
 | Auth | **Google OAuth qua Go core (BFF)** + session cookie httpOnly | SPA **không giữ token trong JS** (tránh XSS); Go core đổi code, set cookie; kiểm tra allowlist email. Xem §14.3. |
@@ -604,6 +605,7 @@ Tham khảo kiến trúc chuẩn: [bulletproof-react](https://github.com/alan220
 
 - **Auth: Google OAuth theo BFF pattern (đã chốt).** SPA **không tự giữ token** — Go core lo toàn bộ, xem luồng ở §14.4. SPA chỉ gọi API kèm cookie (`fetch(..., { credentials: 'include' })`) và bọc route bằng **protected route** (chưa đăng nhập → về trang login).
 - **Routing:** TanStack Router **file-based** (`src/routes/`, `routeTree.gen.ts` sinh tự động), search params type-safe + route loaders tích hợp TanStack Query.
+- **Bảng dữ liệu:** TanStack Table (headless) qua `DataTable<TData>` dùng chung — sort server-side theo URL search, ẩn/hiện cột (column visibility).
 - **shadcn/ui:** hỗ trợ Vite tốt — cấu hình `components.json` trỏ về `packages/ui` để dùng chung với web.
 - **Editor Tiptap** và luồng **presigned URL upload R2** nằm trong app admin (nơi thực sự soạn bài).
 - **Deploy:** build static → host trên **Cloudflare Pages / Vercel (static)** hoặc phục vụ qua Coolify (xem mục 15.3). Không cần Node runtime SSR.
