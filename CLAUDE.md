@@ -30,8 +30,14 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
   Spec: `docs/superpowers/specs/2026-07-06-slice3a-admin-shell-design.md`.
 - ✅ **Slice 3b — DONE**: quản lý posts qua UI (TanStack Query + react-hook-form + zodResolver) — danh sách (bảng, filter status/tag, search debounce, phân trang qua URL), form tạo/sửa, xoá (confirm); Dashboard nối API thật (stat cards + recent). Core: thêm `q` search (ILIKE) + `GET /posts/stats`. Content tạm bằng textarea → `content_html`.
   Spec: `docs/superpowers/specs/2026-07-07-slice3b-posts-crud-design.md`.
-- ⏳ Slice 3c: rich editor **Tiptap + Lexical** (interface chung, chọn qua flag `VITE_EDITOR`) + module `media` (presigned R2/MinIO) + chart Dashboard nối aggregate thật.
+- ✅ **Slice 3c — DONE**: rich editor **Tiptap + Lexical** (interface chung `PostEditorProps`, chọn qua flag `VITE_EDITOR`, code-split; HTML là cầu nối nạp nội dung, lưu `content_json` native best-effort; baseline parity + extras table/task-list/highlight; Lexical có `ImageNode` tự viết) + module `media` (presigned PUT S3-compatible: MinIO dev / R2 prod, `POST /media/presign` bọc auth) + chart Dashboard nối `GET /posts/stats/timeseries` (zero-fill theo tháng).
+  Spec: `docs/superpowers/specs/2026-07-07-slice3c-editor-media-design.md`.
+- ⏳ Slice 3d: chuyển admin routing sang **TanStack Router** (thay `react-router-dom`).
 - ⏳ Slice 4: `apps/web` (Next.js) public.
+
+**Storage & editor (từ 3c):**
+- Object storage S3-compatible: dev dùng **MinIO** (docker-compose, bucket `blog-media` public-read), prod **Cloudflare R2** — chỉ đổi env `STORAGE_*`. Upload theo **presigned PUT** (client upload thẳng, không qua core).
+- Editor chọn qua `VITE_EDITOR=tiptap|lexical` (mặc định tiptap). Thêm editor mới = implement `PostEditorProps` + thêm nhánh trong `EditorSwitch`.
 
 **Stack core đã chốt khi code (khác đề xuất ban đầu trong analysis doc):**
 - Backend `services/core`: **Gin + GORM + Atlas** (analysis doc gợi ý chi + sqlc; đã chọn Gin/GORM/Atlas — xem spec Slice 1). Kiến trúc mỗi module: **Clean-lite / Hexagonal** (domain → service → repository → handler).
