@@ -3,6 +3,8 @@
 > Tài liệu đánh giá tính khả thi và định hướng kiến trúc.
 > Ngày: 2026-07-05 · Tác giả yêu cầu: huyvu.le@kamereo.vn
 > Lựa chọn định hướng: **Cân bằng học + sản phẩm** · Ngân sách **~15–40 USD/tháng** · Backend **Golang** · AI **toàn diện**
+>
+> **Trạng thái triển khai (cập nhật 2026-07-10):** Phase 0 + Phase 1 **HOÀN TẤT** (Slice 1→4) — blog công khai chạy live (Next.js SSG/ISR + SEO), admin dashboard, storage R2 đã cấu hình & verify (dev = MinIO / prod = R2). **Bước kế tiếp chưa chốt:** Deploy production *hoặc* Phase 2 (AI). Tiến độ chi tiết theo từng slice ở **`CLAUDE.md`** (mục "Trạng thái hiện tại"). Tài liệu này giữ vai trò **kiến trúc/định hướng gốc** — không track tiến độ từng slice.
 
 ---
 

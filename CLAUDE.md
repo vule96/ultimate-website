@@ -22,6 +22,8 @@ Tóm tắt định hướng đã chốt:
 
 Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/superpowers/specs/`).
 
+> **📍 Điểm hiện tại (2026-07-10):** **Phase 1 HOÀN TẤT** (Slice 1→4). Blog công khai đã **verify chạy live** (core + web + dữ liệu seed thật). Storage **R2 cấu hình & verify** end-to-end (upload ảnh qua admin OK). Quy ước storage: **dev = MinIO / prod = R2**. **Bước kế tiếp CHƯA chốt** — chọn **Deploy production** hoặc **Phase 2 (AI)**; khi chốt → brainstorm → spec như mọi slice. Roadmap trực quan: Artifact "Status & Roadmap" (`https://claude.ai/code/artifact/78ac518f-fc25-44d0-9385-d85dfbfde92e`).
+
 - ✅ **Slice 1 — DONE**: nền móng Go core + module `posts` (CRUD + tags), chạy end-to-end.
   Spec: `docs/superpowers/specs/2026-07-05-slice1-posts-foundation-design.md`.
 - ✅ **Slice 2 — DONE**: auth Google OAuth (BFF) — `internal/modules/auth` + session server-side (scs + Postgres), allowlist email qua env, middleware `RequireAuth` bọc POST/PUT/DELETE `/posts`. Verify end-to-end với Google thật.
@@ -56,3 +58,4 @@ Tóm tắt nhanh: `docker compose up -d` → `cd services/core && ./atlas.exe mi
 
 - **Tài liệu:** file `.md` là source of truth. Mỗi lần thay đổi yêu cầu → sửa `.md` trước, rồi HỎI trước khi cập nhật bản `.html`/Artifact.
 - **Quy trình dev:** mỗi slice đi qua brainstorm → spec (`docs/superpowers/specs/`) → TDD → verify end-to-end → commit.
+- **Cập nhật tiến độ:** sau mỗi slice/milestone → cập nhật mục **"Trạng thái hiện tại"** + dòng **"📍 Điểm hiện tại"** trong `CLAUDE.md` (để phiên làm việc mới nắm ngay context — dự án thường đổi session).
