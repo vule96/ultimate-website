@@ -1,10 +1,22 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublishedBySlug, listAllPublished } from "@/features/posts/api";
+import { buildPostMetadata } from "@/features/posts/metadata";
 import { PostContent } from "@/features/posts/components/post-content";
 import { TagBadge } from "@/features/posts/components/tag-badge";
 
 export const revalidate = 60;
 export const dynamicParams = true;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const post = await getPublishedBySlug(params.slug);
+  if (!post) return {};
+  return buildPostMetadata(post);
+}
 
 export async function generateStaticParams() {
   try {
