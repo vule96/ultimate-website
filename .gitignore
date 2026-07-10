@@ -13,3 +13,7 @@ dist/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Code intelligence / memory tooling (local, per-machine)
+.codegraph/
+.neurotrace/

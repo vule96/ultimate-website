@@ -189,7 +189,7 @@ apps/web/
   - `openGraph`: `type:'article'`, `title`, `description`, `images:[cover_image]` (nếu có),
     `publishedTime = published_at`.
   - `twitter`: `card:'summary_large_image'`.
-- **`layout.tsx`**: `metadata` gốc — `title.template = '%s · <tên blog>'`, `title.default`,
+- **`layout.tsx`**: `metadata` gốc — `title.template = '%s · Ultimate website'`, `title.default = 'Ultimate website'`,
   `metadataBase = SITE_URL`.
 - **`sitemap.ts`**: `/` + mọi bài PUBLISHED (`lastModified = updated_at`) + `/tags` + mỗi `/tags/[slug]`.
 - **`robots.ts`**: `rules: { userAgent:'*', allow:'/' }`, `sitemap: SITE_URL + /sitemap.xml`.
