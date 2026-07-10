@@ -53,8 +53,9 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
 - Auth: **Google OAuth (`golang.org/x/oauth2`) + session server-side qua `alexedwards/scs` (Postgres store)**; allowlist email + cookie SameSite/Secure cấu hình qua env (xem `.env.example`).
 - DB dev: Postgres 16 + pgvector qua `docker-compose.yml` ở gốc repo.
 
-**Chạy & test core:** xem `services/core/README.md` (quickstart, Atlas migration, test).
-Tóm tắt nhanh: `docker compose up -d` → `cd services/core && ./atlas.exe migrate apply --env gorm --url "postgres://blog:blog@localhost:5432/blog?sslmode=disable"` → `cp .env.example .env && go run ./cmd/api` (server `:8080`, `GET /healthz`).
+**Chạy toàn bộ stack (Docker → core → web → admin):** xem **`README.md`** ở gốc repo (thứ tự khởi động, cổng/URL, lỗi hay gặp).
+**Chạy & test core riêng:** xem `services/core/README.md` (quickstart, Atlas migration, test).
+Tóm tắt nhanh: `docker compose up -d` → `cd services/core && ./atlas.exe migrate apply --env gorm --url "postgres://blog:blog@localhost:5432/blog?sslmode=disable"` → `cp .env.example .env && go run ./cmd/api` (server `:8080`, `GET /healthz`) → `pnpm --filter @ultimate/web dev` (`:3000`) + `pnpm --filter @ultimate/admin dev` (`:5173`).
 
 ## Quy ước làm việc
 
