@@ -1,6 +1,8 @@
+"use client";
+
 import * as React from "react";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { cn } from "../lib/cn";
 
 type ToastVariant = "success" | "error";
 interface ToastItem {

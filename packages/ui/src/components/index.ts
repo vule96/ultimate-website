@@ -1,2 +1,11 @@
-// Các primitive được export ở Task 2.
-export {};
+export * from "./button";
+export * from "./card";
+export * from "./badge";
+export * from "./input";
+export * from "./label";
+export * from "./select";
+export * from "./textarea";
+export * from "./avatar";
+export * from "./alert-dialog";
+export * from "./dropdown-menu";
+export * from "./toast";
