@@ -198,6 +198,9 @@ importers:
       '@fontsource/inter':
         specifier: ^5.1.0
         version: 5.2.8
+      '@fontsource/lora':
+        specifier: ^5.1.0
+        version: 5.2.8
       '@ultimate/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -591,6 +594,9 @@ packages:
 
   '@fontsource/inter@5.2.8':
     resolution: {integrity: sha512-P6r5WnJoKiNVV+zvW2xM13gNdFhAEpQ9dQJHt3naLvfg+LkF2ldgSLiF4T41lf1SQCM9QmkqPTn4TH568IRagg==}
+
+  '@fontsource/lora@5.2.8':
+    resolution: {integrity: sha512-AQlfsHw4TP1x/eb2IZ6VjQ70ctKa39m9JN9A4zlvDOeKYLrCs+GaYIEQ86Y6YfSPGHn01bErXkRcyktOW0LOPQ==}
 
   '@hookform/resolvers@5.4.0':
     resolution: {integrity: sha512-EIsqr/t/qbinPIhGjMdtvutIN1Kk4uwbROE9/UQ93CAVGR7GkA7Y92+fX80OzXi/OB67jVFYwKGO1WzkxmkFZw==}
@@ -3266,6 +3272,8 @@ snapshots:
   '@floating-ui/utils@0.2.11': {}
 
   '@fontsource/inter@5.2.8': {}
+
+  '@fontsource/lora@5.2.8': {}
 
   '@hookform/resolvers@5.4.0(react-hook-form@7.81.0(react@18.3.1))':
     dependencies:

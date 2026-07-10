@@ -16,7 +16,8 @@
     "@ultimate/ui": "workspace:*",
     "next": "^14.2.15",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@fontsource/lora": "^5.1.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",

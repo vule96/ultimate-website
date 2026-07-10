@@ -4,16 +4,21 @@ import { googleLoginUrl } from "./api";
 
 export function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardContent className="flex flex-col items-center gap-6 p-8 pt-8">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-              <span className="text-xl font-bold">U</span>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+      {/* Ánh sáng emerald mềm phía sau thẻ đăng nhập */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.12),transparent_68%)]"
+      />
+      <Card className="relative w-full max-w-sm border-border/80 shadow-xl">
+        <CardContent className="flex flex-col items-center gap-7 p-9">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_6px_16px_hsl(var(--primary)/0.35)]">
+              <span className="text-2xl font-bold">U</span>
             </div>
             <div>
-              <h1 className="text-lg font-semibold">Ultimate Blog · Admin</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h1 className="text-xl font-semibold tracking-tight">Ultimate Blog</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">
                 Đăng nhập để quản trị nội dung
               </p>
             </div>
@@ -28,7 +33,7 @@ export function LoginPage() {
             Đăng nhập với Google
           </Button>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="max-w-[16rem] text-center text-xs leading-relaxed text-muted-foreground">
             Chỉ tài khoản trong danh sách cho phép mới truy cập được.
           </p>
         </CardContent>

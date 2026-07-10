@@ -9,6 +9,16 @@ const config: Config = {
     "./src/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
   ],
+  theme: {
+    extend: {
+      fontFamily: {
+        serif: ["Lora", "Georgia", "Times New Roman", "serif"],
+      },
+      maxWidth: {
+        prose: "42rem",
+      },
+    },
+  },
   plugins: [typography],
 };
 
