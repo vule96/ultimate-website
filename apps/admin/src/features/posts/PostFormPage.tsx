@@ -4,19 +4,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { PostStatus } from "@ultimate/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@ultimate/ui";
+import { Input } from "@ultimate/ui";
+import { Textarea } from "@ultimate/ui";
+import { Label } from "@ultimate/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@ultimate/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useToast } from "@/components/ui/toast";
+} from "@ultimate/ui";
+import { useToast } from "@ultimate/ui";
 import { ApiError } from "@/lib/apiClient";
 import { EditorSwitch } from "@/features/editor/EditorSwitch";
 import { uploadImage } from "@/features/media/api";

@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@ultimate/ui";
 import type { PostStatus } from "@ultimate/types";
 
 const map: Record<PostStatus, { text: string; variant: "published" | "draft" | "pending" }> = {

@@ -1,6 +1,6 @@
 import { Plus, Bell, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@ultimate/ui";
+import { Avatar, AvatarFallback } from "@ultimate/ui";
 import { useAuth, useSignOut } from "@/features/auth/hooks";
 
 export function Topbar({ title }: { title: string }) {

@@ -10,16 +10,16 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ChevronsUpDown, SlidersHorizontal } from "lucide-react";
-import { Button } from "./button";
 import {
+  Button,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./dropdown-menu";
-import { cn } from "@/lib/cn";
+  cn,
+} from "@ultimate/ui";
 
 // Cho phép truyền handler typed qua table.options.meta (thay closure lỏng).
 declare module "@tanstack/react-table" {

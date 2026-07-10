@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/cn";
+import { Card } from "@ultimate/ui";
+import { cn } from "@ultimate/ui";
 
 type Chip = "green" | "blue" | "orange" | "violet";
 

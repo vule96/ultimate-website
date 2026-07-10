@@ -6,9 +6,9 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/cn";
+} from "@ultimate/ui";
+import { buttonVariants } from "@ultimate/ui";
+import { cn } from "@ultimate/ui";
 
 export function DeleteDialog({
   open,

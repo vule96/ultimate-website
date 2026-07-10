@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@ultimate/ui";
 import { usePostsListSuspense } from "@/features/posts/queries";
 import { StatusBadge } from "@/features/posts/components/StatusBadge";
 
