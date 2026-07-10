@@ -76,3 +76,36 @@ Mỗi module trong `internal/modules/<name>`:
 cookie httpOnly, allowlist email qua env. Xem `.env.example` (`GOOGLE_*`, `ADMIN_ALLOWLIST`,
 `SESSION_COOKIE_*`) và spec `docs/superpowers/specs/2026-07-05-slice2-auth-oauth-design.md`
 (kèm hướng dẫn tạo Google OAuth client).
+
+## Object storage (ảnh) — MinIO (dev) / Cloudflare R2 (prod)
+
+Upload ảnh theo **presigned PUT**: admin xin `POST /api/v1/media/presign` (cần đăng nhập) →
+browser **PUT thẳng** lên storage (không qua core) → lưu `public_url` vào bài. Cấu hình qua
+`STORAGE_*` (map vào `S3Config`) — **đổi môi trường chỉ đổi env, không sửa code**.
+
+**Quy ước:** local dev = **MinIO**, production = **R2**.
+
+- **Dev (MinIO):** `docker compose up -d` tự tạo bucket `blog-media` (public-read). `.env` mặc
+  định đã trỏ MinIO — không cần chỉnh. Console MinIO: <http://localhost:9001> (minioadmin/minioadmin).
+- **Đổi qua R2 để test tại local:** trong `.env`, comment khối MinIO + bỏ comment khối R2 (xem `.env.example`), rồi restart core.
+
+### Thiết lập R2 (prod)
+
+1. Cloudflare dashboard → **R2** → Enable (free tier: 10 GB + egress miễn phí).
+2. **Create bucket** `blog-media`.
+3. **Manage R2 API Tokens → Create Account API Token** (không phải User token — service dùng lâu dài),
+   permission **Object Read & Write**, scope bucket `blog-media` → lấy **Access Key ID** + **Secret Access Key**.
+4. Lấy **Account ID** → endpoint `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
+5. Bucket → **Settings → Public access**: bật **r2.dev** (chỉ dev, rate-limited) hoặc gắn **Custom Domain**
+   (prod — mới có CDN cache/WAF thật) → dùng làm `STORAGE_PUBLIC_URL`.
+6. Bucket → **Settings → CORS Policy** (BẮT BUỘC — browser PUT trực tiếp):
+
+   ```json
+   [{ "AllowedOrigins": ["https://admin.tenban.com"], "AllowedMethods": ["PUT","GET"],
+      "AllowedHeaders": ["*"], "ExposeHeaders": ["ETag"], "MaxAgeSeconds": 3600 }]
+   ```
+
+7. Set `STORAGE_*` = R2 qua **env thật** của nền tảng deploy (KHÔNG commit secret).
+
+> `apps/web` cần `NEXT_PUBLIC_MEDIA_HOST` = host của `STORAGE_PUBLIC_URL` (cho `next/image`). Xem `apps/web/README.md`.
+> Giới hạn ảnh: PNG/JPEG/WebP/GIF, ≤ 5 MB (`media/domain.go`).
