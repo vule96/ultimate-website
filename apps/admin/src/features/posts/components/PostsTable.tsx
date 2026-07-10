@@ -7,7 +7,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import type { Post } from "@ultimate/types";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ultimate/ui";
 import { DataTable } from "@/components/ui/data-table";
 import { StatusBadge } from "./StatusBadge";
 

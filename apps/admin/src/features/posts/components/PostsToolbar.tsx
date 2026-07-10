@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
 import type { Tag, PostStatus } from "@ultimate/types";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@ultimate/ui";
+import { Button } from "@ultimate/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ultimate/ui";
 
 const ALL = "ALL"; // sentinel: radix Select không cho phép value rỗng
 

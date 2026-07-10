@@ -36,7 +36,8 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
   Spec: `docs/superpowers/specs/2026-07-07-slice3d-tanstack-router-design.md`.
 - ✅ **Slice 3e — DONE**: bảng dữ liệu dùng **TanStack Table** qua component `DataTable<TData>` chung (headless, manual server-side sort/pagination/filter, column visibility toggle); `PostsTable` migrate sang column defs typed (`createColumnHelper`, module augmentation `TableMeta.onDelete`); core thêm `sort`/`order` (whitelist ORDER BY); sort state ở URL search.
   Spec: `docs/superpowers/specs/2026-07-08-slice3e-tanstack-table-design.md`.
-- ⏳ Slice 4: `apps/web` (Next.js) public.
+- ✅ **Slice 4 — DONE**: `packages/ui` (`@ultimate/ui`) chung — shadcn + theme, `apps/admin` đã migrate sang dùng chung; `apps/web` — Next.js 14 (App Router, React 18, Tailwind v3) blog công khai: trang chủ (danh sách + phân trang), `/blog/[slug]`, `/tags`, `/tags/[slug]`; SSG + ISR (`revalidate = 60`); luôn ép `status=PUBLISHED` và `notFound()` cho bài non-PUBLISHED (kể cả biết slug DRAFT); SEO đầy đủ — metadata/OG mỗi bài, `sitemap.xml`, `/rss.xml`, `robots.txt`. 19 test web + 30 test admin xanh; build @ultimate/ui (typecheck) + admin + web xanh. Verify E2E qua trình duyệt (cần docker + core + seed dữ liệu) còn **PENDING** — xem `apps/web/README.md`.
+  Spec: `docs/superpowers/specs/2026-07-10-slice4-web-public-blog-design.md`.
 
 **Storage & editor (từ 3c):**
 - Object storage S3-compatible: dev dùng **MinIO** (docker-compose, bucket `blog-media` public-read), prod **Cloudflare R2** — chỉ đổi env `STORAGE_*`. Upload theo **presigned PUT** (client upload thẳng, không qua core).

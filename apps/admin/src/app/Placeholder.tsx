@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@ultimate/ui";
 
 export function Placeholder({ title }: { title: string }) {
   return (

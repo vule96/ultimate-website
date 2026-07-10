@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { cn } from "@ultimate/ui";
 
 /** Nút toolbar dùng chung cho cả Tiptap và Lexical (icon + trạng thái active). */
 export function ToolbarButton({

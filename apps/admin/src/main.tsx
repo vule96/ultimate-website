@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { ToastProvider } from "@/components/ui/toast";
+import { ToastProvider } from "@ultimate/ui";
 import { queryClient } from "@/lib/queryClient";
 import { routeTree } from "./routeTree.gen";
 import "@/styles/index.css";

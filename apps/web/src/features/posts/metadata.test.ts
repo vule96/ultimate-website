@@ -1,0 +1,42 @@
+import { describe, it, expect } from "vitest";
+import { PostSchema } from "@ultimate/types";
+import { buildPostMetadata } from "./metadata";
+
+const post = PostSchema.parse({
+  id: "a0000000-0000-4000-8000-000000000000",
+  title: "Tiêu đề gốc",
+  slug: "tieu-de",
+  content_json: {},
+  content_html: "<p/>",
+  excerpt: "tóm tắt bài",
+  cover_image: "https://cdn.example/x.png",
+  status: "PUBLISHED",
+  meta_title: null,
+  meta_desc: null,
+  published_at: "2026-07-01T00:00:00Z",
+  tags: [],
+  created_at: "2026-07-01T00:00:00Z",
+  updated_at: "2026-07-01T00:00:00Z",
+});
+
+describe("buildPostMetadata", () => {
+  it("dùng title khi meta_title null; description = excerpt", () => {
+    const m = buildPostMetadata(post);
+    expect(m.title).toBe("Tiêu đề gốc");
+    expect(m.description).toBe("tóm tắt bài");
+  });
+  it("ưu tiên meta_title/meta_desc khi có", () => {
+    const m = buildPostMetadata({ ...post, meta_title: "SEO title", meta_desc: "SEO desc" });
+    expect(m.title).toBe("SEO title");
+    expect(m.description).toBe("SEO desc");
+  });
+  it("OG có type article, cover_image, publishedTime", () => {
+    const m = buildPostMetadata(post);
+    expect(m.openGraph?.type).toBe("article");
+    expect(JSON.stringify(m.openGraph?.images)).toContain("https://cdn.example/x.png");
+  });
+  it("canonical trỏ /blog/<slug>", () => {
+    const m = buildPostMetadata(post);
+    expect(m.alternates?.canonical).toContain("/blog/tieu-de");
+  });
+});
