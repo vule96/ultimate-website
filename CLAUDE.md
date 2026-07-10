@@ -6,6 +6,8 @@ Dự án website blog cá nhân (FE + BE + AI). Xây dựng mới từ đầu.
 
 Tài liệu phân tích kiến trúc, stack, chi phí và roadmap đầy đủ nằm ở:
 **`docs/personal-blog-ai-analysis.md`** (đọc file này trước khi bắt đầu bất kỳ việc gì).
+Bản xem đẹp (Artifact, UTF-8, sáng/tối): `https://claude.ai/code/artifact/8104b3d2-efe4-4736-8f9f-8587e71253fe`
+(`docs/personal-blog-ai-analysis.html` là **fragment kiểu Artifact** — mở raw sẽ lỗi font; publish qua Artifact mới đúng.)
 
 Tóm tắt định hướng đã chốt:
 - Mục tiêu: cân bằng học + sản phẩm dùng thật. Ngân sách ~15–40 USD/tháng.
