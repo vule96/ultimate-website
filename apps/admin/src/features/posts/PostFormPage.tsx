@@ -45,6 +45,17 @@ export function PostFormPage({ slug }: { slug?: string }) {
   const updateMutation = useUpdatePost();
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Bọc uploadImage: nếu upload lỗi (vd CORS/mạng/kích thước) thì hiện toast thay vì
+  // nuốt im lặng trong editor — người dùng biết vì sao ảnh không chèn được.
+  const handleUploadImage = async (file: File): Promise<string> => {
+    try {
+      return await uploadImage(file);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Tải ảnh lên thất bại.", "error");
+      throw e;
+    }
+  };
+
   const {
     register,
     handleSubmit,
@@ -154,7 +165,7 @@ export function PostFormPage({ slug }: { slug?: string }) {
                     setValue("content", html, { shouldDirty: true });
                     setContentJson(json);
                   }}
-                  uploadImage={uploadImage}
+                  uploadImage={handleUploadImage}
                 />
               </Field>
             </CardContent>
