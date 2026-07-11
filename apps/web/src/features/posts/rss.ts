@@ -12,7 +12,7 @@ function escapeXml(s: string): string {
 export function buildRssXml(posts: Post[], siteUrl: string, siteName: string): string {
   const items = posts
     .map((p) => {
-      const link = `${siteUrl}/blog/${p.slug}`;
+      const link = escapeXml(`${siteUrl}/blog/${p.slug}`);
       const pubDate = p.published_at ? new Date(p.published_at).toUTCString() : "";
       return [
         "    <item>",
@@ -27,13 +27,20 @@ export function buildRssXml(posts: Post[], siteUrl: string, siteName: string): s
         .join("\n");
     })
     .join("\n");
+
+  const latest = posts.find((p) => p.published_at)?.published_at;
+  const lastBuild = latest ? new Date(latest).toUTCString() : "";
+
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0">',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
     "  <channel>",
     `    <title>${escapeXml(siteName)}</title>`,
-    `    <link>${siteUrl}</link>`,
+    `    <link>${escapeXml(siteUrl)}</link>`,
+    `    <atom:link rel="self" href="${escapeXml(siteUrl + "/rss.xml")}" type="application/rss+xml" />`,
     `    <description>${escapeXml(siteName)}</description>`,
+    "    <language>vi</language>",
+    lastBuild ? `    <lastBuildDate>${lastBuild}</lastBuildDate>` : "",
     items,
     "  </channel>",
     "</rss>",
