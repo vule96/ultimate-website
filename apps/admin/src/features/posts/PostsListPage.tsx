@@ -66,6 +66,11 @@ export function PostsListPage() {
       onSuccess: () => {
         toast(`Đã xoá “${toDelete.title}”.`);
         setToDelete(null);
+        // Nếu vừa xoá item cuối của trang cuối → lùi về trang cuối mới (tránh trang rỗng).
+        const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
+        if (search.page > newTotalPages) {
+          void navigate({ search: (p) => ({ ...p, page: newTotalPages }) });
+        }
       },
       onError: (err) => toast(err instanceof ApiError ? err.message : "Xoá thất bại.", "error"),
     });
