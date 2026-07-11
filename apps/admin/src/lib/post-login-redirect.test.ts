@@ -15,6 +15,12 @@ describe("post-login redirect", () => {
     savePostLoginRedirect("http://evil.com");
     expect(takePostLoginRedirect()).toBeNull();
   });
+  it("bỏ backslash trick (protocol-relative qua '\\')", () => {
+    savePostLoginRedirect("/\\evil.com");
+    expect(takePostLoginRedirect()).toBeNull();
+    savePostLoginRedirect("/a\\b");
+    expect(takePostLoginRedirect()).toBeNull();
+  });
   it("ctx trống → null", () => {
     expect(takePostLoginRedirect()).toBeNull();
   });
