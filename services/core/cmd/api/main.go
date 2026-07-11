@@ -18,6 +18,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
 )
 
 func main() {
@@ -83,8 +84,10 @@ func main() {
 	authHandler.RegisterRoutes(r)
 
 	api := r.Group("/api/v1")
-	postsHandler.RegisterRoutes(api, auth.RequireAuth(sm)) // bảo vệ endpoint ghi
-	mediaHandler.RegisterRoutes(api, auth.RequireAuth(sm)) // presign cần đăng nhập
+	// Endpoint ghi: ép Content-Type JSON (chống CSRF simple-request) rồi mới check auth.
+	writeMW := []gin.HandlerFunc{jsonmw.RequireJSON(), auth.RequireAuth(sm)}
+	postsHandler.RegisterRoutes(api, writeMW...)
+	mediaHandler.RegisterRoutes(api, writeMW...)
 
 	if cfg.GoogleClientID == "" || cfg.AdminAllowlist == "" {
 		log.Warn("auth not fully configured — set GOOGLE_CLIENT_ID/SECRET and ADMIN_ALLOWLIST to enable login")
