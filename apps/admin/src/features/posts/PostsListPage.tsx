@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import type { OnChangeFn, SortingState } from "@tanstack/react-table";
-import type { Post, PostStatus } from "@ultimate/types";
+import type { Post } from "@ultimate/types";
 import { Button } from "@ultimate/ui";
 import { useToast } from "@ultimate/ui";
 import { ApiError } from "@/lib/apiClient";
@@ -21,7 +21,7 @@ export function PostsListPage() {
   const postsQuery = usePostsListSuspense({
     page: search.page,
     pageSize: PAGE_SIZE,
-    status: search.status as PostStatus | "",
+    status: search.status,
     tag: search.tag,
     q: search.q,
     sort: search.sort,
@@ -66,6 +66,11 @@ export function PostsListPage() {
       onSuccess: () => {
         toast(`Đã xoá “${toDelete.title}”.`);
         setToDelete(null);
+        // Nếu vừa xoá item cuối của trang cuối → lùi về trang cuối mới (tránh trang rỗng).
+        const newTotalPages = Math.max(1, Math.ceil((total - 1) / PAGE_SIZE));
+        if (search.page > newTotalPages) {
+          void navigate({ search: (p) => ({ ...p, page: newTotalPages }) });
+        }
       },
       onError: (err) => toast(err instanceof ApiError ? err.message : "Xoá thất bại.", "error"),
     });
@@ -86,7 +91,7 @@ export function PostsListPage() {
         onSearchChange={setSearchInput}
         status={search.status}
         onStatusChange={(v) =>
-          void navigate({ search: (p) => ({ ...p, status: v as PostStatus | "", page: 1 }) })
+          void navigate({ search: (p) => ({ ...p, status: v, page: 1 }) })
         }
         tag={search.tag}
         onTagChange={(v) => void navigate({ search: (p) => ({ ...p, tag: v, page: 1 }) })}

@@ -1,4 +1,5 @@
 import { Plus, Bell, LogOut } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@ultimate/ui";
 import { Avatar, AvatarFallback } from "@ultimate/ui";
 import { useAuth, useSignOut } from "@/features/auth/hooks";
@@ -13,9 +14,11 @@ export function Topbar({ title }: { title: string }) {
         <Button variant="ghost" size="icon" aria-label="Thông báo">
           <Bell className="size-5 text-muted-foreground" />
         </Button>
-        <Button>
-          <Plus />
-          Thêm bài viết
+        <Button asChild>
+          <Link to="/posts/new">
+            <Plus />
+            Thêm bài viết
+          </Link>
         </Button>
         <Avatar>
           <AvatarFallback>{(user?.email ?? "A").charAt(0).toUpperCase()}</AvatarFallback>

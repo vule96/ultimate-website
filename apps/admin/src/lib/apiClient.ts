@@ -59,7 +59,11 @@ export async function apiFetch<T>(
     throw new ApiError(res.status, code, message);
   }
 
-  if (schema === null || res.status === 204) return;
+  if (schema === null) return;
+  // Có schema nhưng 204 (không body) là vi phạm hợp đồng — báo lỗi thay vì trả undefined as T.
+  if (res.status === 204) {
+    throw new ApiSchemaError(path, new Error("expected response body but got 204"));
+  }
 
   const json: unknown = await res.json();
   const parsed = schema.safeParse(json);

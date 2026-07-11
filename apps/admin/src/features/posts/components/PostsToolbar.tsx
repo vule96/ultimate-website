@@ -30,8 +30,8 @@ export function PostsToolbar({
 }: {
   search: string;
   onSearchChange: (v: string) => void;
-  status: string;
-  onStatusChange: (v: string) => void;
+  status: PostStatus | "";
+  onStatusChange: (v: PostStatus | "") => void;
   tag: string;
   onTagChange: (v: string) => void;
   tags: Tag[];
@@ -48,7 +48,10 @@ export function PostsToolbar({
         />
       </div>
 
-      <Select value={status || ALL} onValueChange={(v) => onStatusChange(v === ALL ? "" : v)}>
+      <Select
+        value={status || ALL}
+        onValueChange={(v) => onStatusChange(v === ALL ? "" : (v as PostStatus))}
+      >
         <SelectTrigger className="w-[160px]">
           <SelectValue placeholder="Trạng thái" />
         </SelectTrigger>

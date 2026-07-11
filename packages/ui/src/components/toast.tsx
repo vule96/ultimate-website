@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((t) => (
           <div
             key={t.id}
-            role="status"
+            role={t.variant === "error" ? "alert" : "status"}
             className={cn(
               "flex items-start gap-2 rounded-lg border bg-card p-3 text-sm shadow-card",
               t.variant === "success" ? "border-chip-green/30" : "border-red-500/30",

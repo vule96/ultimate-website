@@ -1,7 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { listTags } from "@/features/posts/api";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Chủ đề",
+  description: "Tất cả chủ đề trên blog.",
+};
 
 export default async function TagsPage() {
   const tags = await listTags().catch(() => []);

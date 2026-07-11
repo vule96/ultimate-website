@@ -20,14 +20,7 @@ import {
   DropdownMenuTrigger,
   cn,
 } from "@ultimate/ui";
-
-// Cho phép truyền handler typed qua table.options.meta (thay closure lỏng).
-declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface TableMeta<TData extends unknown> {
-    onDelete: (row: TData) => void;
-  }
-}
+import "@/lib/table-meta"; // module augmentation TableMeta.onDelete?
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[];
@@ -96,8 +89,15 @@ export function DataTable<TData>({
                 {hg.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sorted = header.column.getIsSorted();
+                  const ariaSort = !canSort
+                    ? undefined
+                    : sorted === "asc"
+                      ? "ascending"
+                      : sorted === "desc"
+                        ? "descending"
+                        : "none";
                   return (
-                    <th key={header.id} className="px-4 py-3 font-medium">
+                    <th key={header.id} className="px-4 py-3 font-medium" aria-sort={ariaSort}>
                       {header.isPlaceholder ? null : canSort ? (
                         <button
                           type="button"

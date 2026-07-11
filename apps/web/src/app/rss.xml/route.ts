@@ -5,7 +5,8 @@ import { SITE_URL, SITE_NAME } from "@/lib/config";
 export const revalidate = 60;
 
 export async function GET() {
-  const posts = await listAllPublished().catch(() => []);
+  // Để lỗi throw (ISR giữ feed tốt cuối) — không publish feed rỗng khi core down.
+  const posts = await listAllPublished();
   const xml = buildRssXml(posts, SITE_URL, SITE_NAME);
   return new Response(xml, {
     headers: { "Content-Type": "application/xml; charset=utf-8" },

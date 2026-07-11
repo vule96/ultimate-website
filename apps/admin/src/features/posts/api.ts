@@ -11,6 +11,7 @@ import {
   type PostSortField,
   type SortOrder,
   type UpsertPostInput,
+  type PostId,
 } from "@ultimate/types";
 import { apiFetch } from "@/lib/apiClient";
 
@@ -43,12 +44,20 @@ export function buildPostsQuery(params: ListPostsParams): string {
   return s ? `?${s}` : "";
 }
 
-export function listPosts(params: ListPostsParams): Promise<PostListResponse> {
-  return apiFetch(`/api/v1/posts${buildPostsQuery(params)}`, PostListResponseSchema);
+export function listPosts(params: ListPostsParams, signal?: AbortSignal): Promise<PostListResponse> {
+  return apiFetch(
+    `/api/v1/posts${buildPostsQuery(params)}`,
+    PostListResponseSchema,
+    signal ? { signal } : undefined,
+  );
 }
 
-export function getPostBySlug(slug: string): Promise<Post> {
-  return apiFetch(`/api/v1/posts/${encodeURIComponent(slug)}`, PostSchema);
+export function getPostBySlug(slug: string, signal?: AbortSignal): Promise<Post> {
+  return apiFetch(
+    `/api/v1/posts/${encodeURIComponent(slug)}`,
+    PostSchema,
+    signal ? { signal } : undefined,
+  );
 }
 
 export function fetchStats(): Promise<PostStats> {
@@ -66,7 +75,7 @@ export function createPost(input: UpsertPostInput): Promise<Post> {
   });
 }
 
-export function updatePost(id: string, input: UpsertPostInput): Promise<Post> {
+export function updatePost(id: PostId, input: UpsertPostInput): Promise<Post> {
   return apiFetch(`/api/v1/posts/${encodeURIComponent(id)}`, PostSchema, {
     method: "PUT",
     body: JSON.stringify(input),

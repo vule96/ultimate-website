@@ -16,8 +16,10 @@ export function useSignOut() {
     try {
       await logout();
     } finally {
-      qc.clear();
+      // Navigate trước, clear cache sau — tránh observer _authed refetch → 401 flash
+      // đua với điều hướng (A9).
       await navigate({ to: "/login" });
+      qc.clear();
     }
   };
 }
