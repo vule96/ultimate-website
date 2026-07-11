@@ -6,7 +6,7 @@ import {
   useQueryClient,
   keepPreviousData,
 } from "@tanstack/react-query";
-import type { UpsertPostInput } from "@ultimate/types";
+import type { UpsertPostInput, PostId } from "@ultimate/types";
 import {
   listPosts,
   getPostBySlug,
@@ -18,6 +18,7 @@ import {
   type ListPostsParams,
 } from "./api";
 import { postKeys } from "./keys";
+import { tagKeys } from "@/features/tags/keys";
 
 // --- queryOptions (dùng chung cho route loader + component) ---
 export const postsListQueryOptions = (params: ListPostsParams) =>
@@ -46,19 +47,25 @@ export const useStatsSuspense = () => useSuspenseQuery(statsQueryOptions());
 export const useTimeseriesSuspense = (months = 8) =>
   useSuspenseQuery(timeseriesQueryOptions(months));
 
+// Tạo/sửa post có thể tạo tag mới → invalidate cả posts lẫn tags (A5).
+function invalidatePostsAndTags(qc: ReturnType<typeof useQueryClient>) {
+  void qc.invalidateQueries({ queryKey: postKeys.all });
+  void qc.invalidateQueries({ queryKey: tagKeys.all });
+}
+
 export function useCreatePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpsertPostInput) => createPost(input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: postKeys.all }),
+    onSuccess: () => invalidatePostsAndTags(qc),
   });
 }
 
 export function useUpdatePost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpsertPostInput }) => updatePost(id, input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: postKeys.all }),
+    mutationFn: ({ id, input }: { id: PostId; input: UpsertPostInput }) => updatePost(id, input),
+    onSuccess: () => invalidatePostsAndTags(qc),
   });
 }
 

@@ -10,8 +10,3 @@ export const postKeys = {
   stats: () => [...postKeys.all, "stats"] as const,
   timeseries: (months: number) => [...postKeys.all, "timeseries", months] as const,
 };
-
-export const tagKeys = {
-  all: ["tags"] as const,
-  list: () => [...tagKeys.all, "list"] as const,
-};

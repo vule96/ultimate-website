@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import type { OnChangeFn, SortingState } from "@tanstack/react-table";
-import type { Post, PostStatus } from "@ultimate/types";
+import type { Post } from "@ultimate/types";
 import { Button } from "@ultimate/ui";
 import { useToast } from "@ultimate/ui";
 import { ApiError } from "@/lib/apiClient";
@@ -21,7 +21,7 @@ export function PostsListPage() {
   const postsQuery = usePostsListSuspense({
     page: search.page,
     pageSize: PAGE_SIZE,
-    status: search.status as PostStatus | "",
+    status: search.status,
     tag: search.tag,
     q: search.q,
     sort: search.sort,
@@ -86,7 +86,7 @@ export function PostsListPage() {
         onSearchChange={setSearchInput}
         status={search.status}
         onStatusChange={(v) =>
-          void navigate({ search: (p) => ({ ...p, status: v as PostStatus | "", page: 1 }) })
+          void navigate({ search: (p) => ({ ...p, status: v, page: 1 }) })
         }
         tag={search.tag}
         onTagChange={(v) => void navigate({ search: (p) => ({ ...p, tag: v, page: 1 }) })}

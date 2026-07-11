@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { PostSortFieldSchema, SortOrderSchema } from "@ultimate/types";
+import { PostSortFieldSchema, SortOrderSchema, PostStatusSchema } from "@ultimate/types";
 import { PostsListPage } from "@/features/posts/PostsListPage";
 import { postsListQueryOptions } from "@/features/posts/queries";
 import { tagsQueryOptions } from "@/features/tags/api";
@@ -8,7 +8,7 @@ import { RouteError, RoutePending } from "@/app/route-states";
 
 const searchSchema = z.object({
   page: z.number().int().min(1).default(1).catch(1),
-  status: z.enum(["DRAFT", "PENDING_APPROVAL", "PUBLISHED"]).or(z.literal("")).default("").catch(""),
+  status: PostStatusSchema.or(z.literal("")).default("").catch(""),
   tag: z.string().default("").catch(""),
   q: z.string().default("").catch(""),
   sort: PostSortFieldSchema.default("created_at").catch("created_at"),
