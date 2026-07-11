@@ -24,6 +24,8 @@ Tóm tắt định hướng đã chốt:
 
 Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/superpowers/specs/`).
 
+> **🩺 Issue tracker (2026-07-11):** Senior code review toàn codebase (Go core B+, admin B+, web B) — findings đầy đủ + plan "Slice 5: Hardening" ở **`docs/reviews/2026-07-11-senior-code-review.md`**. Đây là **nơi note & track mọi issue**: khi resolve issue nào phải đánh dấu `✅ RESOLVED (ngày, commit)` ngay tại finding đó trong file; issue mới phát hiện cũng note vào đây. 3 việc khẩn nhất: leak DRAFT qua API public (C1), mất dữ liệu form khi background refetch (A1), pagination hỏng ở production web (W1).
+>
 > **📍 Điểm hiện tại (2026-07-10):** **Phase 1 HOÀN TẤT** (Slice 1→4). Blog công khai đã **verify chạy live** (core + web + dữ liệu seed thật). Storage **R2 cấu hình & verify** end-to-end (upload ảnh qua admin OK). Quy ước storage: **dev = MinIO / prod = R2**. **Bước kế tiếp CHƯA chốt** — chọn **Deploy production** hoặc **Phase 2 (AI)**; khi chốt → brainstorm → spec như mọi slice. Roadmap trực quan: Artifact "Status & Roadmap" (`https://claude.ai/code/artifact/78ac518f-fc25-44d0-9385-d85dfbfde92e`).
 
 - ✅ **Slice 1 — DONE**: nền móng Go core + module `posts` (CRUD + tags), chạy end-to-end.
@@ -62,3 +64,4 @@ Tóm tắt nhanh: `docker compose up -d` → `cd services/core && ./atlas.exe mi
 - **Tài liệu:** file `.md` là source of truth. Mỗi lần thay đổi yêu cầu → sửa `.md` trước, rồi HỎI trước khi cập nhật bản `.html`/Artifact.
 - **Quy trình dev:** mỗi slice đi qua brainstorm → spec (`docs/superpowers/specs/`) → TDD → verify end-to-end → commit.
 - **Cập nhật tiến độ:** sau mỗi slice/milestone → cập nhật mục **"Trạng thái hiện tại"** + dòng **"📍 Điểm hiện tại"** trong `CLAUDE.md` (để phiên làm việc mới nắm ngay context — dự án thường đổi session).
+- **Issue tracking:** mọi issue/finding note vào **`docs/reviews/2026-07-11-senior-code-review.md`** (issue mới → thêm vào mục tương ứng theo mảng + severity, đặt mã mới nối tiếp C/H/M/L, A, W). Khi resolve issue nào → đánh dấu **`✅ RESOLVED (YYYY-MM-DD, commit <hash>)`** ngay tại finding đó (không xoá nội dung finding).
