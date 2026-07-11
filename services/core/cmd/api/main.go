@@ -62,8 +62,9 @@ func main() {
 	})
 
 	// Wiring module auth.
+	allowlist := auth.NewAllowlist(cfg.AdminAllowlist)
 	provider := auth.NewGoogleProvider(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
-	authSvc := auth.NewService(provider, auth.NewAllowlist(cfg.AdminAllowlist))
+	authSvc := auth.NewService(provider, allowlist)
 	authHandler := auth.NewHandler(authSvc, sm, cfg.AppBaseURL)
 
 	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
@@ -105,7 +106,7 @@ func main() {
 
 	api := r.Group("/api/v1")
 	// Endpoint ghi: ép Content-Type JSON (chống CSRF simple-request) rồi mới check auth.
-	writeMW := []gin.HandlerFunc{jsonmw.RequireJSON(), auth.RequireAuth(sm)}
+	writeMW := []gin.HandlerFunc{jsonmw.RequireJSON(), auth.RequireAuth(sm, allowlist)}
 	postsHandler.RegisterRoutes(api, writeMW...)
 	mediaHandler.RegisterRoutes(api, writeMW...)
 

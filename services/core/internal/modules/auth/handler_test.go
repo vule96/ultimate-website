@@ -25,7 +25,7 @@ func newAuthServer(t *testing.T, fp OAuthProvider, allow string) (*httptest.Serv
 	svc := NewService(fp, NewAllowlist(allow))
 	eng := gin.New()
 	NewHandler(svc, sm, appDone).RegisterRoutes(eng)
-	eng.GET("/protected", RequireAuth(sm), func(c *gin.Context) { c.String(http.StatusOK, "ok") })
+	eng.GET("/protected", RequireAuth(sm, NewAllowlist(allow)), func(c *gin.Context) { c.String(http.StatusOK, "ok") })
 
 	srv := httptest.NewServer(sm.LoadAndSave(eng))
 	t.Cleanup(srv.Close)

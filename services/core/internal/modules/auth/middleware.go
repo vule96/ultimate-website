@@ -22,11 +22,21 @@ func IsAuthenticated(sm *scs.SessionManager) func(ctx context.Context) bool {
 	}
 }
 
-// RequireAuth chặn request nếu chưa đăng nhập (session không có admin_email).
-func RequireAuth(sm *scs.SessionManager) gin.HandlerFunc {
+// RequireAuth chặn request nếu chưa đăng nhập, và re-check allowlist mỗi request
+// (M2): email bị gỡ khỏi ADMIN_ALLOWLIST thì session mất hiệu lực ngay (destroy),
+// không phải đợi hết hạn 7 ngày.
+func RequireAuth(sm *scs.SessionManager, allowlist *Allowlist) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if sm.GetString(c.Request.Context(), sessionKeyAdminEmail) == "" {
+		ctx := c.Request.Context()
+		email := sm.GetString(ctx, sessionKeyAdminEmail)
+		if email == "" {
 			httperr.Write(c, http.StatusUnauthorized, "UNAUTHORIZED", "authentication required")
+			c.Abort()
+			return
+		}
+		if !allowlist.IsAllowed(email) {
+			_ = sm.Destroy(ctx) // session không còn giá trị; lỗi destroy không chặn việc trả 401
+			httperr.Write(c, http.StatusUnauthorized, "UNAUTHORIZED", "email no longer permitted")
 			c.Abort()
 			return
 		}
