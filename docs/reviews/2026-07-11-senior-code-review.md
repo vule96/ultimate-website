@@ -18,13 +18,15 @@
 | Tổng thể | **B+** | Kiến trúc & kỷ luật layer/type tốt hơn mặt bằng chung rõ rệt; vấn đề nằm ở **các đường biên chưa siết** (trust boundary API, error-path auth, render mode thật của Next). |
 | Go core | **B+** | Hexagonal chuẩn, OAuth/transaction/whitelist đúng; **1 critical** (leak DRAFT qua API public) + thiếu production hygiene (shutdown, timeout, logging). |
 | Admin SPA | **B+** | Query/router/code-split textbook; lỗi dồn ở auth error-path và form (**bug mất dữ liệu khi background refetch**), vài chỗ TS "hở". |
-| Web Next.js | **B** | Thói quen tốt (Zod boundary, ép PUBLISHED, escape XML); nhưng **"SSG + ISR" sai một phần trong thực tế** — pagination query-string trên route SSG hỏng ở production. |
+| Web Next.js | **B → A- (sau 5b+5c)** | Đã fix pagination SSG (W1/W2), SEO đầy đủ (metadata/JSON-LD/OG/RSS), sanitize + CSP, `next/font`. |
 
 **3 việc phải làm trước mọi thứ:** ✅ (1) visibility policy ở core (chặn leak DRAFT) + ✅ (2) fix prefill clobbering ở PostFormPage (mất dữ liệu) + ✅ (3) path-based pagination ở web (W1) — **tất cả DONE (Slice 5a + 5b, 2026-07-11)**.
 
 > **✅ Slice 5a — Security & Data-loss (đợt 1) HOÀN TẤT (2026-07-11).** Resolved: C1, H1, H4, A1, A4, M7 (+ L11 một phần). Spec/plan: `...slice5a-security-hardening...`.
 >
-> **✅ Slice 5b — Production-readiness (đợt 2) HOÀN TẤT (2026-07-11).** Resolved: W1, W2, H2, H3, A2, A3 (+ M6, L7). Spec `docs/superpowers/specs/2026-07-11-slice5b-prod-readiness-design.md`; plan `docs/superpowers/plans/2026-07-11-slice5b-prod-readiness.md`. Còn mở cho **đợt 3 (polish)**: W3 (sitemap/rss throw), W4–W6 (SEO tag metadata/JSON-LD/OG, not-found/error pages), W7 (sanitize + CSP), font `next/font`, TS tightening admin (A5–A8), M1–M5 core, outbox (chuẩn bị Phase 2).
+> **✅ Slice 5b — Production-readiness (đợt 2) HOÀN TẤT (2026-07-11).** Resolved: W1, W2, H2, H3, A2, A3 (+ M6, L7).
+>
+> **✅ Slice 5c — Polish FE (đợt 3, nhóm A) HOÀN TẤT (2026-07-11).** Resolved: W3, W4, W5, W6, W7 + low SEO (OG fallback, RSS enrich, cover sizes, next.config gate) + font `next/font` + A5, A6, A7, A8, A9 + admin low (tagKeys, PostId, apiClient 204/rename, toast role, aria-sort, clamp page, Topbar link). Spec/plan `...slice5c-polish-fe...`. Còn mở → **Slice 5d (nhóm B, backend robustness):** M1–M5 core (tag ON CONFLICT, session allowlist recheck, route shadowing, body-size limit, optimistic locking) + outbox (chuẩn bị Phase 2). Vài micro-opt/defer: reading-progress rAF, slim list endpoint, `_authed.index` void-catch, Lexical toolbar active state, media orphan cleanup.
 
 ---
 
@@ -107,24 +109,29 @@
 
 - ✅ **RESOLVED (2026-07-11, commit 59ba496)** — `contentJson` chuyển sang `useRef`, chỉ đọc lúc submit → keystroke editor không re-render form. Test submit gửi đúng content_json mới nhất.
 - **A4 — `contentJson` là `useState`** (`PostFormPage.tsx:72,164-167`) nhưng chỉ đọc lúc submit → mỗi keystroke trong rich editor re-render cả form (2 card + Select + toolbar). Optimize thật, không cargo-cult: đổi sang `useRef`. (Cả 2 editor cũng serialize full document → HTML mỗi keystroke — `TiptapEditor.tsx:48`, `LexicalEditor.tsx:96-103`; debounce `onChange` sẽ nhân đôi lợi ích.)
+- ✅ **A5 — RESOLVED (2026-07-11, commit 239f422)** — mutations invalidate thêm `tagKeys.all` (+ chuyển `tagKeys` về `features/tags/keys.ts`).
 - **A5 — Tạo/sửa post có thể tạo tag mới nhưng chỉ invalidate `postKeys.all`** (`features/posts/queries.ts:49-71`) → tags list stale, tag mới không hiện ở filter. **Fix:** invalidate thêm `tagKeys.all`.
+- ✅ **A6 — RESOLVED (2026-07-11, commit f14fcc1)** — `onDelete?` optional + augmentation chuyển ra `lib/table-meta.ts`.
 - **A6 — Module augmentation `TableMeta.onDelete` bắt buộc cho MỌI table** (`components/ui/data-table.tsx:25-30`) — table tiếp theo không có delete phải cấp fake handler. **Fix:** `onDelete?:` + chuyển augmentation ra file riêng.
+- ✅ **A7 — RESOLVED (2026-07-11, commit 239f422)** — toolbar props `PostStatus | ""`, xoá casts, route dùng `PostStatusSchema.or(z.literal(""))`.
 - **A7 — Toolbar erase union `PostStatus` về `string`** (`PostsToolbar.tsx:33-36`) ép parent `as PostStatus | ""` cast (`PostsListPage.tsx:24,89` — cast dòng 24 hoàn toàn thừa vì `validateSearch` đã cho đúng union). Route cũng re-declare enum inline (`routes/_authed.posts.index.tsx:11`) thay vì `PostStatusSchema.or(z.literal(""))` — 2 nguồn sự thật có thể drift. **Fix:** type props bằng union, xoá cả 3 cast.
+- ✅ **A8 — RESOLVED (2026-07-11, commit f14fcc1)** — queryFn forward `{ signal }` vào `listPosts`/`getPostBySlug` → `apiFetch`.
 - **A8 — `apiFetch` không nhận `AbortSignal`** (`lib/apiClient.ts:40`), queryFn không pass `{ signal }` → out-of-order response có thể settle cache stale với `keepPreviousData`. **Fix:** thread `signal` từ `queries.ts:26,31` vào `fetch`.
+- ✅ **A9 — RESOLVED (2026-07-11, commit f14fcc1)** — navigate `/login` trước, `qc.clear()` sau.
 - **A9 — `useSignOut` gọi `qc.clear()` khi component `_authed` còn mounted** (`features/auth/hooks.ts:18-21`) → observer refetch ngay → 401 → flash suspense/error đua với navigate. **Fix:** navigate trước, clear sau.
 
 ### 🟢 Low (tóm tắt)
 
 - Nút "Thêm bài viết" ở Topbar chết (không onClick/link) (`app/Topbar.tsx:16-19`); Bell/search/workspace ở Sidebar cũng inert.
 - `AppShell` map title theo exact path → `/posts/new` hiện "Dashboard" (`app/AppShell.tsx:5-15`).
-- `tagKeys` dead code + đặt sai chỗ (posts sở hữu key của tags) (`features/posts/keys.ts:14-17` vs `features/tags/api.ts:11`).
-- `updatePost(id: string)` không dùng brand `PostId` (`features/posts/api.ts:69,76`) — brand không enforce ở boundary duy nhất quan trọng; fix free vì call site đã pass `Post["id"]`.
-- 204-with-schema trả `undefined as T` (type lie) (`lib/apiClient.ts:62`); class `ApiError` shadow interface `ApiError` trong `packages/types/src/index.ts:110` → rename `ApiErrorBody`.
-- 3 `void ensureQueryData` không catch → unhandled rejection (`routes/_authed.index.tsx:12-14`).
-- Lexical toolbar không có active state (`aria-pressed`) — parity gap với Tiptap (`lexical/LexicalEditor.tsx:172-189`).
-- Media: không dọn ảnh mồ côi, PUT không progress/timeout (`features/media/api.ts`) — ghi TODO sweep server-side.
-- a11y: error toast `role="status"` nên là `alert` (`packages/ui/src/components/toast.tsx:54`); sortable `<th>` thiếu `aria-sort` (`data-table.tsx:100`).
-- Xoá item cuối trang cuối → `page` trỏ quá total (`PostsListPage.tsx:63-72`); clamp sau delete.
+- ✅ **RESOLVED (2026-07-11, commit 239f422)** `tagKeys` dead code + sai chỗ → chuyển `features/tags/keys.ts`, dùng trong `tagsQueryOptions`.
+- ✅ **RESOLVED (2026-07-11, commit f14fcc1)** `updatePost` dùng brand `PostId`.
+- ✅ **RESOLVED (2026-07-11, commit f14fcc1)** 204-with-schema → throw `ApiSchemaError`; interface `ApiError` → `ApiErrorBody`.
+- 3 `void ensureQueryData` không catch → unhandled rejection (`routes/_authed.index.tsx:12-14`). *(chưa làm — minor, để backlog)*
+- Lexical toolbar không có active state (`aria-pressed`) — parity gap với Tiptap (`lexical/LexicalEditor.tsx:172-189`). *(defer — editor parity, ngoài phạm vi 5c)*
+- Media: không dọn ảnh mồ côi, PUT không progress/timeout (`features/media/api.ts`) — ghi TODO sweep server-side. *(defer — thuộc backend/Slice 5d)*
+- ✅ **RESOLVED (2026-07-11, commit b6c6706)** a11y: error toast `role="alert"`; sortable `<th>` thêm `aria-sort`.
+- ✅ **RESOLVED (2026-07-11, commit b6c6706)** Xoá item cuối trang cuối → clamp `page` về trang cuối mới.
 - Test: zero coverage cho code rủi ro nhất (auth guard, PostFormPage submit/prefill — A1 sẽ bị bắt, editors); fixture `as unknown as Post` erase brand → nên có `makePost` factory dùng `PostIdSchema.parse`.
 
 ---
@@ -144,22 +151,27 @@
 
 - ✅ **RESOLVED (2026-07-11, commit 52d937a)** — trang chủ bỏ đọc `searchParams` → static (build log `○ /` thay vì `ƒ /`); soft-404 khi page vượt total. ISR `revalidate=60` giờ có hiệu lực thật.
 - **W2 — Trang chủ render dynamic mỗi request** (`app/page.tsx:10-14` đọc `searchParams` → build log `ƒ /`); `revalidate = 60` (dòng 7) vô hiệu cho ISR; `listPublished` (dòng 15) không error handling → core sập lúc cache miss = visitor thấy 500 mặc định. **Fix:** path-based pagination `/page/[n]` → trang chủ param-less, SSG+ISR thật.
+- ✅ **RESOLVED (2026-07-11, commit 43702e5)** — bỏ `.catch(() => [])` ở sitemap + rss route → lỗi throw, ISR giữ bản tốt cuối.
 - **W3 — Sitemap/RSS rỗng khi core sập lúc revalidate.** `app/sitemap.ts:9-10`, `app/rss.xml/route.ts:8` — `.catch(() => [])` → publish sitemap **rỗng** và cache trong ISR window; crawler thấy cả site biến mất. **Fix:** để throw — revalidation fail thì ISR giữ bản tốt cuối; chỉ nuốt lỗi khi chưa có bản nào (first build).
+- ✅ **RESOLVED (2026-07-11, commit 7cf7f54)** — `generateMetadata` cho `/tags/[slug]` + `/tags/[slug]/page/[n]` (title `#slug`, canonical) + static metadata `/tags`.
 - **W4 — Tag pages không có metadata** (`app/tags/[slug]/page.tsx`, `app/tags/page.tsx`) — mọi trang tag cùng `<title>Ultimate website</title>`, không description/canonical. **Fix:** `generateMetadata({ params })`.
+- ✅ **RESOLVED (2026-07-11, commit 23b09d7)** — JSON-LD `BlogPosting` (escape `<` chống breakout) + cover image `sizes`.
 - **W5 — Không có JSON-LD `BlogPosting`** ở `app/blog/[slug]/page.tsx` — bỏ lỡ rich results; data đã có sẵn tại chỗ (dòng 40).
+- ✅ **RESOLVED (2026-07-11, commit 14f8319)** — `not-found.tsx` + `error.tsx` branded (header/footer từ layout). Verify `/khong-ton-tai` → 404 branded.
 - **W6 — Không có `not-found.tsx`/`error.tsx`/`loading.tsx`** (verify bằng glob) — `notFound()` render 404 trắng không header/footer; error render 500 mặc định. **Fix:** branded pages tái dùng `SiteHeader`/`SiteFooter`.
+- ✅ **RESOLVED (2026-07-11, commit 0b2d569 + 64bede2)** — `rehype-sanitize` server-side (RSC) với allowlist mở rộng cho editor output (chặn `<script>`/`on*`/`javascript:`, giữ table/task-list/`<mark>`/img) + CSP header (không nonce, giữ SSG) qua `next.config` `headers()` + `nosniff`/`Referrer-Policy`. Verify: bài chèn `<script>` render KHÔNG chạy; response có CSP header; security-review sạch.
 - **W7 — Không sanitize + không CSP.** `features/posts/components/post-content.tsx:6` `dangerouslySetInnerHTML` không sanitize (chấp nhận được với single trusted author) NHƯNG `next.config.mjs` không có CSP header nào → admin bị chiếm session (hoặc bug serialize Tiptap/Lexical) = stored XSS trên origin công khai với zero mitigation. **Fix:** `rehype-sanitize`/`sanitize-html` server-side (RSC, chi phí trả 1 lần/ISR render, allowlist tune cho table/task-list/highlight) + CSP qua `headers()` (`script-src 'self'; object-src 'none'` tối thiểu).
 
 ### 🟢 Low (tóm tắt)
 
-- Không OG image fallback khi `cover_image` null nhưng `twitter.card` hardcode `summary_large_image` (`features/posts/metadata.ts:9,24,27`).
-- RSS thiếu `atom:link rel="self"`, `<language>vi</language>`, `<lastBuildDate>`; `<link>/<guid>` chưa escape (`features/posts/rss.ts:30-42`).
-- **Font:** `@fontsource` CSS import thay vì `next/font` → woff2 không preload, FOUT trên serif body (trung tâm visual); CSS dùng weight lẻ (650/680/660/640/620) trong khi chỉ load cut tĩnh 400–700 → browser làm tròn hết về 700, các giá trị đó là ảo (`app/globals.css:1-10,42,67,77,91,139`). **Fix:** `next/font/google` (Lora + Inter) qua CSS variables + chuẩn hoá weight.
-- `reading-progress.tsx:13,27` — setState mỗi scroll event + animate `width`; bản senior: ref + rAF ghi `transform: scaleX()` trực tiếp, không re-render React.
-- Cover image có `priority` nhưng thiếu `sizes` → over-download mobile (`app/blog/[slug]/page.tsx:78-85`); `sizes="(max-width: 42rem) 100vw, 42rem"`.
-- `next.config.mjs:6-7` — pattern `http://localhost` ship cả production; `NEXT_PUBLIC_MEDIA_HOST` unset fail im lặng → gate theo `NODE_ENV` + fail fast lúc build.
-- `listAllPublished` page qua **full payload gồm `content_html`** chỉ để lấy slug/date cho sitemap/RSS/staticParams (`features/posts/api.ts:49-59`) — OK ở scale blog; sau này thêm endpoint slim `fields=`.
-- `?page=` quá trang cuối trả 200 empty-state thay vì 404 → soft-404 space không giới hạn (`app/page.tsx:14`).
+- ✅ **RESOLVED (2026-07-11, commit ee8c4f8)** Không OG image fallback + twitter card cứng → OG fallback `/og-default.png` + card `summary` khi không cover (`features/posts/metadata.ts`).
+- ✅ **RESOLVED (2026-07-11, commit 43702e5)** RSS thiếu `atom:link`/`language`/`lastBuildDate` + chưa escape URL → đã thêm đủ + escape link/guid.
+- ✅ **RESOLVED (2026-07-11, commit 2e58504)** **Font:** migrate `next/font/google` (Lora + Inter) qua CSS variable + chuẩn hoá weight lẻ về cut tĩnh 400–700.
+- `reading-progress.tsx:13,27` — setState mỗi scroll event + animate `width`; bản senior: ref + rAF ghi `transform: scaleX()` trực tiếp, không re-render React. *(chưa làm — micro-opt, để backlog)*
+- ✅ **RESOLVED (2026-07-11, commit 23b09d7)** Cover image thiếu `sizes` → thêm `sizes="(max-width: 42rem) 100vw, 42rem"`.
+- ✅ **RESOLVED (2026-07-11, commit 64bede2)** `next.config` pattern localhost ship prod + media host fail im lặng → gate theo `NODE_ENV` + fail-fast thiếu `NEXT_PUBLIC_MEDIA_HOST` ở prod build.
+- `listAllPublished` page qua **full payload gồm `content_html`** chỉ để lấy slug/date cho sitemap/RSS/staticParams (`features/posts/api.ts:49-59`) — OK ở scale blog; sau này thêm endpoint slim `fields=`. *(chưa làm — scale sau)*
+- ✅ **RESOLVED (2026-07-11, commit 52d937a)** `?page=` quá trang cuối → soft-404 `notFound()` (path-based, đã đóng ở W1/W2).
 - Test: utils thuần cover tốt, nhưng zero test cho `sitemap.ts` (hành vi catch→empty), `format.ts` (readingTime tiếng Việt), boundary `Pagination`. **Bài học chính:** W1/W2 là loại bug unit test không bắt được — cần smoke test production-mode (`next build && next start` + assert `?page=2` trả nội dung khác).
 
 ---
