@@ -10,14 +10,15 @@ export const Route = createFileRoute("/_authed")({
       await context.queryClient.ensureQueryData(authQueryOptions);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        savePostLoginRedirect(location.pathname + location.search);
+        // location.href = chuỗi path+search; .search là object đã parse (không ghép chuỗi được).
+        savePostLoginRedirect(location.href);
         throw redirect({ to: "/login" });
       }
       throw err; // 500/CORS/API sập → error boundary, KHÔNG coi là chưa đăng nhập
     }
     // Vừa đăng nhập xong (quay lại từ OAuth) → nếu có vị trí đã lưu, đưa về đó.
     const back = takePostLoginRedirect();
-    if (back && back !== location.pathname + location.search) {
+    if (back && back !== location.href) {
       throw redirect({ to: back });
     }
   },

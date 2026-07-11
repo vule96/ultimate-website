@@ -8,7 +8,8 @@ function handle401(error: unknown) {
   if (error instanceof ApiError && error.status === 401) {
     const router = getRouter();
     queryClient.setQueryData(["auth", "me"], null);
-    savePostLoginRedirect(router.state.location.pathname + router.state.location.search);
+    // location.href là chuỗi path+search sẵn có; KHÔNG dùng .search (là object đã parse → ném lỗi coerce).
+    savePostLoginRedirect(router.state.location.href);
     void router.navigate({ to: "/login" });
   }
 }
