@@ -12,11 +12,13 @@ import (
 type fakeStorage struct {
 	lastKey         string
 	lastContentType string
+	lastSize        int64
 }
 
-func (f *fakeStorage) PresignPut(_ context.Context, key, contentType string) (string, time.Duration, error) {
+func (f *fakeStorage) PresignPut(_ context.Context, key, contentType string, size int64) (string, time.Duration, error) {
 	f.lastKey = key
 	f.lastContentType = contentType
+	f.lastSize = size
 	return "https://storage.test/" + key + "?sig=x", 15 * time.Minute, nil
 }
 func (f *fakeStorage) PublicURL(key string) string { return "https://cdn.test/" + key }
@@ -51,6 +53,9 @@ func TestPresign_ValidPNG(t *testing.T) {
 	}
 	if res.ExpiresIn != 15*time.Minute {
 		t.Errorf("expires = %v", res.ExpiresIn)
+	}
+	if st.lastSize != 1024 {
+		t.Errorf("storage nhận size = %d, want 1024 (size phải được truyền xuống để ký)", st.lastSize)
 	}
 }
 

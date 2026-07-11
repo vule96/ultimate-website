@@ -199,10 +199,18 @@ func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// ListTags trả về toàn bộ tag, sắp theo tên.
-func (r *GormRepository) ListTags(ctx context.Context) ([]Tag, error) {
+// ListTags trả về tag, sắp theo tên. Khi publishedOnly, chỉ trả tag gắn với ít
+// nhất một bài PUBLISHED (join post_tags/posts) — dùng cho khách chưa đăng nhập.
+func (r *GormRepository) ListTags(ctx context.Context, publishedOnly bool) ([]Tag, error) {
 	var rows []gormTag
-	if err := r.db.WithContext(ctx).Order("name ASC").Find(&rows).Error; err != nil {
+	q := r.db.WithContext(ctx).Order("name ASC")
+	if publishedOnly {
+		q = q.Distinct("tags.*").
+			Joins("JOIN post_tags ON post_tags.tag_id = tags.id").
+			Joins("JOIN posts ON posts.id = post_tags.post_id").
+			Where("posts.status = ?", string(StatusPublished))
+	}
+	if err := q.Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	tags := make([]Tag, len(rows))

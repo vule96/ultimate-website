@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config chứa toàn bộ cấu hình runtime của core service.
@@ -50,7 +51,7 @@ func Load() (Config, error) {
 		AppBaseURL:         getEnv("APP_BASE_URL", "http://localhost:8080"),
 		CORSAllowedOrigins: os.Getenv("CORS_ALLOWED_ORIGINS"),
 
-		SessionSameSite: getEnv("SESSION_COOKIE_SAMESITE", "lax"),
+		SessionSameSite: strings.ToLower(strings.TrimSpace(getEnv("SESSION_COOKIE_SAMESITE", "lax"))),
 		SessionSecure:   getBoolEnv("SESSION_COOKIE_SECURE", appEnv == "production"),
 
 		StorageEndpoint:     os.Getenv("STORAGE_ENDPOINT"),
@@ -63,6 +64,10 @@ func Load() (Config, error) {
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")
+	}
+	// SameSite=None mà không Secure thì browser sẽ drop cookie — fail fast thay vì hỏng im lặng.
+	if cfg.SessionSameSite == "none" && !cfg.SessionSecure {
+		return Config{}, fmt.Errorf("config: SESSION_COOKIE_SAMESITE=none requires SESSION_COOKIE_SECURE=true")
 	}
 	return cfg, nil
 }

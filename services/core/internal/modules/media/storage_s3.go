@@ -49,12 +49,14 @@ func NewS3Storage(cfg S3Config) *s3Storage {
 	}
 }
 
-// PresignPut sinh presigned PUT URL cho object key với content-type cho trước.
-func (s *s3Storage) PresignPut(ctx context.Context, key, contentType string) (string, time.Duration, error) {
+// PresignPut sinh presigned PUT URL cho object key; content-type và content-length
+// đều là signed header — PUT với giá trị khác sẽ bị storage từ chối (403).
+func (s *s3Storage) PresignPut(ctx context.Context, key, contentType string, size int64) (string, time.Duration, error) {
 	req, err := s.presign.PresignPutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(s.bucket),
-		Key:         aws.String(key),
-		ContentType: aws.String(contentType),
+		Bucket:        aws.String(s.bucket),
+		Key:           aws.String(key),
+		ContentType:   aws.String(contentType),
+		ContentLength: aws.Int64(size),
 	}, s3.WithPresignExpires(s.expires))
 	if err != nil {
 		return "", 0, err

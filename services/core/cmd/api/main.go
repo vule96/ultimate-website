@@ -18,6 +18,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
 )
 
 func main() {
@@ -54,8 +55,9 @@ func main() {
 	authSvc := auth.NewService(provider, auth.NewAllowlist(cfg.AdminAllowlist))
 	authHandler := auth.NewHandler(authSvc, sm, cfg.AppBaseURL)
 
-	// Wiring module posts.
-	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)))
+	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
+	// chưa (anonymous chỉ thấy bài PUBLISHED).
+	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)), auth.IsAuthenticated(sm))
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
@@ -83,8 +85,10 @@ func main() {
 	authHandler.RegisterRoutes(r)
 
 	api := r.Group("/api/v1")
-	postsHandler.RegisterRoutes(api, auth.RequireAuth(sm)) // bảo vệ endpoint ghi
-	mediaHandler.RegisterRoutes(api, auth.RequireAuth(sm)) // presign cần đăng nhập
+	// Endpoint ghi: ép Content-Type JSON (chống CSRF simple-request) rồi mới check auth.
+	writeMW := []gin.HandlerFunc{jsonmw.RequireJSON(), auth.RequireAuth(sm)}
+	postsHandler.RegisterRoutes(api, writeMW...)
+	mediaHandler.RegisterRoutes(api, writeMW...)
 
 	if cfg.GoogleClientID == "" || cfg.AdminAllowlist == "" {
 		log.Warn("auth not fully configured — set GOOGLE_CLIENT_ID/SECRET and ADMIN_ALLOWLIST to enable login")

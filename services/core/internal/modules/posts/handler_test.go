@@ -2,6 +2,7 @@ package posts
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -12,15 +13,21 @@ import (
 
 func init() { gin.SetMode(gin.TestMode) }
 
-// newTestServer dựng engine Gin nối với service + repo chạy trong tx (rollback sau test).
-func newTestServer(t *testing.T) *gin.Engine {
+// newServerWithAuth dựng engine với authed checker cố định (true = như đã login).
+func newServerWithAuth(t *testing.T, authed bool) *gin.Engine {
 	t.Helper()
 	repo := newRepoTx(t) // t.Skip nếu không có TEST_DATABASE_URL
 	svc := NewService(repo)
 	r := gin.New()
-	NewHandler(svc).RegisterRoutes(r.Group("/api/v1"))
+	NewHandler(svc, func(context.Context) bool { return authed }).RegisterRoutes(r.Group("/api/v1"))
 	return r
 }
+
+// newTestServer: server "đã đăng nhập" — giữ hành vi cũ cho các test CRUD sẵn có.
+func newTestServer(t *testing.T) *gin.Engine { return newServerWithAuth(t, true) }
+
+// newAnonTestServer: server ẩn danh — cho các test visibility công khai.
+func newAnonTestServer(t *testing.T) *gin.Engine { return newServerWithAuth(t, false) }
 
 func doJSON(t *testing.T, r *gin.Engine, method, path string, body any) *httptest.ResponseRecorder {
 	t.Helper()
@@ -166,5 +173,88 @@ func TestHandler_ListTags(t *testing.T) {
 	w := doJSON(t, r, http.MethodGet, "/api/v1/tags", nil)
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", w.Code)
+	}
+}
+
+func TestHandler_AnonymousListOnlyPublished(t *testing.T) {
+	r := newAnonTestServer(t)
+	// Fixtures: 1 DRAFT (mặc định) + 1 PUBLISHED. Write route trong test không bọc auth.
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Bản nháp"})
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Công khai", "status": "PUBLISHED"})
+
+	// Anonymous xin thẳng DRAFT → vẫn chỉ thấy PUBLISHED.
+	w := doJSON(t, r, http.MethodGet, "/api/v1/posts?status=DRAFT", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	body := decode(t, w)
+	if body["total"].(float64) != 1 {
+		t.Fatalf("total = %v, want 1 (chỉ bài PUBLISHED); body=%s", body["total"], w.Body.String())
+	}
+	data := body["data"].([]any)
+	first := data[0].(map[string]any)
+	if first["slug"] != "cong-khai" {
+		t.Errorf("slug = %v, want cong-khai", first["slug"])
+	}
+}
+
+func TestHandler_AnonymousGetDraft404(t *testing.T) {
+	r := newAnonTestServer(t)
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Bản nháp"})
+
+	w := doJSON(t, r, http.MethodGet, "/api/v1/posts/ban-nhap", nil)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("anonymous GET draft: status = %d, want 404; body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_AuthedGetDraftOK(t *testing.T) {
+	r := newTestServer(t)
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Bản nháp"})
+
+	w := doJSON(t, r, http.MethodGet, "/api/v1/posts/ban-nhap", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("authed GET draft: status = %d, want 200", w.Code)
+	}
+}
+
+func TestHandler_StatsBehindProtectedMW(t *testing.T) {
+	repo := newRepoTx(t)
+	svc := NewService(repo)
+	r := gin.New()
+	deny := func(c *gin.Context) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+	}
+	NewHandler(svc, func(context.Context) bool { return false }).RegisterRoutes(r.Group("/api/v1"), deny)
+
+	for _, path := range []string{"/api/v1/posts/stats", "/api/v1/posts/stats/timeseries"} {
+		w := doJSON(t, r, http.MethodGet, path, nil)
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("%s: status = %d, want 401 (stats phải nằm sau protectedMW)", path, w.Code)
+		}
+	}
+	// List công khai vẫn đi qua bình thường.
+	if w := doJSON(t, r, http.MethodGet, "/api/v1/posts", nil); w.Code != http.StatusOK {
+		t.Errorf("GET /posts: status = %d, want 200", w.Code)
+	}
+}
+
+func TestHandler_AnonymousTagsOnlyFromPublished(t *testing.T) {
+	r := newAnonTestServer(t)
+	// Tag "secret-draft" chỉ thuộc bài DRAFT; "go" thuộc bài PUBLISHED.
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Nháp bí mật", "tags": []string{"Secret Draft"}})
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Công khai", "status": "PUBLISHED", "tags": []string{"Go"}})
+
+	w := doJSON(t, r, http.MethodGet, "/api/v1/tags", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	body := decode(t, w)
+	data, _ := body["data"].([]any)
+	for _, it := range data {
+		tag := it.(map[string]any)
+		if tag["slug"] == "secret-draft" {
+			t.Errorf("anonymous /tags lộ tag của bài DRAFT: %v", tag)
+		}
 	}
 }

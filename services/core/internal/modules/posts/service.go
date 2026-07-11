@@ -18,7 +18,7 @@ type Repository interface {
 	GetBySlug(ctx context.Context, slug string) (*Post, error)
 	List(ctx context.Context, f ListFilter) ([]Post, int64, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	ListTags(ctx context.Context) ([]Tag, error)
+	ListTags(ctx context.Context, publishedOnly bool) ([]Tag, error)
 	Stats(ctx context.Context) (StatsResult, error)
 	CountByMonth(ctx context.Context, since time.Time) (map[string]int64, error)
 }
@@ -30,6 +30,7 @@ type ListFilter struct {
 	Search string // tìm theo tiêu đề (ILIKE, rỗng = tất cả)
 	Sort   string // cột sắp xếp (whitelist; rỗng/lạ = created_at)
 	Order  string // asc | desc (mặc định desc)
+	Authed bool   // request đã đăng nhập admin chưa; false → chỉ thấy PUBLISHED
 	Limit  int
 	Offset int
 }
@@ -179,13 +180,25 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 	return existing, nil
 }
 
-// GetBySlug trả về bài viết theo slug.
-func (s *Service) GetBySlug(ctx context.Context, slug string) (*Post, error) {
-	return s.repo.GetBySlug(ctx, slug)
+// GetBySlug trả về bài viết theo slug. Request chưa đăng nhập chỉ thấy bài
+// PUBLISHED — bài khác trả ErrPostNotFound (404, không lộ tồn tại của slug).
+func (s *Service) GetBySlug(ctx context.Context, slug string, authed bool) (*Post, error) {
+	p, err := s.repo.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+	if !authed && p.Status != StatusPublished {
+		return nil, ErrPostNotFound
+	}
+	return p, nil
 }
 
-// List trả về danh sách bài viết theo filter + tổng số bản ghi.
+// List trả về danh sách bài viết theo filter + tổng số bản ghi. Request chưa
+// đăng nhập bị ép Status=PUBLISHED bất kể filter xin gì (trust boundary ở API).
 func (s *Service) List(ctx context.Context, f ListFilter) ([]Post, int64, error) {
+	if !f.Authed {
+		f.Status = string(StatusPublished)
+	}
 	return s.repo.List(ctx, f)
 }
 
@@ -194,9 +207,10 @@ func (s *Service) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// ListTags trả về toàn bộ tag.
-func (s *Service) ListTags(ctx context.Context) ([]Tag, error) {
-	return s.repo.ListTags(ctx)
+// ListTags trả về tag. Request chưa đăng nhập chỉ thấy tag gắn với ít nhất một
+// bài PUBLISHED — tránh lộ metadata (tên/slug tag) của bài DRAFT/PENDING.
+func (s *Service) ListTags(ctx context.Context, authed bool) ([]Tag, error) {
+	return s.repo.ListTags(ctx, !authed)
 }
 
 // Stats trả về số liệu tổng hợp bài viết cho Dashboard.
