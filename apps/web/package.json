@@ -12,12 +12,16 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",
+    "@fontsource/lora": "^5.1.0",
     "@ultimate/types": "workspace:*",
     "@ultimate/ui": "workspace:*",
     "next": "^14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@fontsource/lora": "^5.1.0"
+    "rehype-parse": "^9.0.1",
+    "rehype-sanitize": "^6.0.0",
+    "rehype-stringify": "^10.0.1",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
