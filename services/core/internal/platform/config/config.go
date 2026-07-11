@@ -34,6 +34,10 @@ type Config struct {
 	StorageBucket       string
 	StoragePublicURL    string // base URL công khai để hiển thị ảnh
 	StorageUsePathStyle bool   // true cho MinIO
+
+	// Giới hạn body request (M4). Ảnh không đi qua core (presigned PUT) nên
+	// 2 MiB thoải mái cho content_html bài dài.
+	MaxBodyBytes int64
 }
 
 // Load đọc cấu hình từ env. DatabaseURL là bắt buộc; các giá trị khác có mặc định.
@@ -61,6 +65,8 @@ func Load() (Config, error) {
 		StorageBucket:       os.Getenv("STORAGE_BUCKET"),
 		StoragePublicURL:    os.Getenv("STORAGE_PUBLIC_URL"),
 		StorageUsePathStyle: getBoolEnv("STORAGE_USE_PATH_STYLE", false),
+
+		MaxBodyBytes: getInt64Env("MAX_BODY_BYTES", 2<<20),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")
@@ -92,4 +98,16 @@ func getBoolEnv(key string, fallback bool) bool {
 		return fallback
 	}
 	return b
+}
+
+func getInt64Env(key string, fallback int64) int64 {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
+	if err != nil || n <= 0 {
+		return fallback
+	}
+	return n
 }

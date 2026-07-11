@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/httperr"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
@@ -40,6 +41,10 @@ type presignResponse struct {
 func (h *Handler) presign(c *gin.Context) {
 	var req presignRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		if bodylimit.IsTooLarge(err) {
+			httperr.Write(c, http.StatusRequestEntityTooLarge, "PAYLOAD_TOO_LARGE", "request body too large")
+			return
+		}
 		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", err.Error())
 		return
 	}

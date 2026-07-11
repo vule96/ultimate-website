@@ -21,6 +21,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
@@ -88,6 +89,7 @@ func main() {
 	r.Use(gin.Recovery())
 	r.Use(reqlog.Middleware(log))
 	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
+	r.Use(bodylimit.Middleware(cfg.MaxBodyBytes))
 
 	r.GET("/healthz", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)

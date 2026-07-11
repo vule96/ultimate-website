@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/httperr"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/pagination"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
@@ -170,8 +171,7 @@ func (h *Handler) getBySlug(c *gin.Context) {
 
 func (h *Handler) create(c *gin.Context) {
 	var req upsertRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", err.Error())
+	if !bindJSON(c, &req) {
 		return
 	}
 	post, err := h.svc.Create(c.Request.Context(), CreateInput{
@@ -200,8 +200,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 	var req upsertRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", err.Error())
+	if !bindJSON(c, &req) {
 		return
 	}
 	post, err := h.svc.Update(c.Request.Context(), id, UpdateInput{
@@ -248,6 +247,19 @@ func (h *Handler) listTags(c *gin.Context) {
 		data[i] = tagResponse{ID: t.ID, Name: t.Name, Slug: t.Slug}
 	}
 	c.JSON(http.StatusOK, gin.H{"data": data})
+}
+
+// bindJSON bind body JSON vào dst; lỗi thì tự ghi response (400 hoặc 413) và trả false.
+func bindJSON(c *gin.Context, dst any) bool {
+	if err := c.ShouldBindJSON(dst); err != nil {
+		if bodylimit.IsTooLarge(err) {
+			httperr.Write(c, http.StatusRequestEntityTooLarge, "PAYLOAD_TOO_LARGE", "request body too large")
+			return false
+		}
+		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", err.Error())
+		return false
+	}
+	return true
 }
 
 // respondError map lỗi domain sang HTTP status + envelope lỗi.
