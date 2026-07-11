@@ -45,7 +45,8 @@ type PresignResult struct {
 }
 
 // Storage là cổng (port) sinh presigned URL. Service không biết cài đặt cụ thể (S3/MinIO/R2).
+// size được ký vào URL (Content-Length) để storage từ chối upload sai kích thước.
 type Storage interface {
-	PresignPut(ctx context.Context, key, contentType string) (url string, expires time.Duration, err error)
+	PresignPut(ctx context.Context, key, contentType string, size int64) (url string, expires time.Duration, err error)
 	PublicURL(key string) string
 }

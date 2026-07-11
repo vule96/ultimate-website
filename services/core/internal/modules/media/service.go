@@ -38,7 +38,7 @@ func (s *Service) Presign(ctx context.Context, in PresignInput) (PresignResult, 
 	}
 
 	key := s.buildKey(ext)
-	url, expires, err := s.storage.PresignPut(ctx, key, in.ContentType)
+	url, expires, err := s.storage.PresignPut(ctx, key, in.ContentType, in.Size)
 	if err != nil {
 		return PresignResult{}, err
 	}
