@@ -20,7 +20,9 @@
 | Admin SPA | **B+** | Query/router/code-split textbook; lỗi dồn ở auth error-path và form (**bug mất dữ liệu khi background refetch**), vài chỗ TS "hở". |
 | Web Next.js | **B** | Thói quen tốt (Zod boundary, ép PUBLISHED, escape XML); nhưng **"SSG + ISR" sai một phần trong thực tế** — pagination query-string trên route SSG hỏng ở production. |
 
-**3 việc phải làm trước mọi thứ:** (1) visibility policy ở core (chặn leak DRAFT), (2) fix prefill clobbering ở PostFormPage (mất dữ liệu), (3) path-based pagination ở web.
+**3 việc phải làm trước mọi thứ:** ✅ (1) visibility policy ở core (chặn leak DRAFT) + ✅ (2) fix prefill clobbering ở PostFormPage (mất dữ liệu) — **cả hai DONE trong Slice 5a (2026-07-11)**; (3) path-based pagination ở web (W1) — còn mở, để đợt sau.
+
+> **✅ Slice 5a — Security & Data-loss (đợt 1) HOÀN TẤT (2026-07-11).** Resolved: C1, H1, H4, A1, A4, M7 (+ L11 một phần). Spec `docs/superpowers/specs/2026-07-11-slice5a-security-hardening-design.md`; plan `docs/superpowers/plans/2026-07-11-slice5a-security-hardening.md`. Còn mở cho đợt 2/3: W1 (pagination web), A2/A3 (401-aware admin), H2/H3 (shutdown/logging), M1–M6, SEO, sanitize/CSP, outbox.
 
 ---
 
@@ -42,14 +44,17 @@
 
 ### 🔴 Critical
 
+- ✅ **RESOLVED (2026-07-11, commit dda480e + f7179ba)** — visibility policy session-aware: anonymous bị ép `status=PUBLISHED` ở service, `GetBySlug` trả 404 cho bài non-published; `/posts/stats*` chuyển sau `RequireAuth`; `/tags` chỉ trả tag của bài PUBLISHED cho khách (M7). Verify curl E2E + handler tests.
 - **C1 — API public lộ bài DRAFT/PENDING_APPROVAL.** `internal/modules/posts/handler.go:29-33` — `GET /posts`, `GET /posts/:slug` public, `list` pass thẳng `c.Query("status")` (`handler.go:101`), `getBySlug` trả mọi status (`handler.go:154-161`). `curl /api/v1/posts?status=DRAFT` đọc được toàn bộ `content_html` bài nháp. Web chỉ lọc client-side — API mới là trust boundary; Phase 2 draft AI chờ duyệt sẽ leak công khai.
   **Fix:** unauthenticated → ép `Status = PUBLISHED`, `GetBySlug` trả `ErrPostNotFound` cho bài non-published; biến thể unfiltered chỉ sau `RequireAuth`. Gate luôn `/posts/stats` + `/posts/stats/timeseries` (data dashboard, đang public — `handler.go:30-31`).
 
 ### 🟠 High
 
+- ✅ **RESOLVED (2026-07-11, commit 2ad90de)** — `Storage.PresignPut` nhận `size int64`, set `ContentLength` vào `PutObjectInput` → Content-Length thành signed header; PUT sai size bị storage từ chối. Unit test assert `content-length` trong `X-Amz-SignedHeaders` + integration MinIO wrong-size bị 403.
 - **H1 — Presign PUT không enforce giới hạn 5MB.** `media/service.go:34-38` validate size nhưng `storage_s3.go:53-63` chỉ ký `Bucket/Key/ContentType` — client khai `size: 1024` rồi PUT 5GB vẫn được nhận (vector lạm dụng chi phí R2). **Fix:** thêm `size` vào port `PresignPut`, set `ContentLength` để Content-Length thành signed header (hoặc presigned POST + `content-length-range`).
 - **H2 — Không graceful shutdown, không timeout `http.Server`.** `cmd/api/main.go:95` — bare `ListenAndServe`: hở slowloris (không `ReadHeaderTimeout`), SIGTERM giết request giữa transaction mỗi lần deploy. **Fix:** `&http.Server{...timeouts...}` + `signal.NotifyContext` + `srv.Shutdown` + close `sqlDB`.
 - **H3 — Lỗi 500 bị nuốt im lặng.** `posts/handler.go:253-254` (tương tự `media/handler.go:55`, `auth/handler.go:42,66,75`) — `err` bị vứt; logger tạo ở `main.go:32` không inject đi đâu; không request-logging middleware, không request ID. DB outage ở prod = chuỗi 500 với zero diagnostic. **Fix:** middleware slog (method/path/status/latency/request-ID vào context), `respondError` log raw error ở nhánh `default`.
+- ✅ **RESOLVED (2026-07-11, commit 19fbb57 + 33026db)** — middleware `jsonmw.RequireJSON` áp lên write routes (POST/PUT/PATCH Content-Type ≠ `application/json` → 415, biến request ghi thành non-simple → bị preflight chặn); config fail-fast khi `samesite=none` mà không `secure`. Verify curl POST text/plain → 415.
 - **H4 — CSRF khi `SameSite=none`.** Config cho phép `SESSION_COOKIE_SAMESITE=none` (`platform/session/session.go:35`); `ShouldBindJSON` parse cả body `text/plain` → cross-site form POST là *simple request* (không preflight, cookie đính kèm) → attacker tạo post / mint presign / logout admin. CORS chỉ chặn *đọc* response, không chặn *gửi*. **Fix:** reject write request có `Content-Type != application/json` (middleware `requireJSON`) hoặc custom header trong `RequireAuth`; assert startup `samesite=none ⇒ secure=true`.
 
 ### 🟡 Medium
@@ -60,6 +65,7 @@
 - **M4 — Không giới hạn body size** trên write endpoints (`posts/handler.go:163-186`). **Fix:** `http.MaxBytesReader` global (map 413).
 - **M5 — Lost-update trên posts** (`posts/service.go:134-180`) — GetByID rồi Update ở 2 transaction; 2 edit concurrent last-writer-wins (gồm logic `PublishedAt`). Nghiêm trọng hơn khi Phase 2 thêm writer thứ 2 (AI worker). **Fix:** optimistic locking (`version` column, rows-affected 0 → 409/412).
 - **M6 — Pool DB không cấu hình** (`main.go:39-43`) — không `SetMaxOpenConns/SetConnMaxLifetime`; mọi route (kể cả blog read anonymous) đều qua `sm.LoadAndSave` chạm bảng `sessions`. **Fix:** set pool từ config; cân nhắc scope `LoadAndSave` vào `/auth` + write routes.
+- ✅ **M7 — `/tags` công khai lộ tag metadata của bài DRAFT/PENDING. RESOLVED (2026-07-11, commit f7179ba).** Phát hiện khi security-review Slice 5a: `ListTags` không lọc theo status → tên/slug tag của bài nháp lộ cho khách (cùng lớp info-disclosure với C1). Fix: `ListTags(ctx, publishedOnly)` — khách chưa đăng nhập chỉ nhận tag JOIN với bài PUBLISHED. Handler test `TestHandler_AnonymousTagsOnlyFromPublished`.
 
 ### 🟢 Low (tóm tắt)
 
@@ -73,7 +79,7 @@
 - L8: `NewS3Storage` trả unexported type; `expires` 15' hardcode → đưa vào `S3Config`.
 - L9: `ShouldBindJSON` `err.Error()` leak internals Go ra client (`posts/handler.go:166,196`).
 - L10: tags mồ côi không bao giờ được dọn → inflate `/tags` + `Stats.Tags`.
-- L11: `getBoolEnv` nuốt lỗi parse (`config.go:80-90`) — `SESSION_COOKIE_SECURE=ture` fail im lặng; nên trả error từ `Load`.
+- L11: `getBoolEnv` nuốt lỗi parse (`config.go:80-90`) — `SESSION_COOKIE_SECURE=ture` fail im lặng; nên trả error từ `Load`. ✅ **RESOLVED một phần (2026-07-11, commit 33026db)** — thêm assertion `samesite=none ⇒ secure` + normalize lowercase SameSite; phần `getBoolEnv` nuốt lỗi vẫn mở.
 
 **Kiến trúc cho Phase 2:** chưa có event/outbox. Khuyến nghị **transactional outbox pattern** — bảng `outbox(id, aggregate, event_type, payload jsonb, created_at, processed_at)`, repo ghi `post.published/updated` **trong cùng transaction**; AI worker poll hoặc LISTEN/NOTIFY. Khác biệt giữa "RAG index eventually consistent" và "RAG index stale im lặng".
 
@@ -85,12 +91,14 @@
 
 ### 🟠 High
 
+- ✅ **RESOLVED (2026-07-11, commit 59ba496)** — prefill gate bằng `hasHydratedRef` (hydrate đúng 1 lần); `initialHtmlRef` chốt HTML nạp editor lần đầu. Test refetch object mới không ghi đè form đang dirty.
 - **A1 — Background refetch xoá bài đang sửa (mất dữ liệu).** `features/posts/PostFormPage.tsx:76-81` — effect prefill chạy theo identity của `loaded`, không chỉ lần đầu; refetch nền (v5 mặc định `refetchOnReconnect`, staleTime 30s) → object mới → `reset(postToFormValues(loaded))` ghi đè nội dung đang gõ. Tệ hơn: editor uncontrolled (`initialHtml`), UI vẫn hiện text của user nhưng hidden field giữ HTML cũ của server — **submit lưu nội dung stale**. **Fix:** gate bằng `hasHydrated` ref (hoặc `formState.isDirty`), hoặc detail query `staleTime: Infinity` khi form mounted.
 - **A2 — API sập = bị đá về login.** `routes/_authed.tsx:6-11` — `beforeLoad` coi *mọi* lỗi `ensureQueryData` là chưa đăng nhập (500/CORS/API down đều redirect `/login`). **Fix:** chỉ redirect khi `ApiError.status === 401`; rethrow phần còn lại cho error boundary.
 - **A3 — Session hết hạn giữa phiên không xử lý.** `features/auth/api.ts:14` staleTime 5' → guard pass từ cache sau khi session chết; 401 từ data query chỉ hiện `RouteError`/toast, không bao giờ về login. **Fix:** `QueryCache`/`MutationCache` `onError` trong `lib/queryClient.ts`: 401 → reset auth query + `router.navigate({ to: "/login" })` kèm `redirect` search param (param này hiện cũng chưa có).
 
 ### 🟡 Medium
 
+- ✅ **RESOLVED (2026-07-11, commit 59ba496)** — `contentJson` chuyển sang `useRef`, chỉ đọc lúc submit → keystroke editor không re-render form. Test submit gửi đúng content_json mới nhất.
 - **A4 — `contentJson` là `useState`** (`PostFormPage.tsx:72,164-167`) nhưng chỉ đọc lúc submit → mỗi keystroke trong rich editor re-render cả form (2 card + Select + toolbar). Optimize thật, không cargo-cult: đổi sang `useRef`. (Cả 2 editor cũng serialize full document → HTML mỗi keystroke — `TiptapEditor.tsx:48`, `LexicalEditor.tsx:96-103`; debounce `onChange` sẽ nhân đôi lợi ích.)
 - **A5 — Tạo/sửa post có thể tạo tag mới nhưng chỉ invalidate `postKeys.all`** (`features/posts/queries.ts:49-71`) → tags list stale, tag mới không hiện ở filter. **Fix:** invalidate thêm `tagKeys.all`.
 - **A6 — Module augmentation `TableMeta.onDelete` bắt buộc cho MỌI table** (`components/ui/data-table.tsx:25-30`) — table tiếp theo không có delete phải cấp fake handler. **Fix:** `onDelete?:` + chuyển augmentation ra file riêng.
