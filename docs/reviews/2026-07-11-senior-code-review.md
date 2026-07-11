@@ -20,9 +20,11 @@
 | Admin SPA | **B+** | Query/router/code-split textbook; lỗi dồn ở auth error-path và form (**bug mất dữ liệu khi background refetch**), vài chỗ TS "hở". |
 | Web Next.js | **B** | Thói quen tốt (Zod boundary, ép PUBLISHED, escape XML); nhưng **"SSG + ISR" sai một phần trong thực tế** — pagination query-string trên route SSG hỏng ở production. |
 
-**3 việc phải làm trước mọi thứ:** ✅ (1) visibility policy ở core (chặn leak DRAFT) + ✅ (2) fix prefill clobbering ở PostFormPage (mất dữ liệu) — **cả hai DONE trong Slice 5a (2026-07-11)**; (3) path-based pagination ở web (W1) — còn mở, để đợt sau.
+**3 việc phải làm trước mọi thứ:** ✅ (1) visibility policy ở core (chặn leak DRAFT) + ✅ (2) fix prefill clobbering ở PostFormPage (mất dữ liệu) + ✅ (3) path-based pagination ở web (W1) — **tất cả DONE (Slice 5a + 5b, 2026-07-11)**.
 
-> **✅ Slice 5a — Security & Data-loss (đợt 1) HOÀN TẤT (2026-07-11).** Resolved: C1, H1, H4, A1, A4, M7 (+ L11 một phần). Spec `docs/superpowers/specs/2026-07-11-slice5a-security-hardening-design.md`; plan `docs/superpowers/plans/2026-07-11-slice5a-security-hardening.md`. Còn mở cho đợt 2/3: W1 (pagination web), A2/A3 (401-aware admin), H2/H3 (shutdown/logging), M1–M6, SEO, sanitize/CSP, outbox.
+> **✅ Slice 5a — Security & Data-loss (đợt 1) HOÀN TẤT (2026-07-11).** Resolved: C1, H1, H4, A1, A4, M7 (+ L11 một phần). Spec/plan: `...slice5a-security-hardening...`.
+>
+> **✅ Slice 5b — Production-readiness (đợt 2) HOÀN TẤT (2026-07-11).** Resolved: W1, W2, H2, H3, A2, A3 (+ M6, L7). Spec `docs/superpowers/specs/2026-07-11-slice5b-prod-readiness-design.md`; plan `docs/superpowers/plans/2026-07-11-slice5b-prod-readiness.md`. Còn mở cho **đợt 3 (polish)**: W3 (sitemap/rss throw), W4–W6 (SEO tag metadata/JSON-LD/OG, not-found/error pages), W7 (sanitize + CSP), font `next/font`, TS tightening admin (A5–A8), M1–M5 core, outbox (chuẩn bị Phase 2).
 
 ---
 
@@ -52,7 +54,9 @@
 
 - ✅ **RESOLVED (2026-07-11, commit 2ad90de)** — `Storage.PresignPut` nhận `size int64`, set `ContentLength` vào `PutObjectInput` → Content-Length thành signed header; PUT sai size bị storage từ chối. Unit test assert `content-length` trong `X-Amz-SignedHeaders` + integration MinIO wrong-size bị 403.
 - **H1 — Presign PUT không enforce giới hạn 5MB.** `media/service.go:34-38` validate size nhưng `storage_s3.go:53-63` chỉ ký `Bucket/Key/ContentType` — client khai `size: 1024` rồi PUT 5GB vẫn được nhận (vector lạm dụng chi phí R2). **Fix:** thêm `size` vào port `PresignPut`, set `ContentLength` để Content-Length thành signed header (hoặc presigned POST + `content-length-range`).
+- ✅ **RESOLVED (2026-07-11, commit 653f426)** — `&http.Server{}` với Read/Write/Idle/ReadHeader timeouts + `signal.NotifyContext` → `srv.Shutdown(10s)` → `sqlDB.Close()`. Verify: SIGINT → log "shutting down" thoát sạch.
 - **H2 — Không graceful shutdown, không timeout `http.Server`.** `cmd/api/main.go:95` — bare `ListenAndServe`: hở slowloris (không `ReadHeaderTimeout`), SIGTERM giết request giữa transaction mỗi lần deploy. **Fix:** `&http.Server{...timeouts...}` + `signal.NotifyContext` + `srv.Shutdown` + close `sqlDB`.
+- ✅ **RESOLVED (2026-07-11, commit 0846e24 + 2530e76)** — package `internal/shared/reqlog`: middleware sinh/đọc `X-Request-ID` + contextual `*slog.Logger` vào context + log completion (method/path/status/latency); `respondError` posts + presign media ghi raw `err` ở nhánh 500. Verify: response có header `X-Request-ID`, completion log kèm `request_id`.
 - **H3 — Lỗi 500 bị nuốt im lặng.** `posts/handler.go:253-254` (tương tự `media/handler.go:55`, `auth/handler.go:42,66,75`) — `err` bị vứt; logger tạo ở `main.go:32` không inject đi đâu; không request-logging middleware, không request ID. DB outage ở prod = chuỗi 500 với zero diagnostic. **Fix:** middleware slog (method/path/status/latency/request-ID vào context), `respondError` log raw error ở nhánh `default`.
 - ✅ **RESOLVED (2026-07-11, commit 19fbb57 + 33026db)** — middleware `jsonmw.RequireJSON` áp lên write routes (POST/PUT/PATCH Content-Type ≠ `application/json` → 415, biến request ghi thành non-simple → bị preflight chặn); config fail-fast khi `samesite=none` mà không `secure`. Verify curl POST text/plain → 415.
 - **H4 — CSRF khi `SameSite=none`.** Config cho phép `SESSION_COOKIE_SAMESITE=none` (`platform/session/session.go:35`); `ShouldBindJSON` parse cả body `text/plain` → cross-site form POST là *simple request* (không preflight, cookie đính kèm) → attacker tạo post / mint presign / logout admin. CORS chỉ chặn *đọc* response, không chặn *gửi*. **Fix:** reject write request có `Content-Type != application/json` (middleware `requireJSON`) hoặc custom header trong `RequireAuth`; assert startup `samesite=none ⇒ secure=true`.
@@ -64,6 +68,7 @@
 - **M3 — Route shadowing:** bài có slug `stats` bị `/posts/stats` che (`posts/handler.go:30-32`). **Fix:** reserve slug hoặc chuyển aggregate sang `GET /stats/posts`.
 - **M4 — Không giới hạn body size** trên write endpoints (`posts/handler.go:163-186`). **Fix:** `http.MaxBytesReader` global (map 413).
 - **M5 — Lost-update trên posts** (`posts/service.go:134-180`) — GetByID rồi Update ở 2 transaction; 2 edit concurrent last-writer-wins (gồm logic `PublishedAt`). Nghiêm trọng hơn khi Phase 2 thêm writer thứ 2 (AI worker). **Fix:** optimistic locking (`version` column, rows-affected 0 → 409/412).
+- ✅ **M6 — RESOLVED (2026-07-11, commit 653f426).** `SetMaxOpenConns(10)`, `SetMaxIdleConns(5)`, `SetConnMaxLifetime(30m)`.
 - **M6 — Pool DB không cấu hình** (`main.go:39-43`) — không `SetMaxOpenConns/SetConnMaxLifetime`; mọi route (kể cả blog read anonymous) đều qua `sm.LoadAndSave` chạm bảng `sessions`. **Fix:** set pool từ config; cân nhắc scope `LoadAndSave` vào `/auth` + write routes.
 - ✅ **M7 — `/tags` công khai lộ tag metadata của bài DRAFT/PENDING. RESOLVED (2026-07-11, commit f7179ba).** Phát hiện khi security-review Slice 5a: `ListTags` không lọc theo status → tên/slug tag của bài nháp lộ cho khách (cùng lớp info-disclosure với C1). Fix: `ListTags(ctx, publishedOnly)` — khách chưa đăng nhập chỉ nhận tag JOIN với bài PUBLISHED. Handler test `TestHandler_AnonymousTagsOnlyFromPublished`.
 
@@ -75,7 +80,7 @@
 - L4: ILIKE không escape `%`/`_` (`repository.go:162`) — an toàn injection nhưng sai ngữ nghĩa search.
 - L5: `media` nhận `Filename` nhưng không dùng (`media/domain.go:33`) — bỏ hoặc lưu metadata. (Key gen `uploads/yyyy/mm/uuid.ext` đã tốt.)
 - L6: `main.go:29` panic vs `os.Exit(1)` không nhất quán.
-- L7: `/healthz` trả 200 kể cả khi Postgres chết (`main.go:79-81`) — ping DB / tách liveness–readiness.
+- L7: `/healthz` trả 200 kể cả khi Postgres chết (`main.go:79-81`) — ping DB / tách liveness–readiness. ✅ **RESOLVED (2026-07-11, commit 653f426)** — `/healthz` ping DB (timeout 2s) → 503 nếu DB down.
 - L8: `NewS3Storage` trả unexported type; `expires` 15' hardcode → đưa vào `S3Config`.
 - L9: `ShouldBindJSON` `err.Error()` leak internals Go ra client (`posts/handler.go:166,196`).
 - L10: tags mồ côi không bao giờ được dọn → inflate `/tags` + `Stats.Tags`.
@@ -93,7 +98,9 @@
 
 - ✅ **RESOLVED (2026-07-11, commit 59ba496)** — prefill gate bằng `hasHydratedRef` (hydrate đúng 1 lần); `initialHtmlRef` chốt HTML nạp editor lần đầu. Test refetch object mới không ghi đè form đang dirty.
 - **A1 — Background refetch xoá bài đang sửa (mất dữ liệu).** `features/posts/PostFormPage.tsx:76-81` — effect prefill chạy theo identity của `loaded`, không chỉ lần đầu; refetch nền (v5 mặc định `refetchOnReconnect`, staleTime 30s) → object mới → `reset(postToFormValues(loaded))` ghi đè nội dung đang gõ. Tệ hơn: editor uncontrolled (`initialHtml`), UI vẫn hiện text của user nhưng hidden field giữ HTML cũ của server — **submit lưu nội dung stale**. **Fix:** gate bằng `hasHydrated` ref (hoặc `formState.isDirty`), hoặc detail query `staleTime: Infinity` khi form mounted.
+- ✅ **RESOLVED (2026-07-11, commit 32c6d11)** — `beforeLoad` chỉ redirect khi `err instanceof ApiError && err.status === 401`; lỗi khác rethrow cho error boundary.
 - **A2 — API sập = bị đá về login.** `routes/_authed.tsx:6-11` — `beforeLoad` coi *mọi* lỗi `ensureQueryData` là chưa đăng nhập (500/CORS/API down đều redirect `/login`). **Fix:** chỉ redirect khi `ApiError.status === 401`; rethrow phần còn lại cho error boundary.
+- ✅ **RESOLVED (2026-07-11, commit 32c6d11)** — `QueryCache`/`MutationCache` `onError` bắt `ApiError 401` → reset auth query + navigate `/login`; vị trí trước khi hết hạn lưu `sessionStorage` (sống sót qua full-page OAuth redirect), consume ở `_authed.beforeLoad` sau khi auth lại. Open-redirect guard `isInternalPath` (chặn `//`, backslash, control char).
 - **A3 — Session hết hạn giữa phiên không xử lý.** `features/auth/api.ts:14` staleTime 5' → guard pass từ cache sau khi session chết; 401 từ data query chỉ hiện `RouteError`/toast, không bao giờ về login. **Fix:** `QueryCache`/`MutationCache` `onError` trong `lib/queryClient.ts`: 401 → reset auth query + `router.navigate({ to: "/login" })` kèm `redirect` search param (param này hiện cũng chưa có).
 
 ### 🟡 Medium
@@ -130,10 +137,12 @@
 
 ### 🟠 High
 
+- ✅ **RESOLVED (2026-07-11, commit 9c04692 + 52d937a)** — chuyển sang path-based pagination (`pageHref` path segment + routes `/page/[n]`, `/tags/[slug]/page/[n]` với `generateStaticParams` + component chung `PostsPage`). Verify production `next build && next start`: `/` và `/page/2` trả nội dung khác nhau; build log `○ /` (static) + `● /page/[n]` (SSG); `/page/999` → soft-404.
 - **W1 — Pagination hỏng ở production.** `app/tags/[slug]/page.tsx:23-26` — route SSG (build log `●`) nhưng phân trang bằng `?page=` query; static cache key theo pathname → tag đã prerender luôn serve HTML trang 1 bất kể `?page=2`. Chỉ chạy đúng ở `next dev` (vì thế E2E verify Slice 4 không bắt được; seed chưa có tag >10 bài). **Fix:** path-based pagination `/tags/[slug]/page/[n]` trong `generateStaticParams` (hoặc `force-dynamic` — không khuyến nghị).
 
 ### 🟡 Medium
 
+- ✅ **RESOLVED (2026-07-11, commit 52d937a)** — trang chủ bỏ đọc `searchParams` → static (build log `○ /` thay vì `ƒ /`); soft-404 khi page vượt total. ISR `revalidate=60` giờ có hiệu lực thật.
 - **W2 — Trang chủ render dynamic mỗi request** (`app/page.tsx:10-14` đọc `searchParams` → build log `ƒ /`); `revalidate = 60` (dòng 7) vô hiệu cho ISR; `listPublished` (dòng 15) không error handling → core sập lúc cache miss = visitor thấy 500 mặc định. **Fix:** path-based pagination `/page/[n]` → trang chủ param-less, SSG+ISR thật.
 - **W3 — Sitemap/RSS rỗng khi core sập lúc revalidate.** `app/sitemap.ts:9-10`, `app/rss.xml/route.ts:8` — `.catch(() => [])` → publish sitemap **rỗng** và cache trong ISR window; crawler thấy cả site biến mất. **Fix:** để throw — revalidation fail thì ISR giữ bản tốt cuối; chỉ nuốt lỗi khi chưa có bản nào (first build).
 - **W4 — Tag pages không có metadata** (`app/tags/[slug]/page.tsx`, `app/tags/page.tsx`) — mọi trang tag cùng `<title>Ultimate website</title>`, không description/canonical. **Fix:** `generateMetadata({ params })`.

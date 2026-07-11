@@ -14,6 +14,7 @@ import (
 
 	"github.com/vule96/ultimate-website/services/core/internal/shared/httperr"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/pagination"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
 
 // Handler expose module posts qua HTTP (Gin).
@@ -259,6 +260,7 @@ func respondError(c *gin.Context, err error) {
 	case errors.Is(err, ErrValidation):
 		httperr.Write(c, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 	default:
+		reqlog.From(c.Request.Context()).Error("request failed", "err", err)
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "internal server error")
 	}
 }

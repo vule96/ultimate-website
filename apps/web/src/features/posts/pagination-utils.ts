@@ -3,5 +3,7 @@ export function totalPages(total: number, pageSize: number): number {
 }
 
 export function pageHref(basePath: string, page: number): string {
-  return page <= 1 ? basePath : `${basePath}?page=${page}`;
+  if (page <= 1) return basePath;
+  const base = basePath === "/" ? "" : basePath;
+  return `${base}/page/${page}`;
 }

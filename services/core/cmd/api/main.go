@@ -2,9 +2,13 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +23,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
 
 func main() {
@@ -42,6 +47,11 @@ func main() {
 		log.Error("failed to get sql.DB", "err", err)
 		os.Exit(1)
 	}
+	// Pool DB: giới hạn kết nối để tránh cạn kết nối dưới tải (mọi request có cookie
+	// session đều chạm bảng sessions qua scs LoadAndSave).
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	// Session manager (scs + Postgres).
 	sm := session.New(sqlDB, session.Config{
@@ -76,9 +86,16 @@ func main() {
 	}
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(reqlog.Middleware(log))
 	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
 
 	r.GET("/healthz", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+		if err := sqlDB.PingContext(ctx); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "db down"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
@@ -94,10 +111,34 @@ func main() {
 		log.Warn("auth not fully configured — set GOOGLE_CLIENT_ID/SECRET and ADMIN_ALLOWLIST to enable login")
 	}
 
-	log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)
 	// Bọc toàn bộ engine bằng scs LoadAndSave để nạp/lưu session mỗi request.
-	if err := http.ListenAndServe(":"+cfg.Port, sm.LoadAndSave(r)); err != nil {
-		log.Error("server exited", "err", err)
-		os.Exit(1)
+	srv := &http.Server{
+		Addr:              ":" + cfg.Port,
+		Handler:           sm.LoadAndSave(r),
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
+
+	// Graceful shutdown: nhận SIGINT/SIGTERM → drain request đang chạy rồi đóng DB.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Error("server error", "err", err)
+			os.Exit(1)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Info("shutting down")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Error("graceful shutdown failed", "err", err)
+	}
+	_ = sqlDB.Close()
 }
