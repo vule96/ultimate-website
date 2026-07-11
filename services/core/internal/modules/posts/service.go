@@ -30,6 +30,7 @@ type ListFilter struct {
 	Search string // tìm theo tiêu đề (ILIKE, rỗng = tất cả)
 	Sort   string // cột sắp xếp (whitelist; rỗng/lạ = created_at)
 	Order  string // asc | desc (mặc định desc)
+	Authed bool   // request đã đăng nhập admin chưa; false → chỉ thấy PUBLISHED
 	Limit  int
 	Offset int
 }
@@ -179,13 +180,25 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 	return existing, nil
 }
 
-// GetBySlug trả về bài viết theo slug.
-func (s *Service) GetBySlug(ctx context.Context, slug string) (*Post, error) {
-	return s.repo.GetBySlug(ctx, slug)
+// GetBySlug trả về bài viết theo slug. Request chưa đăng nhập chỉ thấy bài
+// PUBLISHED — bài khác trả ErrPostNotFound (404, không lộ tồn tại của slug).
+func (s *Service) GetBySlug(ctx context.Context, slug string, authed bool) (*Post, error) {
+	p, err := s.repo.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+	if !authed && p.Status != StatusPublished {
+		return nil, ErrPostNotFound
+	}
+	return p, nil
 }
 
-// List trả về danh sách bài viết theo filter + tổng số bản ghi.
+// List trả về danh sách bài viết theo filter + tổng số bản ghi. Request chưa
+// đăng nhập bị ép Status=PUBLISHED bất kể filter xin gì (trust boundary ở API).
 func (s *Service) List(ctx context.Context, f ListFilter) ([]Post, int64, error) {
+	if !f.Authed {
+		f.Status = string(StatusPublished)
+	}
 	return s.repo.List(ctx, f)
 }
 

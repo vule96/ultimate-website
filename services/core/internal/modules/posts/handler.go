@@ -1,6 +1,7 @@
 package posts
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,25 +18,29 @@ import (
 
 // Handler expose module posts qua HTTP (Gin).
 type Handler struct {
-	svc *Service
+	svc    *Service
+	authed func(ctx context.Context) bool // request hiện tại đã đăng nhập admin chưa
 }
 
-// NewHandler tạo Handler từ Service.
-func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
+// NewHandler tạo Handler từ Service và checker đăng nhập (vd auth.IsAuthenticated(sm)).
+func NewHandler(svc *Service, authed func(ctx context.Context) bool) *Handler {
+	return &Handler{svc: svc, authed: authed}
+}
 
-// RegisterRoutes gắn các route của module posts. GET công khai; các endpoint ghi
-// (POST/PUT/DELETE) được bọc bởi writeMW (vd auth.RequireAuth).
-func (h *Handler) RegisterRoutes(rg gin.IRouter, writeMW ...gin.HandlerFunc) {
+// RegisterRoutes gắn các route của module posts. GET list/detail/tags công khai
+// (service tự ép visibility); stats + endpoint ghi nằm sau protectedMW
+// (vd jsonmw.RequireJSON + auth.RequireAuth).
+func (h *Handler) RegisterRoutes(rg gin.IRouter, protectedMW ...gin.HandlerFunc) {
 	rg.GET("/posts", h.list)
-	rg.GET("/posts/stats", h.stats)
-	rg.GET("/posts/stats/timeseries", h.timeseries)
 	rg.GET("/posts/:slug", h.getBySlug)
 	rg.GET("/tags", h.listTags)
 
-	write := rg.Group("", writeMW...)
-	write.POST("/posts", h.create)
-	write.PUT("/posts/:id", h.update)
-	write.DELETE("/posts/:id", h.delete)
+	protected := rg.Group("", protectedMW...)
+	protected.GET("/posts/stats", h.stats)
+	protected.GET("/posts/stats/timeseries", h.timeseries)
+	protected.POST("/posts", h.create)
+	protected.PUT("/posts/:id", h.update)
+	protected.DELETE("/posts/:id", h.delete)
 }
 
 // --- DTOs ---
@@ -103,6 +108,7 @@ func (h *Handler) list(c *gin.Context) {
 		Search: strings.TrimSpace(c.Query("q")),
 		Sort:   c.Query("sort"),
 		Order:  c.Query("order"),
+		Authed: h.authed(c.Request.Context()),
 		Limit:  p.PageSize,
 		Offset: p.Offset(),
 	})
@@ -152,7 +158,8 @@ func (h *Handler) timeseries(c *gin.Context) {
 }
 
 func (h *Handler) getBySlug(c *gin.Context) {
-	post, err := h.svc.GetBySlug(c.Request.Context(), c.Param("slug"))
+	ctx := c.Request.Context()
+	post, err := h.svc.GetBySlug(ctx, c.Param("slug"), h.authed(ctx))
 	if err != nil {
 		respondError(c, err)
 		return

@@ -15,6 +15,8 @@ type mockRepo struct {
 	updated     *Post
 	createErr   error
 	monthCounts map[string]int64
+	lastFilter  ListFilter // filter cuối cùng List nhận được
+	bySlug      *Post      // post trả về từ GetBySlug (nil → ErrPostNotFound)
 }
 
 func (m *mockRepo) Create(_ context.Context, p *Post) error {
@@ -26,9 +28,13 @@ func (m *mockRepo) GetByID(_ context.Context, _ uuid.UUID) (*Post, error) {
 	return nil, ErrPostNotFound
 }
 func (m *mockRepo) GetBySlug(_ context.Context, _ string) (*Post, error) {
+	if m.bySlug != nil {
+		return m.bySlug, nil
+	}
 	return nil, ErrPostNotFound
 }
-func (m *mockRepo) List(_ context.Context, _ ListFilter) ([]Post, int64, error) {
+func (m *mockRepo) List(_ context.Context, f ListFilter) ([]Post, int64, error) {
+	m.lastFilter = f
 	return nil, 0, nil
 }
 func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error  { return nil }
@@ -176,5 +182,66 @@ func TestServiceCreate_NormalizesAndDedupsTags(t *testing.T) {
 	}
 	if got[1].Slug != "backend" {
 		t.Errorf("tag[1].Slug = %q, want backend", got[1].Slug)
+	}
+}
+
+func TestServiceList_AnonymousForcesPublished(t *testing.T) {
+	repo := &mockRepo{}
+	svc := newTestService(repo)
+
+	// Anonymous cố tình xin status=DRAFT → service phải ép về PUBLISHED.
+	if _, _, err := svc.List(context.Background(), ListFilter{Status: "DRAFT", Authed: false}); err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if repo.lastFilter.Status != string(StatusPublished) {
+		t.Errorf("filter.Status = %q, want %q", repo.lastFilter.Status, StatusPublished)
+	}
+}
+
+func TestServiceList_AuthedKeepsStatus(t *testing.T) {
+	repo := &mockRepo{}
+	svc := newTestService(repo)
+
+	if _, _, err := svc.List(context.Background(), ListFilter{Status: "DRAFT", Authed: true}); err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if repo.lastFilter.Status != "DRAFT" {
+		t.Errorf("filter.Status = %q, want DRAFT (authed giữ nguyên filter)", repo.lastFilter.Status)
+	}
+}
+
+func TestServiceGetBySlug_AnonymousDraftNotFound(t *testing.T) {
+	repo := &mockRepo{bySlug: &Post{Slug: "nhap", Status: StatusDraft}}
+	svc := newTestService(repo)
+
+	if _, err := svc.GetBySlug(context.Background(), "nhap", false); !errors.Is(err, ErrPostNotFound) {
+		t.Fatalf("anonymous đọc DRAFT: want ErrPostNotFound, got %v", err)
+	}
+	// PENDING_APPROVAL cũng phải ẩn.
+	repo.bySlug.Status = StatusPendingApproval
+	if _, err := svc.GetBySlug(context.Background(), "nhap", false); !errors.Is(err, ErrPostNotFound) {
+		t.Fatalf("anonymous đọc PENDING_APPROVAL: want ErrPostNotFound, got %v", err)
+	}
+}
+
+func TestServiceGetBySlug_AnonymousPublishedOK(t *testing.T) {
+	repo := &mockRepo{bySlug: &Post{Slug: "cong-khai", Status: StatusPublished}}
+	svc := newTestService(repo)
+
+	p, err := svc.GetBySlug(context.Background(), "cong-khai", false)
+	if err != nil {
+		t.Fatalf("anonymous đọc PUBLISHED: %v", err)
+	}
+	if p.Slug != "cong-khai" {
+		t.Errorf("slug = %q", p.Slug)
+	}
+}
+
+func TestServiceGetBySlug_AuthedDraftOK(t *testing.T) {
+	repo := &mockRepo{bySlug: &Post{Slug: "nhap", Status: StatusDraft}}
+	svc := newTestService(repo)
+
+	if _, err := svc.GetBySlug(context.Background(), "nhap", true); err != nil {
+		t.Fatalf("authed đọc DRAFT: %v", err)
 	}
 }

@@ -55,8 +55,9 @@ func main() {
 	authSvc := auth.NewService(provider, auth.NewAllowlist(cfg.AdminAllowlist))
 	authHandler := auth.NewHandler(authSvc, sm, cfg.AppBaseURL)
 
-	// Wiring module posts.
-	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)))
+	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
+	// chưa (anonymous chỉ thấy bài PUBLISHED).
+	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)), auth.IsAuthenticated(sm))
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
