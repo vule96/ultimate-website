@@ -20,14 +20,7 @@ import {
   DropdownMenuTrigger,
   cn,
 } from "@ultimate/ui";
-
-// Cho phép truyền handler typed qua table.options.meta (thay closure lỏng).
-declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface TableMeta<TData extends unknown> {
-    onDelete: (row: TData) => void;
-  }
-}
+import "@/lib/table-meta"; // module augmentation TableMeta.onDelete?
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[];

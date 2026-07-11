@@ -24,12 +24,15 @@ import { tagKeys } from "@/features/tags/keys";
 export const postsListQueryOptions = (params: ListPostsParams) =>
   queryOptions({
     queryKey: postKeys.list(params),
-    queryFn: () => listPosts(params),
+    queryFn: ({ signal }) => listPosts(params, signal),
     placeholderData: keepPreviousData,
   });
 
 export const postQueryOptions = (slug: string) =>
-  queryOptions({ queryKey: postKeys.detail(slug), queryFn: () => getPostBySlug(slug) });
+  queryOptions({
+    queryKey: postKeys.detail(slug),
+    queryFn: ({ signal }) => getPostBySlug(slug, signal),
+  });
 
 export const statsQueryOptions = () =>
   queryOptions({ queryKey: postKeys.stats(), queryFn: fetchStats });

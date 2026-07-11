@@ -107,7 +107,7 @@ export type UpsertPostInput = SetOptional<
 >;
 
 /** Envelope lỗi API: { error: { code, message } }. */
-export interface ApiError {
+export interface ApiErrorBody {
   error: {
     code: string;
     message: string;
