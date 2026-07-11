@@ -371,3 +371,40 @@ func TestRepo_Delete(t *testing.T) {
 		t.Errorf("expected ErrPostNotFound on second delete, got %v", err)
 	}
 }
+
+func TestRepository_SharedTagSingleRow(t *testing.T) {
+	// M1: 2 post cùng dùng một tag mới → chỉ 1 dòng tag, ID nhất quán.
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p1 := samplePost("Bài 1", "bai-1", StatusDraft, "Go")
+	if err := repo.Create(ctx, p1); err != nil {
+		t.Fatalf("create p1: %v", err)
+	}
+	p2 := samplePost("Bài 2", "bai-2", StatusDraft, "Go")
+	if err := repo.Create(ctx, p2); err != nil {
+		t.Fatalf("create p2: %v", err)
+	}
+
+	if p1.Tags[0].ID != p2.Tags[0].ID {
+		t.Errorf("tag ID không nhất quán: %s vs %s", p1.Tags[0].ID, p2.Tags[0].ID)
+	}
+	var count int64
+	if err := repo.db.Model(&gormTag{}).Where("slug = ?", "go").Count(&count).Error; err != nil {
+		t.Fatalf("count tags: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("tag rows = %d, want 1", count)
+	}
+}
+
+func TestRepository_UpsertTagsEmptyNoop(t *testing.T) {
+	repo := newRepoTx(t)
+	got, err := upsertTags(repo.db, nil)
+	if err != nil {
+		t.Fatalf("upsertTags(nil): %v", err)
+	}
+	if len(got) != 0 {
+		t.Errorf("want empty, got %d", len(got))
+	}
+}

@@ -266,19 +266,28 @@ func (r *GormRepository) CountByMonth(ctx context.Context, since time.Time) (map
 // --- helpers ---
 
 // upsertTags đảm bảo mỗi tag tồn tại (theo slug) và trả về bản ghi có ID.
+// Batch INSERT ... ON CONFLICT (slug) DO UPDATE — atomic (M1): concurrent save
+// không còn dính unique-violation race, và chỉ 1 round-trip cho mọi tag.
+// DO UPDATE (thay vì DO NOTHING) để RETURNING trả id cả với dòng đã tồn tại.
 func upsertTags(tx *gorm.DB, tags []Tag) ([]gormTag, error) {
-	result := make([]gormTag, 0, len(tags))
-	for _, t := range tags {
-		gt := gormTag{Name: t.Name, Slug: t.Slug}
-		err := tx.Where(gormTag{Slug: t.Slug}).
-			Attrs(gormTag{Name: t.Name}).
-			FirstOrCreate(&gt).Error
-		if err != nil {
-			return nil, translateErr(err)
-		}
-		result = append(result, gt)
+	if len(tags) == 0 {
+		return nil, nil
 	}
-	return result, nil
+	gts := make([]gormTag, len(tags))
+	for i, t := range tags {
+		gts[i] = gormTag{Name: t.Name, Slug: t.Slug}
+	}
+	err := tx.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "slug"}},
+		DoUpdates: clause.AssignmentColumns([]string{"name"}),
+	}).Create(&gts).Error
+	if err != nil {
+		// Không translateErr ở đây: unique-violation của TAG không phải SLUG_TAKEN
+		// của post (đó là bug M1 cũ). Lỗi hiếm còn lại (vd trùng name khác slug)
+		// trả nguyên trạng → 500 có log, không đánh lừa client bằng 409.
+		return nil, err
+	}
+	return gts, nil
 }
 
 func toGormModel(p *Post) gormPost {
