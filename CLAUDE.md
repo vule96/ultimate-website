@@ -9,6 +9,8 @@ Tài liệu phân tích kiến trúc, stack, chi phí và roadmap đầy đủ n
 Bản xem đẹp (Artifact, UTF-8, sáng/tối): `https://claude.ai/code/artifact/8104b3d2-efe4-4736-8f9f-8587e71253fe`
 (`docs/personal-blog-ai-analysis.html` là **fragment kiểu Artifact** — mở raw sẽ lỗi font; publish qua Artifact mới đúng.)
 
+**Kiến trúc vận hành thực tế** (sơ đồ, luồng BE↔FE, cache từng tầng, AI tương lai): **`docs/architecture.md`** · Artifact: `https://claude.ai/code/artifact/52ff8b32-c745-43be-a23e-d3b1717fa57d`.
+
 Tóm tắt định hướng đã chốt:
 - Mục tiêu: cân bằng học + sản phẩm dùng thật. Ngân sách ~15–40 USD/tháng.
 - Kiến trúc: **KHÔNG microservice thật** → Modular Monolith (Go) + 1 AI worker (Python/LangChain) tách riêng.

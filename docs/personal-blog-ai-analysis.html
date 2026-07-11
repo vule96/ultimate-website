@@ -282,12 +282,13 @@
     </header>
 
     <div class="verdict">
-      <div class="verdict-head">● Trạng thái triển khai · cập nhật 2026-07-10</div>
+      <div class="verdict-head">● Trạng thái triển khai · cập nhật 2026-07-11</div>
       <dl>
         <div class="row"><dt>Phase 0 + 1</dt><dd class="yes">HOÀN TẤT — Slice 1→4. Blog công khai chạy live (Next.js SSG/ISR + SEO), admin dashboard, storage R2 đã cấu hình &amp; verify.</dd></div>
-        <div class="row"><dt>Đang ở đâu</dt><dd>Nền móng + blog cơ bản xong. Storage: <b>dev = MinIO / prod = R2</b> (đã chốt).</dd></div>
-        <div class="row"><dt>Bước kế tiếp</dt><dd>Chưa chốt — <b>Deploy production</b> hoặc <b>Phase 2 (AI: RAG, tự viết bài, trợ lý viết)</b>.</dd></div>
-        <div class="row"><dt>Chi tiết tiến độ</dt><dd>Xem <code>CLAUDE.md</code> — nguồn cập nhật theo từng slice. Tài liệu này là kiến trúc/định hướng gốc.</dd></div>
+        <div class="row"><dt>Hardening</dt><dd class="yes">3 đợt 5a/5b/5c HOÀN TẤT sau senior code review — đã đóng mọi issue high+ và polish FE (bảo mật visibility/CSRF/presign + mất-dữ-liệu form; graceful shutdown + request logging + path-based SSG pagination + 401-aware admin; SEO đầy đủ + sanitize + CSP + <code>next/font</code>).</dd></div>
+        <div class="row"><dt>Đang ở đâu</dt><dd>Nền móng + blog cơ bản xong &amp; đã siết chất lượng. Storage: <b>dev = MinIO / prod = R2</b> (đã chốt).</dd></div>
+        <div class="row"><dt>Bước kế tiếp</dt><dd>Chưa chốt — <b>Slice 5d</b> (backend robustness: optimistic locking, outbox) hoặc <b>Deploy production</b> hoặc <b>Phase 2 (AI: RAG, tự viết bài, trợ lý viết)</b>.</dd></div>
+        <div class="row"><dt>Chi tiết tiến độ</dt><dd>Xem <code>CLAUDE.md</code> + <code>docs/reviews/2026-07-11-senior-code-review.md</code>. Kiến trúc vận hành thực tế: <code>docs/architecture.md</code>. Tài liệu này là định hướng/đánh giá gốc.</dd></div>
       </dl>
     </div>
 

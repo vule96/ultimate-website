@@ -1,6 +1,7 @@
 # Kiến trúc & Vận hành — ultimate-website
 
 > Cập nhật: 2026-07-11 · Phản ánh **đúng những gì codebase đang có và cách nó thực sự chạy** (sau Phase 1 + hardening 5a/5b/5c).
+> Bản xem đẹp (Artifact, sáng/tối, sơ đồ): `https://claude.ai/code/artifact/52ff8b32-c745-43be-a23e-d3b1717fa57d`
 > Tài liệu định hướng/đánh giá gốc: `docs/personal-blog-ai-analysis.md`. Tiến độ + issue tracker: `CLAUDE.md`, `docs/reviews/2026-07-11-senior-code-review.md`.
 > Phần **AI (Phase 2)** là **kế hoạch — CHƯA xây**, được đánh dấu rõ ở §9.
 
