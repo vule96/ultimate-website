@@ -8,6 +8,7 @@ import { PostContent } from "@/features/posts/components/post-content";
 import { TagBadge } from "@/features/posts/components/tag-badge";
 import { ReadingProgress } from "@/features/posts/components/reading-progress";
 import { formatDate, readingTime } from "@/lib/format";
+import { SITE_URL, SITE_NAME } from "@/lib/config";
 
 export const revalidate = 60;
 export const dynamicParams = true;
@@ -44,8 +45,24 @@ export default async function BlogPostPage({
   const mins = readingTime(post.content_html);
   const primaryTag = post.tags[0];
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    datePublished: post.published_at ?? undefined,
+    dateModified: post.updated_at,
+    image: post.cover_image ?? undefined,
+    mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+    author: { "@type": "Person", name: SITE_NAME },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        // Escape "<" để tránh breakout </script> (dù title là admin-controlled) — chuẩn inline JSON-LD.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <ReadingProgress />
       <main className="mx-auto max-w-prose px-5 py-12 sm:py-16">
         <Link
@@ -81,6 +98,7 @@ export default async function BlogPostPage({
               width={1200}
               height={630}
               priority
+              sizes="(max-width: 42rem) 100vw, 42rem"
               className="mt-8 w-full rounded-2xl border border-border object-cover shadow-[var(--shadow-card)]"
             />
           ) : null}
