@@ -1,10 +1,19 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { listPublished, listTags } from "@/features/posts/api";
 import { PostsPage } from "@/features/posts/components/posts-page";
 import { totalPages } from "@/features/posts/pagination-utils";
-import { PAGE_SIZE } from "@/lib/config";
+import { PAGE_SIZE, SITE_URL } from "@/lib/config";
 
 export const revalidate = 60;
+
+export function generateMetadata({ params }: { params: { slug: string; n: string } }): Metadata {
+  return {
+    title: `#${params.slug} · Trang ${params.n}`,
+    description: `Các bài viết về chủ đề #${params.slug} — trang ${params.n}.`,
+    alternates: { canonical: `${SITE_URL}/tags/${params.slug}/page/${params.n}` },
+  };
+}
 
 // Sinh cặp {slug, n} cho các trang 2+ của mỗi tag. Lỗi core → [] (degrade).
 export async function generateStaticParams() {
