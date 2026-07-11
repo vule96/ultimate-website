@@ -6,7 +6,8 @@ export function buildPostMetadata(post: Post): Metadata {
   const title = post.meta_title ?? post.title;
   const description = post.meta_desc ?? post.excerpt ?? "";
   const url = `${SITE_URL}/blog/${post.slug}`;
-  const images = post.cover_image ? [{ url: post.cover_image }] : undefined;
+  const hasCover = Boolean(post.cover_image);
+  const ogImage = post.cover_image ?? `${SITE_URL}/og-default.png`;
   return {
     title,
     description,
@@ -18,13 +19,13 @@ export function buildPostMetadata(post: Post): Metadata {
       url,
       siteName: SITE_NAME,
       publishedTime: post.published_at ?? undefined,
-      images,
+      images: [{ url: ogImage }],
     },
     twitter: {
-      card: "summary_large_image",
+      card: hasCover ? "summary_large_image" : "summary",
       title,
       description,
-      images: post.cover_image ? [post.cover_image] : undefined,
+      images: [ogImage],
     },
   };
 }

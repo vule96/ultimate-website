@@ -39,4 +39,13 @@ describe("buildPostMetadata", () => {
     const m = buildPostMetadata(post);
     expect(m.alternates?.canonical).toContain("/blog/tieu-de");
   });
+  it("có cover → twitter summary_large_image", () => {
+    const m = buildPostMetadata(post);
+    expect(m.twitter?.card).toBe("summary_large_image");
+  });
+  it("không cover → og-default + twitter summary", () => {
+    const m = buildPostMetadata({ ...post, cover_image: null });
+    expect(JSON.stringify(m.openGraph?.images)).toContain("/og-default.png");
+    expect(m.twitter?.card).toBe("summary");
+  });
 });
