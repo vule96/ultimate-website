@@ -103,6 +103,7 @@
 - ✅ **RESOLVED (2026-07-11, commit 32c6d11)** — `beforeLoad` chỉ redirect khi `err instanceof ApiError && err.status === 401`; lỗi khác rethrow cho error boundary.
 - **A2 — API sập = bị đá về login.** `routes/_authed.tsx:6-11` — `beforeLoad` coi *mọi* lỗi `ensureQueryData` là chưa đăng nhập (500/CORS/API down đều redirect `/login`). **Fix:** chỉ redirect khi `ApiError.status === 401`; rethrow phần còn lại cho error boundary.
 - ✅ **RESOLVED (2026-07-11, commit 32c6d11)** — `QueryCache`/`MutationCache` `onError` bắt `ApiError 401` → reset auth query + navigate `/login`; vị trí trước khi hết hạn lưu `sessionStorage` (sống sót qua full-page OAuth redirect), consume ở `_authed.beforeLoad` sau khi auth lại. Open-redirect guard `isInternalPath` (chặn `//`, backslash, control char).
+  - 🔧 **Follow-up (2026-07-11, commit 6ed03e7):** bản đầu ghép `location.pathname + location.search` → `location.search` của TanStack Router là **object đã parse**, ghép string+object ném `Cannot convert object to primitive value` làm vỡ guard thành error boundary. Đã đổi sang `location.href` (chuỗi path+search sẵn có). Phát hiện khi chạy stack live.
 - **A3 — Session hết hạn giữa phiên không xử lý.** `features/auth/api.ts:14` staleTime 5' → guard pass từ cache sau khi session chết; 401 từ data query chỉ hiện `RouteError`/toast, không bao giờ về login. **Fix:** `QueryCache`/`MutationCache` `onError` trong `lib/queryClient.ts`: 401 → reset auth query + `router.navigate({ to: "/login" })` kèm `redirect` search param (param này hiện cũng chưa có).
 
 ### 🟡 Medium
