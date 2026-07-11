@@ -17,3 +17,10 @@ dist/
 # Code intelligence / memory tooling (local, per-machine)
 .codegraph/
 .neurotrace/
+
+# Agent-tooling instructions tự sinh per-machine (NeuroTrace/Copilot) — không commit
+AGENTS.md
+.github/copilot-instructions.md
+
+# Build/test logs (scratch)
+*.log

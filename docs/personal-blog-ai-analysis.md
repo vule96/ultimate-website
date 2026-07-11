@@ -4,7 +4,7 @@
 > Ngày: 2026-07-05 · Tác giả yêu cầu: huyvu.le@kamereo.vn
 > Lựa chọn định hướng: **Cân bằng học + sản phẩm** · Ngân sách **~15–40 USD/tháng** · Backend **Golang** · AI **toàn diện**
 >
-> **Trạng thái triển khai (cập nhật 2026-07-10):** Phase 0 + Phase 1 **HOÀN TẤT** (Slice 1→4) — blog công khai chạy live (Next.js SSG/ISR + SEO), admin dashboard, storage R2 đã cấu hình & verify (dev = MinIO / prod = R2). **Bước kế tiếp chưa chốt:** Deploy production *hoặc* Phase 2 (AI). Tiến độ chi tiết theo từng slice ở **`CLAUDE.md`** (mục "Trạng thái hiện tại"). Tài liệu này giữ vai trò **kiến trúc/định hướng gốc** — không track tiến độ từng slice.
+> **Trạng thái triển khai (cập nhật 2026-07-11):** Phase 0 + Phase 1 **HOÀN TẤT** (Slice 1→4) + **3 đợt hardening 5a/5b/5c HOÀN TẤT** — sau senior code review toàn codebase đã đóng mọi issue high+ và polish FE (bảo mật visibility/CSRF/presign, mất-dữ-liệu form; production-readiness: graceful shutdown, request logging, path-based SSG pagination, 401-aware admin; SEO đầy đủ + sanitize + CSP + `next/font`). Blog công khai chạy live (Next.js SSG/ISR + SEO), admin dashboard, storage R2 verify (dev = MinIO / prod = R2). **Bước kế tiếp chưa chốt:** Slice 5d (backend robustness: tag ON CONFLICT, optimistic locking, outbox) *hoặc* Deploy production *hoặc* Phase 2 (AI). Tiến độ chi tiết từng slice + issue tracker ở **`CLAUDE.md`** và **`docs/reviews/2026-07-11-senior-code-review.md`**. **Kiến trúc vận hành thực tế** (sơ đồ, luồng BE↔FE, cache, AI tương lai): **`docs/architecture.md`**. Tài liệu này giữ vai trò **định hướng/đánh giá gốc** — không track tiến độ từng slice.
 
 ---
 
