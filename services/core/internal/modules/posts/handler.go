@@ -236,7 +236,8 @@ func (h *Handler) delete(c *gin.Context) {
 }
 
 func (h *Handler) listTags(c *gin.Context) {
-	tags, err := h.svc.ListTags(c.Request.Context())
+	ctx := c.Request.Context()
+	tags, err := h.svc.ListTags(ctx, h.authed(ctx))
 	if err != nil {
 		respondError(c, err)
 		return

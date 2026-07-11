@@ -238,3 +238,23 @@ func TestHandler_StatsBehindProtectedMW(t *testing.T) {
 		t.Errorf("GET /posts: status = %d, want 200", w.Code)
 	}
 }
+
+func TestHandler_AnonymousTagsOnlyFromPublished(t *testing.T) {
+	r := newAnonTestServer(t)
+	// Tag "secret-draft" chỉ thuộc bài DRAFT; "go" thuộc bài PUBLISHED.
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Nháp bí mật", "tags": []string{"Secret Draft"}})
+	_ = doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "Công khai", "status": "PUBLISHED", "tags": []string{"Go"}})
+
+	w := doJSON(t, r, http.MethodGet, "/api/v1/tags", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", w.Code)
+	}
+	body := decode(t, w)
+	data, _ := body["data"].([]any)
+	for _, it := range data {
+		tag := it.(map[string]any)
+		if tag["slug"] == "secret-draft" {
+			t.Errorf("anonymous /tags lộ tag của bài DRAFT: %v", tag)
+		}
+	}
+}

@@ -18,7 +18,7 @@ type Repository interface {
 	GetBySlug(ctx context.Context, slug string) (*Post, error)
 	List(ctx context.Context, f ListFilter) ([]Post, int64, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	ListTags(ctx context.Context) ([]Tag, error)
+	ListTags(ctx context.Context, publishedOnly bool) ([]Tag, error)
 	Stats(ctx context.Context) (StatsResult, error)
 	CountByMonth(ctx context.Context, since time.Time) (map[string]int64, error)
 }
@@ -207,9 +207,10 @@ func (s *Service) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// ListTags trả về toàn bộ tag.
-func (s *Service) ListTags(ctx context.Context) ([]Tag, error) {
-	return s.repo.ListTags(ctx)
+// ListTags trả về tag. Request chưa đăng nhập chỉ thấy tag gắn với ít nhất một
+// bài PUBLISHED — tránh lộ metadata (tên/slug tag) của bài DRAFT/PENDING.
+func (s *Service) ListTags(ctx context.Context, authed bool) ([]Tag, error) {
+	return s.repo.ListTags(ctx, !authed)
 }
 
 // Stats trả về số liệu tổng hợp bài viết cho Dashboard.

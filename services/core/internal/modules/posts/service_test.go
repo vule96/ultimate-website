@@ -37,9 +37,9 @@ func (m *mockRepo) List(_ context.Context, f ListFilter) ([]Post, int64, error) 
 	m.lastFilter = f
 	return nil, 0, nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error  { return nil }
-func (m *mockRepo) ListTags(_ context.Context) ([]Tag, error)    { return nil, nil }
-func (m *mockRepo) Stats(_ context.Context) (StatsResult, error) { return StatsResult{}, nil }
+func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error       { return nil }
+func (m *mockRepo) ListTags(_ context.Context, _ bool) ([]Tag, error) { return nil, nil }
+func (m *mockRepo) Stats(_ context.Context) (StatsResult, error)      { return StatsResult{}, nil }
 func (m *mockRepo) CountByMonth(_ context.Context, _ time.Time) (map[string]int64, error) {
 	return m.monthCounts, nil
 }

@@ -113,7 +113,7 @@ func TestRepo_ReusesExistingTagBySlug(t *testing.T) {
 	if err := repo.Create(ctx, samplePost("B", "b", StatusPublished, "Go")); err != nil {
 		t.Fatalf("create b: %v", err)
 	}
-	tags, err := repo.ListTags(ctx)
+	tags, err := repo.ListTags(ctx, false)
 	if err != nil {
 		t.Fatalf("list tags: %v", err)
 	}
