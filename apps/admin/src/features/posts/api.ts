@@ -61,11 +61,11 @@ export function getPostBySlug(slug: string, signal?: AbortSignal): Promise<Post>
 }
 
 export function fetchStats(): Promise<PostStats> {
-  return apiFetch("/api/v1/posts/stats", PostStatsSchema);
+  return apiFetch("/api/v1/stats/posts", PostStatsSchema);
 }
 
 export function fetchTimeseries(months = 8): Promise<PostTimeseries> {
-  return apiFetch(`/api/v1/posts/stats/timeseries?months=${months}`, PostTimeseriesSchema);
+  return apiFetch(`/api/v1/stats/posts/timeseries?months=${months}`, PostTimeseriesSchema);
 }
 
 export function createPost(input: UpsertPostInput): Promise<Post> {

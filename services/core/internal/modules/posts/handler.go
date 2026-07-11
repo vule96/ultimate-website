@@ -38,8 +38,9 @@ func (h *Handler) RegisterRoutes(rg gin.IRouter, protectedMW ...gin.HandlerFunc)
 	rg.GET("/tags", h.listTags)
 
 	protected := rg.Group("", protectedMW...)
-	protected.GET("/posts/stats", h.stats)
-	protected.GET("/posts/stats/timeseries", h.timeseries)
+	// Aggregate endpoints tách namespace /stats — tránh route tĩnh che slug bài viết (M3).
+	protected.GET("/stats/posts", h.stats)
+	protected.GET("/stats/posts/timeseries", h.timeseries)
 	protected.POST("/posts", h.create)
 	protected.PUT("/posts/:id", h.update)
 	protected.DELETE("/posts/:id", h.delete)

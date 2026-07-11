@@ -227,7 +227,7 @@ func TestHandler_StatsBehindProtectedMW(t *testing.T) {
 	}
 	NewHandler(svc, func(context.Context) bool { return false }).RegisterRoutes(r.Group("/api/v1"), deny)
 
-	for _, path := range []string{"/api/v1/posts/stats", "/api/v1/posts/stats/timeseries"} {
+	for _, path := range []string{"/api/v1/stats/posts", "/api/v1/stats/posts/timeseries"} {
 		w := doJSON(t, r, http.MethodGet, path, nil)
 		if w.Code != http.StatusUnauthorized {
 			t.Errorf("%s: status = %d, want 401 (stats phải nằm sau protectedMW)", path, w.Code)
@@ -256,5 +256,35 @@ func TestHandler_AnonymousTagsOnlyFromPublished(t *testing.T) {
 		if tag["slug"] == "secret-draft" {
 			t.Errorf("anonymous /tags lộ tag của bài DRAFT: %v", tag)
 		}
+	}
+}
+
+func TestHandler_StatsNewRoute(t *testing.T) {
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodGet, "/api/v1/stats/posts", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /stats/posts = %d, want 200; body=%s", w.Code, w.Body.String())
+	}
+	w = doJSON(t, r, http.MethodGet, "/api/v1/stats/posts/timeseries?months=3", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /stats/posts/timeseries = %d, want 200; body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_PostSlugStatsNotShadowed(t *testing.T) {
+	// M3: bài viết slug "stats" phải xem được qua /posts/stats (không bị route tĩnh che).
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{
+		"title": "Stats", "slug": "stats", "status": "PUBLISHED",
+	})
+	if w.Code != http.StatusCreated {
+		t.Fatalf("create = %d; body=%s", w.Code, w.Body.String())
+	}
+	w = doJSON(t, r, http.MethodGet, "/api/v1/posts/stats", nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET /posts/stats = %d, want 200 (bài viết); body=%s", w.Code, w.Body.String())
+	}
+	if decode(t, w)["title"] != "Stats" {
+		t.Errorf("expected bài viết 'Stats', got %s", w.Body.String())
 	}
 }
