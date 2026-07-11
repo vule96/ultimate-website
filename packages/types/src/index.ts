@@ -51,7 +51,7 @@ export type PostListResponse = z.infer<typeof PostListResponseSchema>;
 export const TagListResponseSchema = z.object({ data: z.array(TagSchema) });
 export type TagListResponse = z.infer<typeof TagListResponseSchema>;
 
-/** Số liệu tổng hợp bài viết cho Dashboard (GET /posts/stats). */
+/** Số liệu tổng hợp bài viết cho Dashboard (GET /stats/posts). */
 export const PostStatsSchema = z.object({
   total: z.number().int(),
   published: z.number().int(),
@@ -60,7 +60,7 @@ export const PostStatsSchema = z.object({
 });
 export type PostStats = z.infer<typeof PostStatsSchema>;
 
-/** Một điểm dữ liệu chart theo tháng (GET /posts/stats/timeseries). */
+/** Một điểm dữ liệu chart theo tháng (GET /stats/posts/timeseries). */
 export const PostTimeseriesSchema = z.array(
   z.object({ month: z.string(), count: z.number().int() }),
 );
