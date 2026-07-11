@@ -188,3 +188,32 @@ func TestHandler_MeWithoutSession(t *testing.T) {
 		t.Errorf("me without session = %d, want 401", me.StatusCode)
 	}
 }
+
+func TestIsAuthenticated(t *testing.T) {
+	sm := scs.New() // MemStore mặc định
+
+	var got bool
+	h := sm.LoadAndSave(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = IsAuthenticated(sm)(r.Context())
+		if r.URL.Query().Get("login") == "1" {
+			sm.Put(r.Context(), sessionKeyAdminEmail, "admin@example.com")
+		}
+	}))
+
+	// Request 1: chưa có session → false (đồng thời login để lấy cookie).
+	w1 := httptest.NewRecorder()
+	h.ServeHTTP(w1, httptest.NewRequest(http.MethodGet, "/?login=1", nil))
+	if got {
+		t.Error("request chưa đăng nhập: IsAuthenticated phải trả false")
+	}
+
+	// Request 2: kèm cookie session → true.
+	req2 := httptest.NewRequest(http.MethodGet, "/", nil)
+	for _, c := range w1.Result().Cookies() {
+		req2.AddCookie(c)
+	}
+	h.ServeHTTP(httptest.NewRecorder(), req2)
+	if !got {
+		t.Error("request có session admin_email: IsAuthenticated phải trả true")
+	}
+}
