@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/vule96/ultimate-website/services/core/internal/shared/httperr"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
 
 // Handler expose module media qua HTTP (Gin).
@@ -52,6 +53,7 @@ func (h *Handler) presign(c *gin.Context) {
 			httperr.Write(c, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 			return
 		}
+		reqlog.From(c.Request.Context()).Error("presign failed", "err", err)
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "internal server error")
 		return
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
 
 func main() {
@@ -76,6 +77,7 @@ func main() {
 	}
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(reqlog.Middleware(log))
 	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
 
 	r.GET("/healthz", func(c *gin.Context) {
