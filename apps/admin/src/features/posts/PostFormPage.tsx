@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "@tanstack/react-router";
@@ -69,14 +69,24 @@ export function PostFormPage({ slug }: { slug?: string }) {
   });
 
   // content_json native của editor (best-effort); HTML vẫn là nguồn nạp chung.
-  const [contentJson, setContentJson] = useState<unknown>({});
+  // Dùng ref (không phải state): chỉ đọc lúc submit — keystroke không cần re-render form (A4).
+  const contentJsonRef = useRef<unknown>({});
 
-  // Khi post đã load (chế độ sửa) → prefill form + json.
+  // Hydrate form đúng MỘT lần khi post load xong. Background refetch tạo object mới
+  // nhưng không được reset() đè lên nội dung user đang sửa (A1).
+  const hasHydratedRef = useRef(false);
+  // HTML nạp editor chốt tại lần load đầu (editor uncontrolled — chỉ đọc lúc mount).
+  const initialHtmlRef = useRef<string | null>(null);
+
   const loaded = postQuery.data;
+  if (loaded && initialHtmlRef.current === null) {
+    initialHtmlRef.current = loaded.content_html;
+  }
   useEffect(() => {
-    if (loaded) {
+    if (loaded && !hasHydratedRef.current) {
+      hasHydratedRef.current = true;
       reset(postToFormValues(loaded));
-      setContentJson(loaded.content_json ?? {});
+      contentJsonRef.current = loaded.content_json ?? {};
     }
   }, [loaded, reset]);
 
@@ -84,7 +94,7 @@ export function PostFormPage({ slug }: { slug?: string }) {
 
   function onSubmit(values: PostFormValues) {
     setFormError(null);
-    const input = toUpsertInput(values, contentJson);
+    const input = toUpsertInput(values, contentJsonRef.current);
     const onError = (err: unknown) => {
       setFormError(err instanceof ApiError ? err.message : "Lưu bài viết thất bại.");
     };
@@ -160,10 +170,10 @@ export function PostFormPage({ slug }: { slug?: string }) {
               <Field label="Nội dung">
                 <input type="hidden" {...register("content")} />
                 <EditorSwitch
-                  initialHtml={loaded?.content_html ?? ""}
+                  initialHtml={initialHtmlRef.current ?? ""}
                   onChange={({ html, json }) => {
                     setValue("content", html, { shouldDirty: true });
-                    setContentJson(json);
+                    contentJsonRef.current = json;
                   }}
                   uploadImage={handleUploadImage}
                 />
