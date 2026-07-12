@@ -13,6 +13,7 @@ const basePost = {
   meta_title: null,
   meta_desc: null,
   published_at: "2026-07-01T00:00:00Z",
+  version: 1,
   tags: [],
   created_at: "2026-07-01T00:00:00Z",
   updated_at: "2026-07-01T00:00:00Z",

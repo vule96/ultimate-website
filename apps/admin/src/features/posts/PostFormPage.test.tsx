@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import type { Post } from "@ultimate/types";
 import { ToastProvider } from "@ultimate/ui";
+import { ApiError } from "@/lib/apiClient";
 import { PostFormPage } from "./PostFormPage";
 
 // --- Mocks: router, editor (lazy), queries ---
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   usePostQuery: vi.fn(),
   createMutate: vi.fn(),
   updateMutate: vi.fn(),
+  refetch: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-router", () => ({
@@ -54,6 +56,7 @@ const basePost = {
   meta_title: null,
   meta_desc: null,
   published_at: null,
+  version: 1,
   tags: [],
   created_at: "2026-07-01T00:00:00Z",
   updated_at: "2026-07-01T00:00:00Z",
@@ -112,5 +115,47 @@ describe("PostFormPage — hydrate & data-loss (A1, A4)", () => {
       { id: string; input: { content_json: unknown } },
     ];
     expect(vars.input.content_json).toEqual({ text: "<p>Mới</p>" });
+  });
+});
+
+describe("PostFormPage — optimistic locking (M5)", () => {
+  it("gửi version của bản đã load khi update", async () => {
+    mocks.usePostQuery.mockReturnValue({
+      data: { ...basePost, version: 3 } as unknown as Post,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
+
+    await waitFor(() => expect(mocks.updateMutate).toHaveBeenCalled());
+    const [vars] = mocks.updateMutate.mock.calls[0] as [{ id: string; input: { version?: number } }];
+    expect(vars.input.version).toBe(3);
+  });
+
+  it("409 VERSION_CONFLICT → banner conflict + nút tải lại gọi refetch", async () => {
+    mocks.usePostQuery.mockReturnValue({
+      data: basePost,
+      isPending: false,
+      isError: false,
+      refetch: mocks.refetch,
+    });
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Lưu" }));
+    await waitFor(() => expect(mocks.updateMutate).toHaveBeenCalled());
+
+    // Mô phỏng server trả 409: gọi onError mà component truyền vào mutate.
+    const [, opts] = mocks.updateMutate.mock.calls[0] as [
+      unknown,
+      { onError: (e: unknown) => void },
+    ];
+    opts.onError(new ApiError(409, "VERSION_CONFLICT", "post was modified by someone else"));
+
+    const banner = await screen.findByRole("alert");
+    expect(banner).toHaveTextContent("Bài đã bị sửa ở nơi khác");
+
+    fireEvent.click(screen.getByRole("button", { name: "Tải bản mới nhất" }));
+    expect(mocks.refetch).toHaveBeenCalled();
   });
 });

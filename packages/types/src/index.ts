@@ -33,6 +33,7 @@ export const PostSchema = z.object({
   meta_title: z.string().nullable(),
   meta_desc: z.string().nullable(),
   published_at: z.string().nullable(),
+  version: z.number().int(),
   tags: z.array(TagSchema),
   created_at: z.string(),
   updated_at: z.string(),
@@ -102,8 +103,17 @@ export type UpsertPostInput = SetOptional<
     meta_title: string | null;
     meta_desc: string | null;
     tags: string[];
+    /** Optimistic locking (M5): bắt buộc khi update; create bỏ qua. */
+    version: number;
   },
-  "slug" | "excerpt" | "cover_image" | "status" | "meta_title" | "meta_desc" | "content_json"
+  | "slug"
+  | "excerpt"
+  | "cover_image"
+  | "status"
+  | "meta_title"
+  | "meta_desc"
+  | "content_json"
+  | "version"
 >;
 
 /** Envelope lỗi API: { error: { code, message } }. */

@@ -44,6 +44,9 @@ export function PostFormPage({ slug }: { slug?: string }) {
   const createMutation = useCreatePost();
   const updateMutation = useUpdatePost();
   const [formError, setFormError] = useState<string | null>(null);
+  const [conflict, setConflict] = useState(false);
+  // Đổi key để remount editor khi nạp lại bản mới (editor uncontrolled, chỉ đọc initialHtml lúc mount).
+  const [editorKey, setEditorKey] = useState(0);
 
   // Bọc uploadImage: nếu upload lỗi (vd CORS/mạng/kích thước) thì hiện toast thay vì
   // nuốt im lặng trong editor — người dùng biết vì sao ảnh không chèn được.
@@ -96,11 +99,15 @@ export function PostFormPage({ slug }: { slug?: string }) {
     setFormError(null);
     const input = toUpsertInput(values, contentJsonRef.current);
     const onError = (err: unknown) => {
+      if (err instanceof ApiError && err.code === "VERSION_CONFLICT") {
+        setConflict(true); // M5: bài đã bị sửa ở nơi khác — không đè, cho user chọn tải lại
+        return;
+      }
       setFormError(err instanceof ApiError ? err.message : "Lưu bài viết thất bại.");
     };
     if (isEdit && loaded) {
       updateMutation.mutate(
-        { id: loaded.id, input },
+        { id: loaded.id, input: { ...input, version: loaded.version } },
         {
           onSuccess: () => {
             toast("Đã cập nhật bài viết.");
@@ -118,6 +125,14 @@ export function PostFormPage({ slug }: { slug?: string }) {
         onError,
       });
     }
+  }
+
+  function reloadLatest() {
+    setConflict(false);
+    hasHydratedRef.current = false; // cho phép hydrate lại từ data mới
+    initialHtmlRef.current = null; // chốt lại HTML editor theo bản mới
+    setEditorKey((k) => k + 1); // remount editor với initialHtml mới
+    void postQuery.refetch();
   }
 
   if (isEdit && postQuery.isPending) {
@@ -154,6 +169,18 @@ export function PostFormPage({ slug }: { slug?: string }) {
         </div>
       )}
 
+      {conflict && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-50 p-3 text-sm text-amber-800"
+        >
+          <span>Bài đã bị sửa ở nơi khác — thay đổi của bạn chưa được lưu.</span>
+          <Button type="button" variant="outline" size="sm" onClick={reloadLatest}>
+            Tải bản mới nhất
+          </Button>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="grid gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card>
@@ -170,6 +197,7 @@ export function PostFormPage({ slug }: { slug?: string }) {
               <Field label="Nội dung">
                 <input type="hidden" {...register("content")} />
                 <EditorSwitch
+                  key={editorKey}
                   initialHtml={initialHtmlRef.current ?? ""}
                   onChange={({ html, json }) => {
                     setValue("content", html, { shouldDirty: true });

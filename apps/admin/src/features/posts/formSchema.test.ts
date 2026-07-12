@@ -68,6 +68,7 @@ describe("postToFormValues", () => {
       meta_title: "MT",
       meta_desc: null,
       published_at: null,
+      version: 1,
       tags: [{ id: "1", name: "Go", slug: "go" }],
       created_at: "2026-07-07T00:00:00Z",
       updated_at: "2026-07-07T00:00:00Z",
