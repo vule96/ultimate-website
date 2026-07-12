@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -328,5 +329,29 @@ func TestHandler_PostSlugStatsNotShadowed(t *testing.T) {
 	}
 	if decode(t, w)["title"] != "Stats" {
 		t.Errorf("expected bài viết 'Stats', got %s", w.Body.String())
+	}
+}
+
+func TestHandler_InvalidJSONBodyGenericMessage(t *testing.T) {
+	r := newServerWithAuth(t, true)
+	// JSON sai kiểu: title là số → lỗi unmarshal của Go có tên struct/field.
+	body := `{"title": 123}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/posts", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400", w.Code)
+	}
+	got := w.Body.String()
+	if !strings.Contains(got, "invalid request body") {
+		t.Errorf("body = %s, want generic message", got)
+	}
+	// Không được lộ internals Go (tên type, package, field Go).
+	for _, leak := range []string{"json:", "Go struct", "unmarshal", "posts."} {
+		if strings.Contains(got, leak) {
+			t.Errorf("body leaks internals (%q): %s", leak, got)
+		}
 	}
 }
