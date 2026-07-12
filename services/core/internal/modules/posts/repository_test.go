@@ -511,3 +511,69 @@ func TestRepository_NoEventWhenCreateFails(t *testing.T) {
 		t.Errorf("events = %d, want 1 (transaction fail không để lại event)", count)
 	}
 }
+
+// tagInList kiểm tra slug có trong danh sách tag trả về không.
+func tagInList(tags []Tag, slug string) bool {
+	for _, tg := range tags {
+		if tg.Slug == slug {
+			return true
+		}
+	}
+	return false
+}
+
+func TestRepo_UpdateCleansOrphanTags(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+	orphan := "orphan-" + uuid.NewString()[:8]
+	kept := "kept-" + uuid.NewString()[:8]
+
+	p := samplePost("Bài A", "bai-a-"+uuid.NewString()[:8], StatusDraft, orphan, kept)
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	// Bài khác vẫn dùng tag kept → kept không được xoá.
+	p2 := samplePost("Bài B", "bai-b-"+uuid.NewString()[:8], StatusDraft, kept)
+	if err := repo.Create(ctx, p2); err != nil {
+		t.Fatalf("create p2: %v", err)
+	}
+
+	// Update bỏ hết tags của bài A → orphan mồ côi, kept vẫn còn bài B.
+	p.Tags = nil
+	if err := repo.Update(ctx, p); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	tags, err := repo.ListTags(ctx, false)
+	if err != nil {
+		t.Fatalf("list tags: %v", err)
+	}
+	if tagInList(tags, Slugify(orphan)) {
+		t.Errorf("orphan tag %q vẫn còn sau update", orphan)
+	}
+	if !tagInList(tags, Slugify(kept)) {
+		t.Errorf("tag %q đang được bài khác dùng mà bị xoá", kept)
+	}
+}
+
+func TestRepo_DeleteCleansOrphanTags(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+	orphan := "orphan-" + uuid.NewString()[:8]
+
+	p := samplePost("Bài C", "bai-c-"+uuid.NewString()[:8], StatusDraft, orphan)
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if err := repo.Delete(ctx, p.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+
+	tags, err := repo.ListTags(ctx, false)
+	if err != nil {
+		t.Fatalf("list tags: %v", err)
+	}
+	if tagInList(tags, Slugify(orphan)) {
+		t.Errorf("orphan tag %q vẫn còn sau delete post", orphan)
+	}
+}

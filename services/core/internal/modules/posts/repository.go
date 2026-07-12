@@ -148,6 +148,9 @@ func (r *GormRepository) Update(ctx context.Context, p *Post) error {
 		if err := tx.Model(&gormPost{ID: p.ID}).Association("Tags").Replace(tags); err != nil {
 			return err
 		}
+		if err := deleteOrphanTags(tx); err != nil {
+			return err
+		}
 		// Nạp lại giá trị DB sinh ra (updated_at, version mới) về domain.
 		var fresh gormPost
 		if err := tx.First(&fresh, "id = ?", p.ID).Error; err != nil {
@@ -251,6 +254,9 @@ func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		// không ghi event ma cho lần xoá không thực sự xảy ra.
 		if res.RowsAffected == 0 {
 			return ErrPostNotFound
+		}
+		if err := deleteOrphanTags(tx); err != nil {
+			return err
 		}
 		return outbox.Write(tx, "post", id, "post.deleted",
 			postEventPayload(id, gp.Slug, gp.Status, gp.Version))
@@ -416,4 +422,13 @@ func translateErr(err error) error {
 // (Phase 2 AI worker) tự lọc theo status.
 func postEventPayload(id uuid.UUID, slug, status string, version int64) map[string]any {
 	return map[string]any{"id": id, "slug": slug, "status": status, "version": version}
+}
+
+// deleteOrphanTags xoá tag không còn liên kết với bài nào (L10). Gọi trong cùng
+// transaction ngay sau khi thay tags (Update) hoặc xoá post (Delete) — xoá "nhầm"
+// không mất gì vì lần dùng lại tag sẽ được upsert theo slug (M1).
+func deleteOrphanTags(tx *gorm.DB) error {
+	return tx.Exec(
+		`DELETE FROM tags WHERE NOT EXISTS (SELECT 1 FROM post_tags WHERE post_tags.tag_id = tags.id)`,
+	).Error
 }
