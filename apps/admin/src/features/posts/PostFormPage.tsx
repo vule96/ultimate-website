@@ -97,6 +97,7 @@ export function PostFormPage({ slug }: { slug?: string }) {
 
   function onSubmit(values: PostFormValues) {
     setFormError(null);
+    setConflict(false); // retry mới: dọn banner conflict cũ, tránh hiện 2 banner cùng lúc
     const input = toUpsertInput(values, contentJsonRef.current);
     const onError = (err: unknown) => {
       if (err instanceof ApiError && err.code === "VERSION_CONFLICT") {
