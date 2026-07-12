@@ -111,6 +111,12 @@ func (r *GormRepository) Create(ctx context.Context, p *Post) error {
 func (r *GormRepository) Update(ctx context.Context, p *Post) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		gp := toGormModel(p)
+		// Lấy tag ids hiện tại trước khi thay — chỉ những tag này mới là ứng viên
+		// orphan sau Replace (không quét toàn bảng tags).
+		var oldTagIDs []uuid.UUID
+		if err := tx.Table("post_tags").Where("post_id = ?", p.ID).Pluck("tag_id", &oldTagIDs).Error; err != nil {
+			return err
+		}
 		// Updates bằng map để không bỏ sót zero-value (vd xoá excerpt → nil).
 		res := tx.Model(&gormPost{}).
 			Where("id = ? AND version = ?", p.ID, p.Version).
@@ -148,7 +154,7 @@ func (r *GormRepository) Update(ctx context.Context, p *Post) error {
 		if err := tx.Model(&gormPost{ID: p.ID}).Association("Tags").Replace(tags); err != nil {
 			return err
 		}
-		if err := deleteOrphanTags(tx); err != nil {
+		if err := deleteOrphanTags(tx, oldTagIDs); err != nil {
 			return err
 		}
 		// Nạp lại giá trị DB sinh ra (updated_at, version mới) về domain.
@@ -246,6 +252,11 @@ func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
 			}
 			return err
 		}
+		// Lấy tag ids của bài trước khi xoá — ứng viên orphan sau khi gỡ liên kết.
+		var oldTagIDs []uuid.UUID
+		if err := tx.Table("post_tags").Where("post_id = ?", id).Pluck("tag_id", &oldTagIDs).Error; err != nil {
+			return err
+		}
 		res := tx.Select(clause.Associations).Delete(&gormPost{ID: id})
 		if res.Error != nil {
 			return res.Error
@@ -255,7 +266,7 @@ func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		if res.RowsAffected == 0 {
 			return ErrPostNotFound
 		}
-		if err := deleteOrphanTags(tx); err != nil {
+		if err := deleteOrphanTags(tx, oldTagIDs); err != nil {
 			return err
 		}
 		return outbox.Write(tx, "post", id, "post.deleted",
@@ -424,11 +435,20 @@ func postEventPayload(id uuid.UUID, slug, status string, version int64) map[stri
 	return map[string]any{"id": id, "slug": slug, "status": status, "version": version}
 }
 
-// deleteOrphanTags xoá tag không còn liên kết với bài nào (L10). Gọi trong cùng
-// transaction ngay sau khi thay tags (Update) hoặc xoá post (Delete) — xoá "nhầm"
-// không mất gì vì lần dùng lại tag sẽ được upsert theo slug (M1).
-func deleteOrphanTags(tx *gorm.DB) error {
-	return tx.Exec(
-		`DELETE FROM tags WHERE NOT EXISTS (SELECT 1 FROM post_tags WHERE post_tags.tag_id = tags.id)`,
-	).Error
+// deleteOrphanTags xoá các tag trong ids không còn liên kết với bài nào (L10).
+// Chỉ xét đúng các tag vừa gỡ khỏi bài (không quét toàn bảng) + khoá row FOR UPDATE
+// để giảm đụng độ với transaction khác đang tái dùng tag. Race còn lại ở mức
+// READ COMMITTED là lý thuyết với multi-writer — chấp nhận cho single-admin,
+// xem lại khi Phase 2+ có nhiều writer.
+func deleteOrphanTags(tx *gorm.DB, ids []uuid.UUID) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return tx.Exec(`
+		DELETE FROM tags WHERE id IN (
+			SELECT t.id FROM tags t
+			WHERE t.id IN ?
+			  AND NOT EXISTS (SELECT 1 FROM post_tags pt WHERE pt.tag_id = t.id)
+			FOR UPDATE
+		)`, ids).Error
 }
