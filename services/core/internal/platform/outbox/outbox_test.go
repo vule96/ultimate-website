@@ -45,13 +45,18 @@ func newTx(t *testing.T) *gorm.DB {
 	return tx
 }
 
-// fakeHandler ghi lại event nhận được; failN lần đầu trả lỗi.
+// fakeHandler ghi lại event của đúng aggregate đang test (event lạ từ DB bẩn
+// cho qua — L12); failN lần đầu trả lỗi cho aggregate đó.
 type fakeHandler struct {
+	only  uuid.UUID
 	got   []Event
 	failN int
 }
 
 func (f *fakeHandler) Handle(_ context.Context, e Event) error {
+	if e.AggregateID != f.only {
+		return nil
+	}
 	if f.failN > 0 {
 		f.failN--
 		return fmt.Errorf("boom")
@@ -80,7 +85,7 @@ func TestDispatcher_ProcessesAndMarks(t *testing.T) {
 	id := uuid.New()
 	_ = Write(tx, "post", id, "post.updated", map[string]any{"slug": "y"})
 
-	h := &fakeHandler{}
+	h := &fakeHandler{only: id}
 	d := NewDispatcher(tx, h, slog.New(slog.NewTextHandler(os.Stderr, nil)), time.Second)
 	d.dispatchPending(context.Background())
 
@@ -99,7 +104,7 @@ func TestDispatcher_HandlerErrorKeepsEvent(t *testing.T) {
 	id := uuid.New()
 	_ = Write(tx, "post", id, "post.updated", map[string]any{"slug": "z"})
 
-	h := &fakeHandler{failN: 1}
+	h := &fakeHandler{only: id, failN: 1}
 	d := NewDispatcher(tx, h, slog.New(slog.NewTextHandler(os.Stderr, nil)), time.Second)
 	d.dispatchPending(context.Background())
 

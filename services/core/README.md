@@ -42,8 +42,9 @@ Schema là các GORM model trong `internal/modules/*` (khai báo qua `Models()`)
 # Unit test (không cần DB)
 go test ./...
 
-# Kèm integration test (repository/handler) → cần DB test
-docker exec ultimate_postgres createdb -U blog blog_test   # lần đầu
+# Kèm integration test (repository/handler) → cần DB test `blog_test`
+# (volume Postgres mới sẽ tự có nhờ docker/postgres-init; volume cũ tạo 1 lần:)
+docker exec ultimate_postgres createdb -U blog blog_test   # chỉ cần với volume cũ
 TEST_DATABASE_URL="postgres://blog:blog@localhost:5432/blog_test?sslmode=disable" go test ./...
 ```
 
@@ -88,6 +89,7 @@ browser **PUT thẳng** lên storage (không qua core) → lưu `public_url` và
 - **Dev (MinIO):** `docker compose up -d` tự tạo bucket `blog-media` (public-read). `.env` mặc
   định đã trỏ MinIO — không cần chỉnh. Console MinIO: <http://localhost:9001> (minioadmin/minioadmin).
 - **Đổi qua R2 để test tại local:** trong `.env`, comment khối MinIO + bỏ comment khối R2 (xem `.env.example`), rồi restart core.
+- **STORAGE_PRESIGN_EXPIRES** (mặc định 15m): thời hạn presigned PUT URL.
 
 ### Thiết lập R2 (prod)
 

@@ -258,13 +258,15 @@ func (h *Handler) listTags(c *gin.Context) {
 }
 
 // bindJSON bind body JSON vào dst; lỗi thì tự ghi response (400 hoặc 413) và trả false.
+// Message trả client cố định — chi tiết lỗi chỉ ghi log (L9: không leak internals Go).
 func bindJSON(c *gin.Context, dst any) bool {
 	if err := c.ShouldBindJSON(dst); err != nil {
 		if bodylimit.IsTooLarge(err) {
 			httperr.Write(c, http.StatusRequestEntityTooLarge, "PAYLOAD_TOO_LARGE", "request body too large")
 			return false
 		}
-		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", err.Error())
+		reqlog.From(c.Request.Context()).Info("bind json failed", "err", err)
+		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", "invalid request body")
 		return false
 	}
 	return true

@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 // setRequiredEnv đặt env tối thiểu để Load() không fail vì thiếu DATABASE_URL.
@@ -43,5 +44,54 @@ func TestLoad_DefaultLaxOK(t *testing.T) {
 	setRequiredEnv(t)
 	if _, err := Load(); err != nil {
 		t.Fatalf("unexpected error with defaults: %v", err)
+	}
+}
+
+func TestLoad_InvalidBoolEnvFails(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("SESSION_COOKIE_SECURE", "ture") // typo cố ý
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error for invalid bool env, got nil")
+	}
+}
+
+func TestLoad_InvalidInt64EnvFails(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("MAX_BODY_BYTES", "abc")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error for invalid int env, got nil")
+	}
+}
+
+func TestLoad_EmptyEnvUsesFallback(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("SESSION_COOKIE_SECURE", "")
+	t.Setenv("MAX_BODY_BYTES", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.MaxBodyBytes != 2<<20 {
+		t.Errorf("MaxBodyBytes = %d, want default 2MiB", cfg.MaxBodyBytes)
+	}
+}
+
+func TestLoad_InvalidDurationEnvFails(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("STORAGE_PRESIGN_EXPIRES", "fifteen")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error for invalid duration env, got nil")
+	}
+}
+
+func TestLoad_PresignExpiresDefault(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("STORAGE_PRESIGN_EXPIRES", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.StoragePresignExpires != 15*time.Minute {
+		t.Errorf("StoragePresignExpires = %v, want 15m", cfg.StoragePresignExpires)
 	}
 }

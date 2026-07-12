@@ -12,13 +12,14 @@ import (
 
 // S3Config là cấu hình cho storage S3-compatible (MinIO/R2/S3).
 type S3Config struct {
-	Endpoint     string // rỗng = AWS mặc định
-	Region       string
-	AccessKey    string
-	SecretKey    string
-	Bucket       string
-	PublicURL    string // base URL công khai (không có dấu / cuối)
-	UsePathStyle bool   // true cho MinIO
+	Endpoint       string // rỗng = AWS mặc định
+	Region         string
+	AccessKey      string
+	SecretKey      string
+	Bucket         string
+	PublicURL      string        // base URL công khai (không có dấu / cuối)
+	UsePathStyle   bool          // true cho MinIO
+	PresignExpires time.Duration // thời hạn presigned URL; 0 = mặc định 15 phút
 }
 
 // s3Storage cài đặt Storage bằng aws-sdk-go-v2.
@@ -33,19 +34,23 @@ type s3Storage struct {
 var _ Storage = (*s3Storage)(nil)
 
 // NewS3Storage tạo storage S3-compatible từ cấu hình.
-func NewS3Storage(cfg S3Config) *s3Storage {
+func NewS3Storage(cfg S3Config) Storage {
 	client := s3.New(s3.Options{
 		Region:       cfg.Region,
 		Credentials:  credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, ""),
 		BaseEndpoint: endpointPtr(cfg.Endpoint),
 		UsePathStyle: cfg.UsePathStyle,
 	})
+	expires := cfg.PresignExpires
+	if expires <= 0 {
+		expires = 15 * time.Minute
+	}
 	return &s3Storage{
 		client:    client,
 		presign:   s3.NewPresignClient(client),
 		bucket:    cfg.Bucket,
 		publicURL: strings.TrimRight(cfg.PublicURL, "/"),
-		expires:   15 * time.Minute,
+		expires:   expires,
 	}
 }
 

@@ -45,7 +45,8 @@ func (h *Handler) presign(c *gin.Context) {
 			httperr.Write(c, http.StatusRequestEntityTooLarge, "PAYLOAD_TOO_LARGE", "request body too large")
 			return
 		}
-		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", err.Error())
+		reqlog.From(c.Request.Context()).Info("bind json failed", "err", err)
+		httperr.Write(c, http.StatusBadRequest, "INVALID_BODY", "invalid request body")
 		return
 	}
 	res, err := h.svc.Presign(c.Request.Context(), PresignInput{
