@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Presigned URL phải ký content-length để storage từ chối PUT sai kích thước (H1).
@@ -113,4 +114,33 @@ func getenv(k, def string) string {
 		return v
 	}
 	return def
+}
+
+func TestNewS3Storage_PresignExpiresConfigurable(t *testing.T) {
+	st := NewS3Storage(S3Config{
+		Region: "auto", AccessKey: "k", SecretKey: "s", Bucket: "b",
+		PublicURL:      "http://cdn.example.com",
+		PresignExpires: 5 * time.Minute,
+	})
+	_, expires, err := st.PresignPut(context.Background(), "uploads/x.png", "image/png", 100)
+	if err != nil {
+		t.Fatalf("PresignPut: %v", err)
+	}
+	if expires != 5*time.Minute {
+		t.Errorf("expires = %v, want 5m", expires)
+	}
+}
+
+func TestNewS3Storage_PresignExpiresDefault15m(t *testing.T) {
+	st := NewS3Storage(S3Config{
+		Region: "auto", AccessKey: "k", SecretKey: "s", Bucket: "b",
+		PublicURL: "http://cdn.example.com",
+	})
+	_, expires, err := st.PresignPut(context.Background(), "uploads/x.png", "image/png", 100)
+	if err != nil {
+		t.Fatalf("PresignPut: %v", err)
+	}
+	if expires != 15*time.Minute {
+		t.Errorf("expires = %v, want default 15m", expires)
+	}
 }

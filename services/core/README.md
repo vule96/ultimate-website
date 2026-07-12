@@ -88,6 +88,7 @@ browser **PUT thẳng** lên storage (không qua core) → lưu `public_url` và
 - **Dev (MinIO):** `docker compose up -d` tự tạo bucket `blog-media` (public-read). `.env` mặc
   định đã trỏ MinIO — không cần chỉnh. Console MinIO: <http://localhost:9001> (minioadmin/minioadmin).
 - **Đổi qua R2 để test tại local:** trong `.env`, comment khối MinIO + bỏ comment khối R2 (xem `.env.example`), rồi restart core.
+- **STORAGE_PRESIGN_EXPIRES** (mặc định 15m): thời hạn presigned PUT URL.
 
 ### Thiết lập R2 (prod)
 

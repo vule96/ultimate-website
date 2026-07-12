@@ -74,13 +74,14 @@ func main() {
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
-		Endpoint:     cfg.StorageEndpoint,
-		Region:       cfg.StorageRegion,
-		AccessKey:    cfg.StorageAccessKey,
-		SecretKey:    cfg.StorageSecretKey,
-		Bucket:       cfg.StorageBucket,
-		PublicURL:    cfg.StoragePublicURL,
-		UsePathStyle: cfg.StorageUsePathStyle,
+		Endpoint:       cfg.StorageEndpoint,
+		Region:         cfg.StorageRegion,
+		AccessKey:      cfg.StorageAccessKey,
+		SecretKey:      cfg.StorageSecretKey,
+		Bucket:         cfg.StorageBucket,
+		PublicURL:      cfg.StoragePublicURL,
+		UsePathStyle:   cfg.StorageUsePathStyle,
+		PresignExpires: cfg.StoragePresignExpires,
 	})
 	mediaHandler := media.NewHandler(media.NewService(mediaStorage))
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Config chứa toàn bộ cấu hình runtime của core service.
@@ -27,13 +28,14 @@ type Config struct {
 	SessionSecure   bool
 
 	// Object storage (Slice 3c) — S3-compatible (MinIO dev / R2 prod)
-	StorageEndpoint     string // vd http://localhost:9000 (MinIO); rỗng = AWS mặc định
-	StorageRegion       string
-	StorageAccessKey    string
-	StorageSecretKey    string
-	StorageBucket       string
-	StoragePublicURL    string // base URL công khai để hiển thị ảnh
-	StorageUsePathStyle bool   // true cho MinIO
+	StorageEndpoint       string // vd http://localhost:9000 (MinIO); rỗng = AWS mặc định
+	StorageRegion         string
+	StorageAccessKey      string
+	StorageSecretKey      string
+	StorageBucket         string
+	StoragePublicURL      string        // base URL công khai để hiển thị ảnh
+	StorageUsePathStyle   bool          // true cho MinIO
+	StoragePresignExpires time.Duration // thời hạn presigned URL (STORAGE_PRESIGN_EXPIRES, mặc định 15m)
 
 	// Giới hạn body request (M4). Ảnh không đi qua core (presigned PUT) nên
 	// 2 MiB thoải mái cho content_html bài dài.
@@ -60,6 +62,12 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	// Hoist duration env helper để fail-fast khi parse error
+	presignExpires, err := getDurationEnv("STORAGE_PRESIGN_EXPIRES", 15*time.Minute)
+	if err != nil {
+		return Config{}, err
+	}
+
 	cfg := Config{
 		AppEnv:      appEnv,
 		Port:        getEnv("PORT", "8080"),
@@ -75,13 +83,14 @@ func Load() (Config, error) {
 		SessionSameSite: strings.ToLower(strings.TrimSpace(getEnv("SESSION_COOKIE_SAMESITE", "lax"))),
 		SessionSecure:   sessionSecure,
 
-		StorageEndpoint:     os.Getenv("STORAGE_ENDPOINT"),
-		StorageRegion:       getEnv("STORAGE_REGION", "auto"),
-		StorageAccessKey:    os.Getenv("STORAGE_ACCESS_KEY"),
-		StorageSecretKey:    os.Getenv("STORAGE_SECRET_KEY"),
-		StorageBucket:       os.Getenv("STORAGE_BUCKET"),
-		StoragePublicURL:    os.Getenv("STORAGE_PUBLIC_URL"),
-		StorageUsePathStyle: usePathStyle,
+		StorageEndpoint:       os.Getenv("STORAGE_ENDPOINT"),
+		StorageRegion:         getEnv("STORAGE_REGION", "auto"),
+		StorageAccessKey:      os.Getenv("STORAGE_ACCESS_KEY"),
+		StorageSecretKey:      os.Getenv("STORAGE_SECRET_KEY"),
+		StorageBucket:         os.Getenv("STORAGE_BUCKET"),
+		StoragePublicURL:      os.Getenv("STORAGE_PUBLIC_URL"),
+		StorageUsePathStyle:   usePathStyle,
+		StoragePresignExpires: presignExpires,
 
 		MaxBodyBytes: maxBodyBytes,
 	}
@@ -127,4 +136,16 @@ func getInt64Env(key string, fallback int64) (int64, error) {
 		return 0, fmt.Errorf("config: %s must be a positive integer, got %q", key, v)
 	}
 	return n, nil
+}
+
+func getDurationEnv(key string, fallback time.Duration) (time.Duration, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback, nil
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil || d <= 0 {
+		return 0, fmt.Errorf("config: %s must be a positive duration (e.g. 15m), got %q", key, v)
+	}
+	return d, nil
 }
