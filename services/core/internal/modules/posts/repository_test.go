@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/outbox"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 )
@@ -24,7 +25,7 @@ func TestMain(m *testing.M) {
 			fmt.Println("cannot connect TEST_DATABASE_URL:", err)
 			os.Exit(1)
 		}
-		if err := db.AutoMigrate(&gormPost{}, &gormTag{}); err != nil {
+		if err := db.AutoMigrate(&gormPost{}, &gormTag{}, &outbox.Event{}); err != nil {
 			fmt.Println("automigrate failed:", err)
 			os.Exit(1)
 		}
@@ -446,5 +447,67 @@ func TestRepository_UpsertTagsEmptyNoop(t *testing.T) {
 	}
 	if len(got) != 0 {
 		t.Errorf("want empty, got %d", len(got))
+	}
+}
+
+// outboxEvents đọc event outbox của một post trong tx của repo.
+func outboxEvents(t *testing.T, repo *GormRepository, id uuid.UUID) []outbox.Event {
+	t.Helper()
+	var evs []outbox.Event
+	if err := repo.db.Order("created_at ASC").Find(&evs, "aggregate_id = ?", id).Error; err != nil {
+		t.Fatalf("find outbox: %v", err)
+	}
+	return evs
+}
+
+func TestRepository_OutboxEvents(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Sự kiện", "su-kien", StatusPublished)
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	evs := outboxEvents(t, repo, p.ID)
+	if len(evs) != 1 || evs[0].EventType != "post.created" {
+		t.Fatalf("sau create: %+v", evs)
+	}
+
+	p.Title = "Sự kiện 2"
+	if err := repo.Update(ctx, p); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	evs = outboxEvents(t, repo, p.ID)
+	if len(evs) != 2 || evs[1].EventType != "post.updated" {
+		t.Fatalf("sau update: %+v", evs)
+	}
+
+	if err := repo.Delete(ctx, p.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	evs = outboxEvents(t, repo, p.ID)
+	if len(evs) != 3 || evs[2].EventType != "post.deleted" {
+		t.Fatalf("sau delete: %+v", evs)
+	}
+}
+
+func TestRepository_NoEventWhenCreateFails(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+	p1 := samplePost("Trùng", "trung", StatusDraft)
+	if err := repo.Create(ctx, p1); err != nil {
+		t.Fatalf("create p1: %v", err)
+	}
+	p2 := samplePost("Trùng 2", "trung", StatusDraft) // slug trùng → fail
+	if err := repo.Create(ctx, p2); err == nil {
+		t.Fatal("expected slug conflict")
+	}
+	var count int64
+	if err := repo.db.Model(&outbox.Event{}).Where("event_type = ?", "post.created").
+		Where("payload->>'slug' = ?", "trung").Count(&count).Error; err != nil {
+		t.Fatalf("count: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("events = %d, want 1 (transaction fail không để lại event)", count)
 	}
 }

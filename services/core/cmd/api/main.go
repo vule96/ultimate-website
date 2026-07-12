@@ -20,6 +20,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/outbox"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
@@ -127,6 +128,11 @@ func main() {
 	// Graceful shutdown: nhận SIGINT/SIGTERM → drain request đang chạy rồi đóng DB.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	// Outbox dispatcher (chuẩn bị Phase 2): poll event chưa xử lý, handler hiện
+	// tại chỉ log. Dừng theo ctx shutdown — event còn lại nằm trong DB, không mất.
+	dispatcher := outbox.NewDispatcher(db, outbox.LogHandler{Log: log}, log, 10*time.Second)
+	go dispatcher.Run(ctx)
 
 	go func() {
 		log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)

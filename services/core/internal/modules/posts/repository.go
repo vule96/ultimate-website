@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/outbox"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -96,6 +97,10 @@ func (r *GormRepository) Create(ctx context.Context, p *Post) error {
 		if err := tx.Model(&gp).Association("Tags").Replace(tags); err != nil {
 			return err
 		}
+		if err := outbox.Write(tx, "post", gp.ID, "post.created",
+			postEventPayload(gp.ID, gp.Slug, gp.Status, gp.Version)); err != nil {
+			return err
+		}
 		applyGenerated(p, gp, tags)
 		return nil
 	})
@@ -146,6 +151,10 @@ func (r *GormRepository) Update(ctx context.Context, p *Post) error {
 		// Nạp lại giá trị DB sinh ra (updated_at, version mới) về domain.
 		var fresh gormPost
 		if err := tx.First(&fresh, "id = ?", p.ID).Error; err != nil {
+			return err
+		}
+		if err := outbox.Write(tx, "post", fresh.ID, "post.updated",
+			postEventPayload(fresh.ID, fresh.Slug, fresh.Status, fresh.Version)); err != nil {
 			return err
 		}
 		applyGenerated(p, fresh, tags)
@@ -223,16 +232,23 @@ func (r *GormRepository) List(ctx context.Context, f ListFilter) ([]Post, int64,
 	return posts, total, nil
 }
 
-// Delete xoá bài viết + quan hệ tags; trả ErrPostNotFound nếu không có.
+// Delete xoá bài viết + quan hệ tags trong 1 transaction, ghi event post.deleted;
+// trả ErrPostNotFound nếu không có.
 func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	res := r.db.WithContext(ctx).Select(clause.Associations).Delete(&gormPost{ID: id})
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return ErrPostNotFound
-	}
-	return nil
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var gp gormPost
+		if err := tx.First(&gp, "id = ?", id).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrPostNotFound
+			}
+			return err
+		}
+		if err := tx.Select(clause.Associations).Delete(&gormPost{ID: id}).Error; err != nil {
+			return err
+		}
+		return outbox.Write(tx, "post", id, "post.deleted",
+			postEventPayload(id, gp.Slug, gp.Status, gp.Version))
+	})
 }
 
 // ListTags trả về tag, sắp theo tên. Khi publishedOnly, chỉ trả tag gắn với ít
@@ -388,4 +404,10 @@ func translateErr(err error) error {
 		return ErrSlugTaken
 	}
 	return err
+}
+
+// postEventPayload là payload chung cho outbox event của post — consumer
+// (Phase 2 AI worker) tự lọc theo status.
+func postEventPayload(id uuid.UUID, slug, status string, version int64) map[string]any {
+	return map[string]any{"id": id, "slug": slug, "status": status, "version": version}
 }
