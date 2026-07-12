@@ -297,19 +297,29 @@ func TestRepo_List_SortByTitleDesc(t *testing.T) {
 func TestRepo_CountByMonth(t *testing.T) {
 	repo := newRepoTx(t)
 	ctx := context.Background()
-
-	// Tạo 2 bài trong tháng hiện tại (created_at mặc định = now).
-	_ = repo.Create(ctx, samplePost("A", "cbm-a", StatusPublished))
-	_ = repo.Create(ctx, samplePost("B", "cbm-b", StatusDraft))
+	tok := uuid.NewString()[:8]
 
 	since := time.Now().UTC().AddDate(0, -1, 0)
+	before, err := repo.CountByMonth(ctx, since)
+	if err != nil {
+		t.Fatalf("count by month (before): %v", err)
+	}
+
+	// Tạo 2 bài trong tháng hiện tại (created_at mặc định = now).
+	if err := repo.Create(ctx, samplePost("A", "cbm-a-"+tok, StatusPublished)); err != nil {
+		t.Fatalf("create A: %v", err)
+	}
+	if err := repo.Create(ctx, samplePost("B", "cbm-b-"+tok, StatusDraft)); err != nil {
+		t.Fatalf("create B: %v", err)
+	}
+
 	counts, err := repo.CountByMonth(ctx, since)
 	if err != nil {
 		t.Fatalf("count by month: %v", err)
 	}
 	thisMonth := time.Now().UTC().Format("2006-01")
-	if counts[thisMonth] != 2 {
-		t.Errorf("counts[%s] = %d, want 2", thisMonth, counts[thisMonth])
+	if got := counts[thisMonth] - before[thisMonth]; got != 2 {
+		t.Errorf("counts[%s] delta = %d, want 2", thisMonth, got)
 	}
 }
 
