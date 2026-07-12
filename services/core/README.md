@@ -42,8 +42,9 @@ Schema là các GORM model trong `internal/modules/*` (khai báo qua `Models()`)
 # Unit test (không cần DB)
 go test ./...
 
-# Kèm integration test (repository/handler) → cần DB test
-docker exec ultimate_postgres createdb -U blog blog_test   # lần đầu
+# Kèm integration test (repository/handler) → cần DB test `blog_test`
+# (volume Postgres mới sẽ tự có nhờ docker/postgres-init; volume cũ tạo 1 lần:)
+docker exec ultimate_postgres createdb -U blog blog_test   # chỉ cần với volume cũ
 TEST_DATABASE_URL="postgres://blog:blog@localhost:5432/blog_test?sslmode=disable" go test ./...
 ```
 
