@@ -243,8 +243,14 @@ func (r *GormRepository) Delete(ctx context.Context, id uuid.UUID) error {
 			}
 			return err
 		}
-		if err := tx.Select(clause.Associations).Delete(&gormPost{ID: id}).Error; err != nil {
-			return err
+		res := tx.Select(clause.Associations).Delete(&gormPost{ID: id})
+		if res.Error != nil {
+			return res.Error
+		}
+		// Race hiếm: bài bị xoá bởi transaction khác giữa First và Delete —
+		// không ghi event ma cho lần xoá không thực sự xảy ra.
+		if res.RowsAffected == 0 {
+			return ErrPostNotFound
 		}
 		return outbox.Write(tx, "post", id, "post.deleted",
 			postEventPayload(id, gp.Slug, gp.Status, gp.Version))
