@@ -59,6 +59,7 @@ type upsertRequest struct {
 	MetaTitle   *string         `json:"meta_title"`
 	MetaDesc    *string         `json:"meta_desc"`
 	Tags        []string        `json:"tags"`
+	Version     int64           `json:"version"` // bắt buộc với update (M5); create bỏ qua
 }
 
 type tagResponse struct {
@@ -79,6 +80,7 @@ type postResponse struct {
 	MetaTitle   *string         `json:"meta_title"`
 	MetaDesc    *string         `json:"meta_desc"`
 	PublishedAt *time.Time      `json:"published_at"`
+	Version     int64           `json:"version"`
 	Tags        []tagResponse   `json:"tags"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
@@ -204,6 +206,10 @@ func (h *Handler) update(c *gin.Context) {
 	if !bindJSON(c, &req) {
 		return
 	}
+	if req.Version < 1 {
+		httperr.Write(c, http.StatusBadRequest, "VALIDATION_ERROR", "version is required for update")
+		return
+	}
 	post, err := h.svc.Update(c.Request.Context(), id, UpdateInput{
 		Title:       req.Title,
 		Slug:        req.Slug,
@@ -215,6 +221,7 @@ func (h *Handler) update(c *gin.Context) {
 		MetaTitle:   req.MetaTitle,
 		MetaDesc:    req.MetaDesc,
 		TagNames:    req.Tags,
+		Version:     req.Version,
 	})
 	if err != nil {
 		respondError(c, err)
@@ -272,6 +279,8 @@ func respondError(c *gin.Context, err error) {
 		httperr.Write(c, http.StatusConflict, "SLUG_TAKEN", "slug already taken")
 	case errors.Is(err, ErrValidation):
 		httperr.Write(c, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
+	case errors.Is(err, ErrVersionConflict):
+		httperr.Write(c, http.StatusConflict, "VERSION_CONFLICT", "post was modified by someone else")
 	default:
 		reqlog.From(c.Request.Context()).Error("request failed", "err", err)
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "internal server error")
@@ -295,6 +304,7 @@ func toResponse(p Post) postResponse {
 		MetaTitle:   p.MetaTitle,
 		MetaDesc:    p.MetaDesc,
 		PublishedAt: p.PublishedAt,
+		Version:     p.Version,
 		Tags:        tags,
 		CreatedAt:   p.CreatedAt,
 		UpdatedAt:   p.UpdatedAt,

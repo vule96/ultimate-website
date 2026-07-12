@@ -75,6 +75,7 @@ type UpdateInput struct {
 	MetaTitle   *string
 	MetaDesc    *string
 	TagNames    []string
+	Version     int64 // optimistic locking (M5)
 }
 
 // Service chứa business logic của module posts.
@@ -164,6 +165,9 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 	existing.MetaTitle = in.MetaTitle
 	existing.MetaDesc = in.MetaDesc
 	existing.Tags = normalizeTags(in.TagNames)
+	// M5: version phải là bản client đang cầm (không phải bản vừa GetByID) —
+	// repo dùng nó làm điều kiện WHERE để phát hiện lost-update.
+	existing.Version = in.Version
 
 	// Đặt published_at lần đầu chuyển sang PUBLISHED; giữ nguyên nếu đã có.
 	if status == StatusPublished && existing.PublishedAt == nil {

@@ -128,8 +128,9 @@ func TestHandler_UpdatePost(t *testing.T) {
 	id := decode(t, cw)["id"].(string)
 
 	w := doJSON(t, r, http.MethodPut, "/api/v1/posts/"+id, map[string]any{
-		"title":  "Changed",
-		"status": "PUBLISHED",
+		"title":   "Changed",
+		"status":  "PUBLISHED",
+		"version": 1,
 	})
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200; body=%s", w.Code, w.Body.String())
@@ -268,6 +269,47 @@ func TestHandler_StatsNewRoute(t *testing.T) {
 	w = doJSON(t, r, http.MethodGet, "/api/v1/stats/posts/timeseries?months=3", nil)
 	if w.Code != http.StatusOK {
 		t.Fatalf("GET /stats/posts/timeseries = %d, want 200; body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_UpdateRequiresVersion(t *testing.T) {
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "V Post"})
+	id := decode(t, w)["id"].(string)
+
+	// Thiếu version → 400.
+	w = doJSON(t, r, http.MethodPut, "/api/v1/posts/"+id, map[string]any{"title": "V Post 2"})
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("update thiếu version = %d, want 400; body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_UpdateVersionConflict409(t *testing.T) {
+	r := newTestServer(t)
+	w := doJSON(t, r, http.MethodPost, "/api/v1/posts", map[string]any{"title": "C Post"})
+	body := decode(t, w)
+	id := body["id"].(string)
+	if body["version"].(float64) != 1 {
+		t.Fatalf("version sau create = %v, want 1", body["version"])
+	}
+
+	// Lần 1 với version 1 → OK, version thành 2.
+	w = doJSON(t, r, http.MethodPut, "/api/v1/posts/"+id, map[string]any{"title": "C Post x", "version": 1})
+	if w.Code != http.StatusOK {
+		t.Fatalf("update 1 = %d; body=%s", w.Code, w.Body.String())
+	}
+	if decode(t, w)["version"].(float64) != 2 {
+		t.Errorf("version sau update = %v, want 2", decode(t, w)["version"])
+	}
+
+	// Lần 2 vẫn gửi version 1 (stale) → 409 VERSION_CONFLICT.
+	w = doJSON(t, r, http.MethodPut, "/api/v1/posts/"+id, map[string]any{"title": "C Post y", "version": 1})
+	if w.Code != http.StatusConflict {
+		t.Fatalf("stale update = %d, want 409; body=%s", w.Code, w.Body.String())
+	}
+	errObj := decode(t, w)["error"].(map[string]any)
+	if errObj["code"] != "VERSION_CONFLICT" {
+		t.Errorf("code = %v, want VERSION_CONFLICT", errObj["code"])
 	}
 }
 

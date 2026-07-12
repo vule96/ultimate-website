@@ -50,6 +50,7 @@ type Post struct {
 	MetaTitle   *string
 	MetaDesc    *string
 	PublishedAt *time.Time
+	Version     int64
 	Tags        []Tag
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -60,6 +61,8 @@ var (
 	ErrPostNotFound = errors.New("post not found")
 	ErrSlugTaken    = errors.New("slug already taken")
 	ErrValidation   = errors.New("validation error")
+	// ErrVersionConflict: update với version cũ — bài đã bị writer khác sửa (M5).
+	ErrVersionConflict = errors.New("post version conflict")
 )
 
 // validationErrorf tạo lỗi validation có thông điệp, vẫn khớp errors.Is(ErrValidation).

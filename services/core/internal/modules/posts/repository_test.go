@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -395,6 +396,45 @@ func TestRepository_SharedTagSingleRow(t *testing.T) {
 	}
 	if count != 1 {
 		t.Errorf("tag rows = %d, want 1", count)
+	}
+}
+
+func TestRepository_UpdateVersionConflict(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Bài A", "bai-a", StatusDraft)
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if p.Version != 1 {
+		t.Fatalf("version sau create = %d, want 1", p.Version)
+	}
+
+	// Update với version đúng → OK, version tăng.
+	p.Title = "Bài A sửa"
+	if err := repo.Update(ctx, p); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if p.Version != 2 {
+		t.Errorf("version sau update = %d, want 2", p.Version)
+	}
+
+	// Update với version cũ (stale) → ErrVersionConflict.
+	stale := *p
+	stale.Version = 1
+	if err := repo.Update(ctx, &stale); !errors.Is(err, ErrVersionConflict) {
+		t.Errorf("stale update err = %v, want ErrVersionConflict", err)
+	}
+}
+
+func TestRepository_UpdateNotFoundStillNotFound(t *testing.T) {
+	repo := newRepoTx(t)
+	p := samplePost("Ma", "ma", StatusDraft)
+	p.ID = uuid.New()
+	p.Version = 1
+	if err := repo.Update(context.Background(), p); !errors.Is(err, ErrPostNotFound) {
+		t.Errorf("err = %v, want ErrPostNotFound", err)
 	}
 }
 

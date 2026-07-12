@@ -46,6 +46,7 @@ type gormPost struct {
 	MetaTitle   *string
 	MetaDesc    *string
 	PublishedAt *time.Time `gorm:"index"`
+	Version     int64      `gorm:"not null;default:1"`
 	Tags        []gormTag  `gorm:"many2many:post_tags;joinForeignKey:PostID;joinReferences:TagID;constraint:OnDelete:CASCADE;"`
 	CreatedAt   time.Time  `gorm:"not null;default:now()"`
 	UpdatedAt   time.Time  `gorm:"not null;default:now()"`
@@ -82,6 +83,9 @@ func (r *GormRepository) Create(ctx context.Context, p *Post) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		gp := toGormModel(p)
 		gp.Tags = nil
+		if gp.Version == 0 {
+			gp.Version = 1
+		}
 		if err := tx.Omit("Tags").Create(&gp).Error; err != nil {
 			return translateErr(err)
 		}
@@ -97,22 +101,54 @@ func (r *GormRepository) Create(ctx context.Context, p *Post) error {
 	})
 }
 
-// Update ghi đè bài viết theo ID + thay toàn bộ tags.
+// Update ghi đè bài viết theo ID + thay toàn bộ tags, với optimistic locking (M5):
+// chỉ ghi khi version trong DB khớp version client đang cầm; lệch → ErrVersionConflict.
 func (r *GormRepository) Update(ctx context.Context, p *Post) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		gp := toGormModel(p)
-		gp.Tags = nil
-		if err := tx.Omit("Tags").Save(&gp).Error; err != nil {
-			return translateErr(err)
+		// Updates bằng map để không bỏ sót zero-value (vd xoá excerpt → nil).
+		res := tx.Model(&gormPost{}).
+			Where("id = ? AND version = ?", p.ID, p.Version).
+			Updates(map[string]any{
+				"title":        gp.Title,
+				"slug":         gp.Slug,
+				"content_json": gp.ContentJSON,
+				"content_html": gp.ContentHTML,
+				"excerpt":      gp.Excerpt,
+				"cover_image":  gp.CoverImage,
+				"status":       gp.Status,
+				"meta_title":   gp.MetaTitle,
+				"meta_desc":    gp.MetaDesc,
+				"published_at": gp.PublishedAt,
+				"version":      gorm.Expr("version + 1"),
+			})
+		if res.Error != nil {
+			return translateErr(res.Error)
+		}
+		if res.RowsAffected == 0 {
+			// Phân biệt not-found vs version lệch.
+			var count int64
+			if err := tx.Model(&gormPost{}).Where("id = ?", p.ID).Count(&count).Error; err != nil {
+				return err
+			}
+			if count == 0 {
+				return ErrPostNotFound
+			}
+			return ErrVersionConflict
 		}
 		tags, err := upsertTags(tx, p.Tags)
 		if err != nil {
 			return err
 		}
-		if err := tx.Model(&gp).Association("Tags").Replace(tags); err != nil {
+		if err := tx.Model(&gormPost{ID: p.ID}).Association("Tags").Replace(tags); err != nil {
 			return err
 		}
-		applyGenerated(p, gp, tags)
+		// Nạp lại giá trị DB sinh ra (updated_at, version mới) về domain.
+		var fresh gormPost
+		if err := tx.First(&fresh, "id = ?", p.ID).Error; err != nil {
+			return err
+		}
+		applyGenerated(p, fresh, tags)
 		return nil
 	})
 }
@@ -303,6 +339,7 @@ func toGormModel(p *Post) gormPost {
 		MetaTitle:   p.MetaTitle,
 		MetaDesc:    p.MetaDesc,
 		PublishedAt: p.PublishedAt,
+		Version:     p.Version,
 		// Giữ lại timestamps để Save (update) không ghi đè created_at về zero.
 		// Khi tạo mới, giá trị zero sẽ được GORM autoCreateTime điền.
 		CreatedAt: p.CreatedAt,
@@ -323,6 +360,7 @@ func toDomain(gp gormPost) *Post {
 		MetaTitle:   gp.MetaTitle,
 		MetaDesc:    gp.MetaDesc,
 		PublishedAt: gp.PublishedAt,
+		Version:     gp.Version,
 		CreatedAt:   gp.CreatedAt,
 		UpdatedAt:   gp.UpdatedAt,
 	}
@@ -337,6 +375,7 @@ func applyGenerated(p *Post, gp gormPost, tags []gormTag) {
 	p.ID = gp.ID
 	p.CreatedAt = gp.CreatedAt
 	p.UpdatedAt = gp.UpdatedAt
+	p.Version = gp.Version
 	p.Tags = make([]Tag, len(tags))
 	for i, gt := range tags {
 		p.Tags[i] = Tag{ID: gt.ID, Name: gt.Name, Slug: gt.Slug}
