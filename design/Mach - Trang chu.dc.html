@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e7e3db;font-family:'Be Vietnam Pro',system-ui,sans-serif}
+.dv-turn{padding:40px 44px 34px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 22px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:11px;scroll-margin-top:16px}
+.dv-olabel{display:flex;align-items:baseline;gap:9px;font:400 12px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.58)}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.09);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-card{border:1px solid rgba(0,0,0,.10);border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.12);overflow:hidden}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-next{margin:26px 0 0;font:12px/1.7 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+a{color:inherit}
+</style>
+</helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Theme mới cho <a class="dv-oid" href="#1b">1b</a> — "tạp chí tri thức" sống động, bớt chất AI</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Mạch Magazine — masthead màu, số thứ tự kiểu báo in, thumbnail khối màu, chữ Bricolage</div>
+<div class="dv-card" style="{{ shellB2 }}">
+  <div style="background:var(--accent);color:#fff;padding:20px 30px;display:flex;align-items:center;justify-content:space-between;gap:22px">
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:.9">Mạch</span>
+      <span style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.85">Tạp chí tri thức</span>
+    </div>
+    <div style="flex:1;max-width:400px;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:9px;padding:10px 15px">
+      <span style="width:13px;height:13px;border:2px solid #fff;border-radius:50%;flex:none"></span>
+      <input value="{{ query }}" onChange="{{ onSearch }}" placeholder="Tìm bài viết, chủ đề, tác giả…" style="flex:1;border:none;background:transparent;outline:none;color:#fff;font-family:inherit;font-size:13.5px"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onClick="{{ onToggleDark }}" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:9px 13px;color:#fff;font-family:inherit;font-size:12.5px;cursor:pointer;font-weight:600"><span style="width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:inset -4px -1px 0 0 var(--accent)"></span>{{ darkLabel }}</button>
+      <sc-if value="{{ notUser }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:9px">
+        <button onClick="{{ onLogin }}" style="background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Đăng nhập</button>
+        <button onClick="{{ onRegister }}" style="background:#fff;border:none;color:var(--accent);border-radius:8px;padding:9px 14px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">Đăng ký</button>
+      </div>
+      </sc-if>
+      <sc-if value="{{ user }}" hint-placeholder-val="">
+      <div style="display:flex;align-items:center;gap:11px">
+        <span style="background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:9px 13px;font-size:12.5px;font-weight:700">{{ savedLabel }}</span>
+        <div style="display:flex;align-items:center;gap:8px"><span style="width:30px;height:30px;border-radius:50%;background:#fff;color:var(--accent);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center">{{ userInitial }}</span><span style="color:#fff;font-size:13px;font-weight:600">{{ userName }}</span></div>
+        <button onClick="{{ onLogout }}" style="background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:9px 12px;font-family:inherit;font-size:12px;cursor:pointer">Thoát</button>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:11px 30px;background:var(--surface);border-bottom:2px solid var(--fg)">
+    <nav style="display:flex;gap:26px;font-size:13.5px;font-weight:600"><a href="#2a" style="text-decoration:none;color:var(--fg)">Trang chủ</a><a href="#2a" style="text-decoration:none;color:var(--muted)">Danh mục</a><a href="#2a" style="text-decoration:none;color:var(--muted)">Khám phá</a></nav>
+    <span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--muted)">SỐ 128 · 12.07.2026 · CẬP NHẬT MỖI NGÀY</span>
+  </div>
+
+  <div style="display:flex">
+    <nav style="width:224px;flex:none;padding:24px 18px;border-right:1px solid var(--line);background:var(--surface)">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 6px 13px">Lĩnh vực</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="8"><button onClick="{{ c.onClick }}" style="{{ c.railStyle2 }}">{{ c.iconEl }}{{ c.label }}</button></sc-for>
+      </div>
+      <div style="margin-top:28px;padding:18px;background:var(--fg);color:var(--bg);border-radius:12px">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;margin-bottom:5px;line-height:1.15">Bản tin Mạch</div>
+        <p style="font-size:11.5px;opacity:.72;margin:0 0 12px;line-height:1.5">Tuyển tập hay nhất, mỗi sáng thứ Hai.</p>
+        <input value="{{ nlEmail }}" onChange="{{ onNlInput }}" placeholder="email…" style="width:100%;box-sizing:border-box;border:none;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:12.5px;outline:none;margin-bottom:8px"/>
+        <button onClick="{{ onSubscribe }}" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer">Đăng ký</button>
+        <sc-if value="{{ nlMsg }}" hint-placeholder-val=""><p style="font-size:11px;margin:9px 0 0;opacity:.9">{{ nlMsg }}</p></sc-if>
+      </div>
+    </nav>
+
+    <main style="flex:1;min-width:0;padding:24px 26px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px">
+        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;margin:0;letter-spacing:-.02em"><span style="background:linear-gradient(transparent 58%, #ffcf33 58%);padding:0 2px">Mới nhất</span></h2>
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">{{ resultLabel }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ items }}" as="item" hint-placeholder-count="8">
+        <article onClick="{{ item.onOpen }}" style="display:flex;gap:18px;padding:19px 0;border-bottom:1px solid var(--line);cursor:pointer;align-items:flex-start">
+          <div style="width:132px;height:90px;flex:none;border-radius:8px;background:{{ item.color }};position:relative;overflow:hidden;display:flex;align-items:flex-end;padding:9px">
+            <span style="position:absolute;top:-10px;right:5px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:58px;color:rgba(255,255,255,.22);line-height:1">{{ item.num }}</span>
+            <span style="font-family:'Space Mono',monospace;font-size:8.5px;font-weight:700;color:#fff;background:rgba(0,0,0,.28);padding:3px 7px;border-radius:4px;letter-spacing:.05em">{{ item.catUpper }}</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+              <span style="font-size:11px;font-weight:700;color:{{ item.color }};background:{{ item.tint }};padding:3px 9px;border-radius:5px">{{ item.cat }}</span>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">{{ item.date }}</span>
+            </div>
+            <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;line-height:1.22;margin:0 0 6px;letter-spacing:-.01em">{{ item.title }}</h3>
+            <p style="font-size:13px;color:var(--muted);margin:0 0 8px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.excerpt }}</p>
+            <div style="display:flex;gap:12px;font-size:11.5px;color:var(--muted);align-items:center"><span style="font-weight:700;color:var(--fg)">{{ item.author }}</span><span>·</span><span>{{ item.commentsLabel }}</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:11px;flex:none">
+            <button onClick="{{ item.onToggle }}" style="{{ item.saveIcon }}">{{ item.saveMark }}</button>
+            <div style="font-family:'Space Mono',monospace;font-size:10.5px;color:var(--muted);text-align:right;line-height:1.7">{{ item.views }}<br/>{{ item.read }}</div>
+          </div>
+        </article>
+        </sc-for>
+      </div>
+    </main>
+
+    <aside style="width:250px;flex:none;padding:24px 22px;border-left:1px solid var(--line);background:var(--surface)">
+      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Thịnh hành</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:30px">
+        <sc-for list="{{ trending }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="background:{{ t.tint }};color:{{ t.color }};border:none;border-radius:7px;padding:8px 13px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">#{{ t.label }}</button></sc-for>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Top xem nhiều</div>
+      <div style="display:flex;flex-direction:column;gap:15px">
+        <sc-for list="{{ topViewed }}" as="tv" hint-placeholder-count="5">
+        <div onClick="{{ tv.onOpen }}" style="display:flex;gap:13px;cursor:pointer;align-items:flex-start"><span style="font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;color:{{ tv.color }};line-height:.9;min-width:26px">{{ tv.rankPad }}</span><div><h5 style="font-size:13.5px;font-weight:600;line-height:1.32;margin:0 0 4px">{{ tv.title }}</h5><span style="font-family:'Space Mono',monospace;font-size:10.5px;color:var(--muted)">{{ tv.date }}</span></div></div>
+        </sc-for>
+      </div>
+      <a href="#2a" style="display:block;text-align:center;margin-top:26px;background:var(--accent);color:#fff;border-radius:9px;padding:12px;font-size:13px;font-weight:700;text-decoration:none">Tham gia nhóm Facebook →</a>
+    </aside>
+  </div>
+
+  <footer style="background:var(--fg);color:var(--bg);padding:46px 30px 24px">
+    <div style="display:grid;grid-template-columns:1.7fr 1fr 1fr 1.3fr;gap:38px;padding-bottom:32px;border-bottom:1px solid rgba(255,255,255,.16)">
+      <div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:27px;letter-spacing:-.03em;margin-bottom:11px">Mạch</div>
+        <p style="font-size:13px;line-height:1.65;opacity:.68;margin:0 0 18px;max-width:290px">Tạp chí tri thức cho người trẻ dám nghĩ — công nghệ, tài chính, kiến trúc, văn hoá và những gì đáng đọc mỗi ngày.</p>
+        <div style="display:flex;gap:9px">
+          <a href="#2a" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.12);color:var(--bg);display:flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:13px">f</a>
+          <a href="#2a" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.12);color:var(--bg);display:flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:12px">in</a>
+          <a href="#2a" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.12);color:var(--bg);display:flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:13px">X</a>
+          <a href="#2a" style="width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.12);color:var(--bg);display:flex;align-items:center;justify-content:center;text-decoration:none;font-weight:700;font-size:11px">YT</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.5;margin-bottom:15px">Chuyên mục</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ footerCats }}" as="f" hint-placeholder-count="6"><a href="#2a" onClick="{{ f.onClick }}" style="font-size:13px;color:var(--bg);opacity:.72;text-decoration:none">{{ f.label }}</a></sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.5;margin-bottom:15px">Về Mạch</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <a href="#2a" style="color:var(--bg);opacity:.72;text-decoration:none">Giới thiệu</a>
+          <a href="#2a" style="color:var(--bg);opacity:.72;text-decoration:none">Viết cho Mạch</a>
+          <a href="#2a" style="color:var(--bg);opacity:.72;text-decoration:none">Liên hệ</a>
+          <a href="#2a" style="color:var(--bg);opacity:.72;text-decoration:none">Tuyển dụng</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.5;margin-bottom:15px">Bản tin</div>
+        <p style="font-size:12.5px;opacity:.68;margin:0 0 12px;line-height:1.55">Bài hay nhất mỗi sáng thứ Hai.</p>
+        <div style="display:flex;gap:8px">
+          <input value="{{ nlEmail }}" onChange="{{ onNlInput }}" placeholder="email…" style="flex:1;min-width:0;border:none;border-radius:8px;padding:11px 12px;font-family:inherit;font-size:12.5px;outline:none"/>
+          <button onClick="{{ onSubscribe }}" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:11px 15px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap">OK</button>
+        </div>
+        <sc-if value="{{ nlMsg }}" hint-placeholder-val=""><p style="font-size:11.5px;margin:9px 0 0;opacity:.85">{{ nlMsg }}</p></sc-if>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:20px;font-family:'Space Mono',monospace;font-size:11px;opacity:.5;flex-wrap:wrap;gap:10px">
+      <span>© 2026 Mạch. Bảo lưu mọi quyền.</span>
+      <span>Điều khoản · Bảo mật · Cookie</span>
+    </div>
+  </footer>
+
+  <sc-if value="{{ authOpen }}" hint-placeholder-val="">
+  <div onClick="{{ onCloseAuth }}" style="position:fixed;inset:0;background:rgba(8,12,22,.55);z-index:95;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div onClick="{{ stop }}" style="width:384px;max-width:100%;background:var(--surface);color:var(--fg);border-radius:14px;padding:30px 30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.45)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:800;margin:0;letter-spacing:-.02em">{{ authTitle }}</h3>
+        <button onClick="{{ onCloseAuth }}" style="background:var(--soft);border:none;width:30px;height:30px;border-radius:8px;color:var(--muted);font-size:17px;line-height:1;cursor:pointer">×</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 20px;line-height:1.5">{{ authSubtitle }}</p>
+      <sc-if value="{{ isRegister }}" hint-placeholder-val="">
+      <input value="{{ authName }}" onChange="{{ onAuthName }}" placeholder="Tên hiển thị" style="width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:12px 14px;font-family:inherit;font-size:13.5px;color:var(--fg);outline:none;margin-bottom:11px"/>
+      </sc-if>
+      <input value="{{ authEmail }}" onChange="{{ onAuthEmail }}" placeholder="Email" style="width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:12px 14px;font-family:inherit;font-size:13.5px;color:var(--fg);outline:none;margin-bottom:11px"/>
+      <input value="{{ authPass }}" onChange="{{ onAuthPass }}" type="password" placeholder="Mật khẩu" style="width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:12px 14px;font-family:inherit;font-size:13.5px;color:var(--fg);outline:none;margin-bottom:11px"/>
+      <sc-if value="{{ authMsg }}" hint-placeholder-val=""><p style="font-size:12.5px;color:var(--accent);margin:0 0 12px;font-weight:600">{{ authMsg }}</p></sc-if>
+      <button onClick="{{ onSubmitAuth }}" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:9px;padding:13px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:15px">{{ authCta }}</button>
+      <div style="text-align:center;font-size:13px;color:var(--muted)">{{ authSwitchText }} <button onClick="{{ onToggleAuthMode }}" style="background:none;border:none;color:var(--accent);font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">{{ authSwitchCta }}</button></div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Thử tiếp: "dựa trên <a class="dv-oid" href="#2a">2a</a> làm thêm trang bài viết + bình luận" · "đổi màu thương hiệu sang xanh/tím" · "làm bản dark mặc định cho <a class="dv-oid" href="#2a">2a</a>" · "xuất gói bàn giao cho lập trình viên"</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Blog tin tức "Mạch" — 3 phương án trang chủ (tất cả đã tương tác thật)</span></div>
+<div class="dv-opts">
+
+<!-- ============================ 1a — TÒA SOẠN ============================ -->
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Tòa soạn — editorial cổ điển, hero lớn + lưới bài + sidebar</div>
+<div class="dv-card" style="{{ shellA }}">
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 32px;background:var(--surface);border-bottom:1px solid var(--line)">
+    <div style="display:flex;align-items:center;gap:11px">
+      <span style="width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--soft)"></span>
+      <div style="display:flex;flex-direction:column;line-height:1">
+        <span style="font-family:'Lora',serif;font-weight:700;font-size:25px;letter-spacing:-.01em">Mạch</span>
+        <span style="font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-top:4px">Dòng chảy tri thức</span>
+      </div>
+    </div>
+    <nav style="display:flex;gap:28px;font-size:14.5px">
+      <a href="#1a" style="color:var(--fg);font-weight:600;text-decoration:none;border-bottom:2px solid var(--accent);padding-bottom:3px">Trang chủ</a>
+      <a href="#1a" style="color:var(--muted);text-decoration:none">Danh mục</a>
+      <a href="#1a" style="color:var(--muted);text-decoration:none">Khám phá</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 14px">
+        <span style="width:13px;height:13px;border:2px solid var(--muted);border-radius:50%;display:inline-block;position:relative"></span>
+        <input value="{{ query }}" onChange="{{ onSearch }}" placeholder="Tìm bài viết…" style="border:none;background:transparent;outline:none;color:var(--fg);font-family:inherit;font-size:13.5px;width:120px"/>
+      </div>
+      <button onClick="{{ onToggleDark }}" style="display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 13px;color:var(--fg);font-family:inherit;font-size:13px;cursor:pointer"><span style="width:12px;height:12px;border-radius:50%;background:var(--fg);box-shadow:inset -4px -1px 0 0 var(--bg)"></span>{{ darkLabel }}</button>
+      <span style="background:var(--accent);color:#fff;border-radius:999px;padding:8px 13px;font-size:12.5px;font-weight:600">{{ savedLabel }}</span>
+    </div>
+  </header>
+
+  <div style="display:flex;flex-wrap:wrap;gap:9px;padding:15px 32px;background:var(--surface);border-bottom:1px solid var(--line)">
+    <sc-for list="{{ chips }}" as="c" hint-placeholder-count="8"><button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
+  </div>
+
+  <div style="display:flex;gap:0;padding:0">
+    <main style="flex:1;min-width:0;padding:28px 30px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px">
+        <h2 style="font-family:'Lora',serif;font-size:15px;font-weight:600;margin:0;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)">Bài nổi bật</h2>
+        <span style="font-size:12.5px;color:var(--muted)">{{ resultLabel }}</span>
+      </div>
+      <sc-if value="{{ featured }}" hint-placeholder-val="{{ true }}">
+      <article onClick="{{ featured.onOpen }}" style="display:grid;grid-template-columns:1.15fr 1fr;gap:24px;cursor:pointer;padding-bottom:28px;margin-bottom:26px;border-bottom:1px solid var(--line)">
+        <div style="position:relative;min-height:270px;border-radius:12px;overflow:hidden;background:var(--soft);background-image:repeating-linear-gradient(135deg,transparent 0 13px,var(--line) 13px 14px);display:flex;align-items:flex-end;padding:12px">
+          <span style="font:600 9px ui-monospace,monospace;color:var(--muted);background:var(--surface);padding:4px 7px;border-radius:5px">{{ featured.imgLabel }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:center">
+          <span style="align-self:flex-start;font:700 11px 'Be Vietnam Pro';letter-spacing:.05em;text-transform:uppercase;color:{{ featured.color }};margin-bottom:12px">{{ featured.cat }}</span>
+          <h3 style="font-family:'Lora',serif;font-size:29px;line-height:1.16;font-weight:700;margin:0 0 12px;letter-spacing:-.01em">{{ featured.title }}</h3>
+          <p style="font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 18px">{{ featured.excerpt }}</p>
+          <div style="display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--muted)">
+            <span style="font-weight:600;color:var(--fg)">{{ featured.author }}</span>
+            <span>{{ featured.date }}</span><span>·</span><span>{{ featured.read }}</span>
+            <button onClick="{{ featured.onToggle }}" style="{{ featured.saveStyle }}">{{ featured.saveLabel }}</button>
+          </div>
+        </div>
+      </article>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:26px">
+        <sc-for list="{{ rest }}" as="item" hint-placeholder-count="6">
+        <article onClick="{{ item.onOpen }}" style="cursor:pointer;display:flex;flex-direction:column;gap:11px">
+          <div style="position:relative;height:150px;border-radius:11px;overflow:hidden;background:var(--soft);background-image:repeating-linear-gradient(135deg,transparent 0 13px,var(--line) 13px 14px);display:flex;align-items:flex-end;padding:10px">
+            <span style="font:600 8.5px ui-monospace,monospace;color:var(--muted);background:var(--surface);padding:3px 6px;border-radius:4px">{{ item.imgLabel }}</span>
+            <button onClick="{{ item.onToggle }}" style="{{ item.saveDot }}">{{ item.saveMark }}</button>
+          </div>
+          <span style="font:700 10.5px 'Be Vietnam Pro';letter-spacing:.05em;text-transform:uppercase;color:{{ item.color }}">{{ item.cat }}</span>
+          <h3 style="font-family:'Lora',serif;font-size:19px;line-height:1.24;font-weight:600;margin:0">{{ item.title }}</h3>
+          <p style="font-size:13.5px;line-height:1.55;color:var(--muted);margin:0">{{ item.excerpt }}</p>
+          <div style="display:flex;gap:11px;font-size:11.5px;color:var(--muted);margin-top:auto"><span style="font-weight:600;color:var(--fg)">{{ item.author }}</span><span>{{ item.read }}</span><span>·</span><span>{{ item.commentsLabel }}</span></div>
+        </article>
+        </sc-for>
+      </div>
+    </main>
+
+    <aside style="width:322px;flex:none;padding:28px 30px 28px 26px;border-left:1px solid var(--line);background:var(--surface)">
+      <div style="margin-bottom:30px">
+        <h4 style="font-family:'Lora',serif;font-size:14px;font-weight:700;margin:0 0 14px;text-transform:uppercase;letter-spacing:.1em">Thịnh hành</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ trending }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12.5px;color:var(--fg);cursor:pointer;font-family:inherit"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.color }}"></span>{{ t.label }}</button></sc-for>
+        </div>
+      </div>
+      <div style="margin-bottom:30px">
+        <h4 style="font-family:'Lora',serif;font-size:14px;font-weight:700;margin:0 0 14px;text-transform:uppercase;letter-spacing:.1em">Top xem nhiều</h4>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <sc-for list="{{ topViewed }}" as="tv" hint-placeholder-count="5">
+          <div onClick="{{ tv.onOpen }}" style="display:flex;gap:13px;cursor:pointer;align-items:flex-start">
+            <span style="font-family:'Lora',serif;font-size:23px;font-weight:700;color:var(--accent);line-height:1;min-width:22px">{{ tv.rank }}</span>
+            <div><h5 style="font-size:14px;line-height:1.35;font-weight:600;margin:0 0 5px">{{ tv.title }}</h5><div style="font-size:11px;color:var(--muted)"><span style="color:{{ tv.color }};font-weight:600">{{ tv.cat }}</span> · {{ tv.date }}</div></div>
+          </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px">
+        <h4 style="font-family:'Lora',serif;font-size:17px;font-weight:700;margin:0 0 6px">Nhận Mạch hằng tuần</h4>
+        <p style="font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.5">Tuyển tập bài hay nhất, gửi vào hộp thư mỗi sáng thứ Hai.</p>
+        <input value="{{ nlEmail }}" onChange="{{ onNlInput }}" placeholder="email@cua-ban.com" style="width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13px;color:var(--fg);outline:none;margin-bottom:9px"/>
+        <button onClick="{{ onSubscribe }}" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:9px;padding:11px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">Đăng ký</button>
+        <sc-if value="{{ nlMsg }}" hint-placeholder-val=""><p style="font-size:12px;color:var(--accent);margin:10px 0 0;font-weight:500">{{ nlMsg }}</p></sc-if>
+      </div>
+      <a href="#1a" style="display:block;text-align:center;background:var(--surface);border:1.5px solid var(--accent);color:var(--accent);border-radius:10px;padding:12px;font-size:13.5px;font-weight:600;text-decoration:none">Tham gia nhóm Facebook →</a>
+    </aside>
+  </div>
+</div>
+</div>
+
+<!-- ============================ 1b — BẢNG TIN DEV ============================ -->
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Bảng tin dev — rail danh mục trái, feed danh sách dày, thẻ mono</div>
+<div class="dv-card" style="{{ shellB }}">
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 26px;background:var(--surface);border-bottom:1px solid var(--line)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="width:11px;height:11px;border-radius:3px;background:var(--accent)"></span>
+      <span style="font-weight:800;font-size:20px;letter-spacing:-.02em">mạch<span style="color:var(--accent)">.dev</span></span>
+    </div>
+    <div style="flex:1;max-width:440px;display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 14px">
+      <span style="font:600 12px ui-monospace,monospace;color:var(--muted)">/</span>
+      <input value="{{ query }}" onChange="{{ onSearch }}" placeholder="tìm kiếm bài viết, tag, tác giả…" style="flex:1;border:none;background:transparent;outline:none;color:var(--fg);font-family:inherit;font-size:13.5px"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onClick="{{ onToggleDark }}" style="display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font-family:inherit;font-size:12.5px;cursor:pointer"><span style="width:11px;height:11px;border-radius:50%;background:var(--fg);box-shadow:inset -4px -1px 0 0 var(--bg)"></span>{{ darkLabel }}</button>
+      <span style="background:var(--soft);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600">{{ savedLabel }}</span>
+    </div>
+  </header>
+
+  <div style="display:flex">
+    <nav style="width:210px;flex:none;padding:22px 18px;border-right:1px solid var(--line);background:var(--surface);align-self:stretch">
+      <div style="font:600 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 8px 12px">Danh mục</div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="8"><button onClick="{{ c.onClick }}" style="{{ c.railStyle }}"><span style="width:7px;height:7px;border-radius:2px;background:{{ c.color }}"></span>{{ c.label }}</button></sc-for>
+      </div>
+      <div style="margin-top:26px;padding:16px;background:var(--bg);border:1px solid var(--line);border-radius:11px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:5px">Newsletter</div>
+        <p style="font-size:11.5px;color:var(--muted);margin:0 0 11px;line-height:1.5">Bản tin dev mỗi thứ Hai.</p>
+        <input value="{{ nlEmail }}" onChange="{{ onNlInput }}" placeholder="email…" style="width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:12px;color:var(--fg);outline:none;margin-bottom:8px"/>
+        <button onClick="{{ onSubscribe }}" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Đăng ký</button>
+        <sc-if value="{{ nlMsg }}" hint-placeholder-val=""><p style="font-size:11px;color:var(--accent);margin:8px 0 0">{{ nlMsg }}</p></sc-if>
+      </div>
+    </nav>
+
+    <main style="flex:1;min-width:0;padding:20px 24px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700;margin:0">Mới nhất</h2>
+        <span style="font:600 11px ui-monospace,monospace;color:var(--muted)">{{ resultLabel }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ items }}" as="item" hint-placeholder-count="8">
+        <article onClick="{{ item.onOpen }}" style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);cursor:pointer;align-items:center">
+          <div style="width:118px;height:78px;flex:none;border-radius:9px;overflow:hidden;background:var(--soft);background-image:repeating-linear-gradient(135deg,transparent 0 11px,var(--line) 11px 12px)"></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
+              <span style="font:600 10px ui-monospace,monospace;color:{{ item.color }};background:{{ item.tint }};padding:3px 8px;border-radius:5px">{{ item.cat }}</span>
+              <span style="font-size:11.5px;color:var(--muted)">{{ item.date }}</span>
+            </div>
+            <h3 style="font-size:17px;font-weight:600;line-height:1.3;margin:0 0 5px">{{ item.title }}</h3>
+            <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.excerpt }}</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:none">
+            <button onClick="{{ item.onToggle }}" style="{{ item.saveIcon }}">{{ item.saveMark }}</button>
+            <div style="font:600 11px ui-monospace,monospace;color:var(--muted);text-align:right;line-height:1.6">{{ item.views }} views<br/>{{ item.read }}</div>
+          </div>
+        </article>
+        </sc-for>
+      </div>
+    </main>
+
+    <aside style="width:240px;flex:none;padding:22px 20px;border-left:1px solid var(--line)">
+      <div style="font:600 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:13px">Thịnh hành</div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:26px">
+        <sc-for list="{{ trending }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="display:flex;align-items:center;gap:9px;background:transparent;border:none;border-left:2px solid {{ t.color }};padding:2px 0 2px 11px;font-family:inherit;font-size:13px;color:var(--fg);cursor:pointer;text-align:left">#{{ t.label }}</button></sc-for>
+      </div>
+      <div style="font:600 10px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:13px">Top xem nhiều</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ topViewed }}" as="tv" hint-placeholder-count="5">
+        <div onClick="{{ tv.onOpen }}" style="display:flex;gap:11px;cursor:pointer"><span style="font:700 15px ui-monospace,monospace;color:var(--accent);min-width:20px">{{ tv.rankPad }}</span><h5 style="font-size:13px;font-weight:600;line-height:1.35;margin:0">{{ tv.title }}</h5></div>
+        </sc-for>
+      </div>
+    </aside>
+  </div>
+</div>
+</div>
+
+<!-- ============================ 1c — TẠP CHÍ GEN Z ============================ -->
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Tạp chí Gen Z — type lớn, thẻ nhiều màu theo danh mục, lưới bất đối xứng</div>
+<div class="dv-card" style="{{ shellC }}">
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:22px 34px;background:var(--surface);border-bottom:1px solid var(--line)">
+    <div style="display:flex;align-items:baseline;gap:13px">
+      <span style="font-weight:800;font-size:30px;letter-spacing:-.03em">Mạch</span>
+      <span style="font-size:11px;color:var(--muted);letter-spacing:.02em">tri thức cho người trẻ dám nghĩ</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--fg);border-radius:999px;padding:9px 16px">
+        <input value="{{ query }}" onChange="{{ onSearch }}" placeholder="Bạn đang tìm gì?" style="border:none;background:transparent;outline:none;color:var(--fg);font-family:inherit;font-size:13.5px;width:150px"/>
+      </div>
+      <button onClick="{{ onToggleDark }}" style="width:40px;height:40px;border-radius:50%;background:var(--fg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center"><span style="width:15px;height:15px;border-radius:50%;background:var(--bg);box-shadow:inset -5px -1px 0 0 var(--fg)"></span></button>
+      <span style="background:var(--accent);color:#fff;border-radius:999px;padding:10px 15px;font-size:12.5px;font-weight:700">{{ savedLabel }}</span>
+    </div>
+  </header>
+
+  <div style="display:flex;flex-wrap:wrap;gap:10px;padding:18px 34px;background:var(--surface);border-bottom:1px solid var(--line)">
+    <sc-for list="{{ chips }}" as="c" hint-placeholder-count="8"><button onClick="{{ c.onClick }}" style="{{ c.pillStyle }}">{{ c.label }}</button></sc-for>
+  </div>
+
+  <div style="padding:30px 34px">
+    <sc-if value="{{ featured }}" hint-placeholder-val="{{ true }}">
+    <article onClick="{{ featured.onOpen }}" style="cursor:pointer;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--surface);margin-bottom:30px;display:grid;grid-template-columns:1.1fr 1fr">
+      <div style="min-height:320px;background:{{ featured.tint }};background-image:repeating-linear-gradient(135deg,transparent 0 15px,var(--line) 15px 16px);display:flex;align-items:flex-end;padding:16px"><span style="font:600 10px ui-monospace,monospace;color:var(--fg);background:var(--surface);padding:5px 9px;border-radius:6px">{{ featured.imgLabel }}</span></div>
+      <div style="padding:38px 40px;display:flex;flex-direction:column;justify-content:center">
+        <span style="align-self:flex-start;background:{{ featured.color }};color:#fff;font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:6px 13px;border-radius:999px;margin-bottom:18px">{{ featured.cat }}</span>
+        <h2 style="font-family:'Lora',serif;font-size:38px;line-height:1.08;font-weight:700;margin:0 0 16px;letter-spacing:-.02em">{{ featured.title }}</h2>
+        <p style="font-size:15.5px;line-height:1.6;color:var(--muted);margin:0 0 22px">{{ featured.excerpt }}</p>
+        <div style="display:flex;align-items:center;gap:14px;font-size:13px;color:var(--muted)"><span style="font-weight:700;color:var(--fg)">{{ featured.author }}</span><span>{{ featured.read }}</span><button onClick="{{ featured.onToggle }}" style="{{ featured.saveStyle }}">{{ featured.saveLabel }}</button></div>
+      </div>
+    </article>
+    </sc-if>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px"><h3 style="font-family:'Lora',serif;font-size:22px;font-weight:700;margin:0">Dòng bài mới</h3><span style="font-size:12.5px;color:var(--muted)">{{ resultLabel }}</span></div>
+    <div style="columns:3;column-gap:24px">
+      <sc-for list="{{ rest }}" as="item" hint-placeholder-count="6">
+      <article onClick="{{ item.onOpen }}" style="break-inside:avoid;margin-bottom:24px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-block;width:100%">
+        <div style="height:{{ item.imgH }};background:{{ item.tint }};background-image:repeating-linear-gradient(135deg,transparent 0 13px,var(--line) 13px 14px);position:relative"><button onClick="{{ item.onToggle }}" style="{{ item.saveDot }}">{{ item.saveMark }}</button></div>
+        <div style="padding:18px 19px">
+          <span style="display:inline-block;background:{{ item.tint }};color:{{ item.color }};font-weight:700;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:11px">{{ item.cat }}</span>
+          <h4 style="font-family:'Lora',serif;font-size:20px;line-height:1.22;font-weight:600;margin:0 0 9px">{{ item.title }}</h4>
+          <p style="font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 13px">{{ item.excerpt }}</p>
+          <div style="display:flex;gap:10px;font-size:11.5px;color:var(--muted);align-items:center"><span style="font-weight:700;color:var(--fg)">{{ item.author }}</span><span>·</span><span>{{ item.commentsLabel }}</span></div>
+        </div>
+      </article>
+      </sc-for>
+    </div>
+    <div style="margin-top:8px;display:grid;grid-template-columns:1.4fr 1fr;gap:22px">
+      <div style="background:var(--fg);color:var(--bg);border-radius:18px;padding:30px 34px">
+        <h3 style="font-family:'Lora',serif;font-size:25px;font-weight:700;margin:0 0 8px">Đừng bỏ lỡ Mạch mỗi tuần</h3>
+        <p style="font-size:13.5px;opacity:.75;margin:0 0 18px;line-height:1.55">Bài hay nhất về công nghệ, văn hoá và phát triển bản thân — gọn trong một email.</p>
+        <div style="display:flex;gap:10px"><input value="{{ nlEmail }}" onChange="{{ onNlInput }}" placeholder="email@cua-ban.com" style="flex:1;border:none;border-radius:10px;padding:13px 15px;font-family:inherit;font-size:13.5px;outline:none"/><button onClick="{{ onSubscribe }}" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:13px 22px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer">Đăng ký</button></div>
+        <sc-if value="{{ nlMsg }}" hint-placeholder-val=""><p style="font-size:12.5px;margin:12px 0 0;opacity:.9">{{ nlMsg }}</p></sc-if>
+      </div>
+      <div style="border:1px solid var(--line);border-radius:18px;padding:26px 28px;background:var(--surface)">
+        <h4 style="font-family:'Lora',serif;font-size:16px;font-weight:700;margin:0 0 15px">Thịnh hành tuần này</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:9px"><sc-for list="{{ trending }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onClick }}" style="background:{{ t.tint }};color:{{ t.color }};border:none;border-radius:999px;padding:8px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">#{{ t.label }}</button></sc-for></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Thử tiếp: "chọn <a class="dv-oid" href="#1b">1b</a> và dựng thêm trang bài viết chi tiết + bình luận" · "làm <a class="dv-oid" href="#1c">1c</a> nhưng đổi màu danh mục dịu hơn" · "gộp sidebar của <a class="dv-oid" href="#1a">1a</a> vào <a class="dv-oid" href="#1c">1c</a>" · "thêm màn danh mục &amp; tìm kiếm"</p>
+</section>
+
+<sc-if value="{{ toast }}" hint-placeholder-val=""><div style="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:13px 20px;border-radius:12px;font:500 13.5px 'Be Vietnam Pro',sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.35);z-index:99;display:flex;align-items:center;gap:12px">📖 {{ toast }}<button onClick="{{ onCloseToast }}" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:14px;line-height:1">×</button></div></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { dark:false, query:'', cat:'all', saved:{}, nlEmail:'', nlMsg:'', toast:'',
+            user:null, authOpen:false, authMode:'login', authEmail:'', authPass:'', authName:'', authMsg:'' };
+
+  cats = [
+    {key:'all',label:'Tất cả'},{key:'IT',label:'IT'},{key:'AI',label:'AI'},
+    {key:'Tài chính',label:'Tài chính'},{key:'Chứng khoán',label:'Chứng khoán'},{key:'Kiến trúc',label:'Kiến trúc'},
+    {key:'Văn hóa',label:'Văn hóa'},{key:'Giải trí',label:'Giải trí'},{key:'Tin tức',label:'Tin tức'},
+    {key:'Phát triển bản thân',label:'Phát triển bản thân'},{key:'Review sách',label:'Review sách'}
+  ];
+  catColor = {IT:'#2f6df6',AI:'#7048e8','Văn hóa':'#e8843c','Giải trí':'#e64980','Tin tức':'#0ca678','Phát triển bản thân':'#37b24d','Review sách':'#e8590c','Tài chính':'#0b8a6f','Chứng khoán':'#e8590c','Kiến trúc':'#5f6b7a'};
+
+  icon(key,color){
+    const rect=(x,y,w,h)=>React.createElement('rect',{x,y,width:w,height:h,key:x+'-'+y});
+    const ln=(x1,y1,x2,y2)=>React.createElement('line',{x1,y1,x2,y2,key:x1+'-'+y1+'-'+x2});
+    const P=(d)=>React.createElement('path',{d,key:d.slice(0,6)});
+    const poly=(p)=>React.createElement('polyline',{points:p,key:p.slice(0,6)});
+    const circ=(cx,cy,r)=>React.createElement('circle',{cx,cy,r,key:'c'+cx+cy});
+    const sets={
+      all:[rect(3,3,7,7),rect(14,3,7,7),rect(14,14,7,7),rect(3,14,7,7)],
+      IT:[poly('16 18 22 12 16 6'),poly('8 6 2 12 8 18')],
+      AI:[P('M12 3l-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z')],
+      'Tài chính':[circ(12,12,9),P('M14.8 9.3a2.4 2 0 0 0-2.8-1.3c-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2 2.6.8 2.6 2-1.1 2-2.6 2a2.4 2 0 0 1-2.8-1.3'),ln(12,6,12,8),ln(12,16,12,18)],
+      'Chứng khoán':[ln(3,21,21,21),rect(5,12,3,6),rect(10.5,7,3,11),rect(16,14,3,4)],
+      'Kiến trúc':[circ(12,12,10),React.createElement('polygon',{points:'16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88',key:'cmp'})],
+      'Văn hóa':[ln(3,22,21,22),ln(6,18,6,11),ln(10,18,10,11),ln(14,18,14,11),ln(18,18,18,11),React.createElement('polygon',{points:'12 2 20 8 4 8',key:'roof'})],
+      'Giải trí':[circ(12,12,10),React.createElement('polygon',{points:'10 8 16 12 10 16',key:'play'})],
+      'Tin tức':[P('M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2V9'),ln(8,7,16,7),ln(8,11,16,11),ln(8,15,12,15)],
+      'Phát triển bản thân':[poly('22 7 13.5 15.5 8.5 10.5 2 17'),poly('16 7 22 7 22 13')],
+      'Review sách':[P('M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z'),P('M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z')]
+    };
+    return React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:color,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',style:{flex:'none'}},sets[key]||sets.all);
+  }
+
+  articles = [
+    {id:'a1',cat:'IT',title:'Kiến trúc micro-frontend: khi nào nên và khi nào đừng',excerpt:'Chia nhỏ frontend nghe rất hấp dẫn, nhưng cái giá vận hành thường bị bỏ quên. Một góc nhìn thực dụng.',author:'Minh Đức',date:'12/07/2026',read:'8 phút',views:'3.4k',comments:24,imgH:'210px'},
+    {id:'a2',cat:'AI',title:'RAG là gì và vì sao startup nào cũng nhắc đến nó',excerpt:'Retrieval-Augmented Generation giải thích dễ hiểu cho người mới, kèm khi nào bạn thật sự cần nó.',author:'Thu Hà',date:'11/07/2026',read:'6 phút',views:'5.1k',comments:41,imgH:'150px'},
+    {id:'a3',cat:'Phát triển bản thân',title:'Burnout ở tuổi 24: dấu hiệu và cách quay trở lại',excerpt:'Không phải lười, không phải yếu. Cách nhận ra kiệt sức sớm và tự chữa lành từng bước.',author:'Gia Bảo',date:'10/07/2026',read:'7 phút',views:'8.9k',comments:63,imgH:'180px'},
+    {id:'a4',cat:'Văn hóa',title:'Vì sao nhạc lo-fi thống trị giờ làm việc của Gen Z',excerpt:'Một hiện tượng văn hoá số nhỏ bé nhưng nói lên rất nhiều về cách chúng ta tập trung.',author:'Lan Chi',date:'09/07/2026',read:'5 phút',views:'2.7k',comments:18,imgH:'140px'},
+    {id:'a5',cat:'Giải trí',title:'8 series đáng cày hè 2026 cho dân công nghệ',excerpt:'Từ phim về hacker đến tài liệu AI — danh sách cuối tuần không thể bỏ lỡ.',author:'Quốc Anh',date:'08/07/2026',read:'4 phút',views:'6.2k',comments:29,imgH:'195px'},
+    {id:'a6',cat:'Review sách',title:"Đọc 'Deep Work' lần thứ ba: điều tôi mới thật sự hiểu",excerpt:'Cùng một cuốn sách, ba con người khác nhau. Ghi chú đọc lại sau 5 năm đi làm.',author:'Phương Vy',date:'07/07/2026',read:'9 phút',views:'4.0k',comments:37,imgH:'160px'},
+    {id:'a7',cat:'Tin tức',title:'Việt Nam lọt top điểm đến của kỹ sư phần mềm remote',excerpt:'Chi phí sống, cộng đồng dev và hạ tầng internet đang kéo nhân tài toàn cầu về.',author:'Ban Tin',date:'06/07/2026',read:'3 phút',views:'9.5k',comments:52,imgH:'150px'},
+    {id:'a8',cat:'IT',title:'Viết Git commit message như một senior',excerpt:'Bảy quy tắc nhỏ giúp lịch sử commit của bạn kể được câu chuyện của cả dự án.',author:'Minh Đức',date:'05/07/2026',read:'6 phút',views:'7.1k',comments:44,imgH:'175px'},
+    {id:'a9',cat:'Chứng khoán',title:'Đọc biểu đồ nến cho người mới bắt đầu',excerpt:'Nến xanh nến đỏ nói gì về tâm lý thị trường — hướng dẫn không dùng thuật ngữ doạ người.',author:'Hoàng Nam',date:'12/07/2026',read:'7 phút',views:'11k',comments:58,imgH:'185px'},
+    {id:'a10',cat:'Tài chính',title:'Quỹ ETF: cách người bận rộn đầu tư mà không cần canh bảng',excerpt:'Vì sao rót tiền đều đặn vào ETF lại thắng phần lớn nhà đầu tư chủ động.',author:'Mai Linh',date:'11/07/2026',read:'6 phút',views:'7.8k',comments:33,imgH:'165px'},
+    {id:'a11',cat:'Kiến trúc',title:'Kiến trúc nhiệt đới: nhà mát mà không cần điều hoà',excerpt:'Thông gió chéo, mái đua và vật liệu địa phương — bài học từ nhà Việt xưa.',author:'Đức Huy',date:'10/07/2026',read:'8 phút',views:'4.5k',comments:21,imgH:'200px'},
+    {id:'a12',cat:'Chứng khoán',title:'Tâm lý FOMO và cái giá của việc mua đỉnh',excerpt:'Câu chuyện hành vi phía sau mỗi con sóng — và cách giữ được cái đầu lạnh.',author:'Hoàng Nam',date:'09/07/2026',read:'5 phút',views:'9.1k',comments:47,imgH:'155px'}
+  ];
+
+  hexA(hex,a){const h=hex.replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return `rgba(${r},${g},${b},${a})`;}
+  setCat(k){this.setState({cat:k});}
+  toggleSave(id){if(!this.state.user){this.setState({authOpen:true,authMode:'login',authMsg:'Đăng nhập để lưu bài viết yêu thích.'});return;}this.setState(s=>({saved:{...s.saved,[id]:!s.saved[id]}}));}
+  openAuth(mode){this.setState({authOpen:true,authMode:mode,authMsg:''});}
+  toggleAuthMode(){this.setState(s=>({authMode:s.authMode==='register'?'login':'register',authMsg:''}));}
+  logout(){this.setState({user:null,saved:{},toast:'Đã đăng xuất.'});clearTimeout(this._t);this._t=setTimeout(()=>this.setState({toast:''}),2400);}
+  submitAuth(){const e=this.state.authEmail.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){this.setState({authMsg:'Vui lòng nhập email hợp lệ.'});return;}if(!this.state.authPass){this.setState({authMsg:'Vui lòng nhập mật khẩu.'});return;}const name=(this.state.authMode==='register'&&this.state.authName.trim())?this.state.authName.trim():e.split('@')[0];this.setState({user:{name,email:e},authOpen:false,authPass:'',authMsg:'',toast:'Xin chào '+name+'!'});clearTimeout(this._t);this._t=setTimeout(()=>this.setState({toast:''}),2800);}
+  open(a){this.setState({toast:'Đang mở: '+a.title});clearTimeout(this._t);this._t=setTimeout(()=>this.setState({toast:''}),2800);}
+  subscribe(){const e=this.state.nlEmail.trim();const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);this.setState({nlMsg:ok?('Đã đăng ký '+e+' — hẹn gặp thứ Hai!'):'Vui lòng nhập email hợp lệ.'});}
+
+  renderVals(){
+    const dark=this.state.dark, q=this.state.query.trim().toLowerCase(), cat=this.state.cat;
+    const t = dark
+      ? {bg:'#151310',surface:'#201d18',fg:'#efe9df',muted:'#a89d8b',line:'rgba(239,233,223,.14)',soft:'rgba(239,233,223,.05)'}
+      : {bg:'#f6f3ec',surface:'#fffdf8',fg:'#1c1a16',muted:'#726a5b',line:'rgba(28,26,22,.11)',soft:'rgba(28,26,22,.045)'};
+    const shell=(accent,w)=>`width:${w}px;--bg:${t.bg};--surface:${t.surface};--fg:${t.fg};--muted:${t.muted};--line:${t.line};--soft:${t.soft};--accent:${accent};background:var(--bg);color:var(--fg);font-family:'Be Vietnam Pro',system-ui,sans-serif`;
+
+    const filtered=this.articles.filter(a=>{const okC=cat==='all'||a.cat===cat;const okQ=!q||(a.title+a.excerpt+a.cat+a.author).toLowerCase().includes(q);return okC&&okQ;});
+    const dec=a=>{const color=this.catColor[a.cat]||'#888';const tint=this.hexA(color,dark?0.24:0.13);const saved=!!this.state.saved[a.id];
+      const saveBase='cursor:pointer;font-family:inherit;font-weight:600;border-radius:999px;transition:all .15s';
+      return {...a,color,tint,imgLabel:'ẢNH · '+a.cat.toUpperCase(),saved,commentsLabel:a.comments+' bình luận',
+        catUpper:a.cat.toUpperCase(),catInitial:a.cat.trim().charAt(0).toUpperCase(),
+        onOpen:()=>this.open(a),onToggle:(e)=>{if(e&&e.stopPropagation)e.stopPropagation();this.toggleSave(a.id);},
+        saveMark:saved?'★':'☆',
+        saveLabel:saved?'★ Đã lưu':'☆ Lưu',
+        saveStyle:`margin-left:auto;padding:7px 14px;border:1px solid ${saved?color:'var(--line)'};background:${saved?tint:'transparent'};color:${saved?color:'var(--muted)'};font-size:12px;${saveBase}`,
+        saveDot:`position:absolute;top:10px;right:10px;width:30px;height:30px;border:none;border-radius:50%;background:${saved?color:'rgba(0,0,0,.35)'};color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center`,
+        saveIcon:`width:30px;height:30px;border:1px solid ${saved?color:'var(--line)'};border-radius:8px;background:${saved?tint:'transparent'};color:${saved?color:'var(--muted)'};font-size:14px;cursor:pointer`
+      };};
+    const items=filtered.map((a,i)=>Object.assign(dec(a),{num:String(i+1).padStart(2,'0')}));
+    const featured=items[0]||null;
+    const rest=items.slice(1);
+
+    const chips=this.cats.map(c=>{const active=cat===c.key;const color=c.key==='all'?'var(--accent)':(this.catColor[c.label]||'#888');
+      const base="cursor:pointer;font-family:'Be Vietnam Pro';white-space:nowrap";
+      return {label:c.label,onClick:()=>this.setCat(c.key),color,active,iconEl:this.icon(c.key,active?'#fff':color),
+        style:active?`padding:8px 15px;border-radius:999px;border:1px solid ${color};background:${color};color:#fff;font-weight:600;font-size:13px;${base}`
+                    :`padding:8px 15px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:500;font-size:13px;${base}`,
+        railStyle:`display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:8px 10px;border-radius:8px;border:none;font-size:13px;font-family:inherit;cursor:pointer;${active?'background:var(--soft);color:var(--fg);font-weight:600':'background:transparent;color:var(--muted)'}`,
+        pillStyle:active?`padding:9px 17px;border-radius:999px;border:1.5px solid var(--fg);background:var(--fg);color:var(--bg);font-weight:700;font-size:13.5px;${base}`
+                        :`padding:9px 17px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--fg);font-weight:600;font-size:13.5px;${base}`,
+        railStyle2:active?`display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:12px 13px;border-radius:9px;border:none;font-size:13.5px;font-family:inherit;cursor:pointer;background:${color};color:#fff;font-weight:700;box-shadow:0 6px 16px ${this.hexA(c.key==='all'?'#ff4d1c':(this.catColor[c.label]||'#888'),.32)}`
+                         :`display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:12px 13px;border-radius:9px;border:none;font-size:13.5px;font-family:inherit;cursor:pointer;background:transparent;color:var(--fg);font-weight:500`
+      };});
+    const R=this.state.authMode==='register';
+
+    const trending=['AI','IT','Tin tức','Review sách','Giải trí'].map(l=>({label:l,color:this.catColor[l]||'#888',tint:this.hexA(this.catColor[l]||'#888',dark?0.24:0.13),onClick:()=>this.setCat(l)}));
+    const order=['a7','a3','a8','a5','a2'];
+    const topViewed=order.map((id,i)=>{const a=this.articles.find(x=>x.id===id);return {rank:i+1,rankPad:String(i+1).padStart(2,'0'),title:a.title,cat:a.cat,date:a.date,color:this.catColor[a.cat]||'#888',onOpen:()=>this.open(a)};});
+
+    return {dark,darkLabel:dark?'Sáng':'Tối',shellA:shell('#b8452e',1180),shellB:shell('#3b5bdb',1120),shellC:shell('#7048e8',1180),shellB2:shell('#1668e3',1160),
+      query:this.state.query,onSearch:e=>this.setState({query:e.target.value}),onToggleDark:()=>this.setState(s=>({dark:!s.dark})),
+      chips,items,featured,rest,trending,topViewed,
+      savedLabel:'Đã lưu '+Object.values(this.state.saved).filter(Boolean).length,
+      resultLabel:items.length+' bài viết',
+      nlEmail:this.state.nlEmail,onNlInput:e=>this.setState({nlEmail:e.target.value}),onSubscribe:()=>this.subscribe(),nlMsg:this.state.nlMsg,
+      toast:this.state.toast,onCloseToast:()=>this.setState({toast:''}),
+      footerCats:chips.slice(1),
+      user:this.state.user,notUser:!this.state.user,
+      userName:this.state.user?this.state.user.name:'',userInitial:this.state.user?this.state.user.name.charAt(0).toUpperCase():'',
+      onLogin:()=>this.openAuth('login'),onRegister:()=>this.openAuth('register'),onLogout:()=>this.logout(),
+      authOpen:this.state.authOpen,onCloseAuth:()=>this.setState({authOpen:false}),stop:e=>{if(e&&e.stopPropagation)e.stopPropagation();},
+      isRegister:R,
+      authTitle:R?'Tạo tài khoản':'Đăng nhập',
+      authSubtitle:R?'Tham gia Mạch để lưu bài và nhận bản tin.':'Đăng nhập để lưu bài viết yêu thích.',
+      authCta:R?'Đăng ký':'Đăng nhập',
+      authSwitchText:R?'Đã có tài khoản?':'Chưa có tài khoản?',
+      authSwitchCta:R?'Đăng nhập':'Đăng ký ngay',
+      authEmail:this.state.authEmail,authPass:this.state.authPass,authName:this.state.authName,authMsg:this.state.authMsg,
+      onAuthEmail:e=>this.setState({authEmail:e.target.value}),onAuthPass:e=>this.setState({authPass:e.target.value}),onAuthName:e=>this.setState({authName:e.target.value}),
+      onSubmitAuth:()=>this.submitAuth(),onToggleAuthMode:()=>this.toggleAuthMode()
+    };
+  }
+}
+</script>
+</body>
+</html>
