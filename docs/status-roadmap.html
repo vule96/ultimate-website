@@ -1,0 +1,418 @@
+<title>Ultimate website — Status & Roadmap</title>
+<style>
+  :root {
+    --bg: #F7F8FA;
+    --surface: #FFFFFF;
+    --surface-2: #F1F4F7;
+    --ink: #16191C;
+    --muted: #626C79;
+    --faint: #949CA8;
+    --border: #E7EAEE;
+    --border-strong: #D6DBE1;
+    --accent: #15803D;
+    --accent-soft: #E6F4EA;
+    --accent-ink: #10632F;
+    --done: #15803D;
+    --done-bg: #E6F4EA;
+    --next: #2563EB;
+    --next-bg: #E6EDFD;
+    --warn: #B45309;
+    --warn-bg: #FaEfDF;
+    --pending: #556170;
+    --pending-bg: #EEF1F4;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 20px rgba(16,24,40,.05);
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, Menlo, monospace;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0D1013;
+      --surface: #14181D;
+      --surface-2: #1B2027;
+      --ink: #E8ECF1;
+      --muted: #9AA4B1;
+      --faint: #6B7684;
+      --border: #262D36;
+      --border-strong: #333C47;
+      --accent: #3CCB6E;
+      --accent-soft: #10281A;
+      --accent-ink: #7EE6A0;
+      --done: #3CCB6E;
+      --done-bg: #10281A;
+      --next: #6098F6;
+      --next-bg: #121E33;
+      --warn: #E0A44A;
+      --warn-bg: #2A2010;
+      --pending: #93A0AF;
+      --pending-bg: #1D232B;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F7F8FA; --surface: #FFFFFF; --surface-2: #F1F4F7; --ink: #16191C;
+    --muted: #626C79; --faint: #949CA8; --border: #E7EAEE; --border-strong: #D6DBE1;
+    --accent: #15803D; --accent-soft: #E6F4EA; --accent-ink: #10632F;
+    --done: #15803D; --done-bg: #E6F4EA; --next: #2563EB; --next-bg: #E6EDFD;
+    --warn: #B45309; --warn-bg: #FaEfDF; --pending: #556170; --pending-bg: #EEF1F4;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 20px rgba(16,24,40,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D1013; --surface: #14181D; --surface-2: #1B2027; --ink: #E8ECF1;
+    --muted: #9AA4B1; --faint: #6B7684; --border: #262D36; --border-strong: #333C47;
+    --accent: #3CCB6E; --accent-soft: #10281A; --accent-ink: #7EE6A0;
+    --done: #3CCB6E; --done-bg: #10281A; --next: #6098F6; --next-bg: #121E33;
+    --warn: #E0A44A; --warn-bg: #2A2010; --pending: #93A0AF; --pending-bg: #1D232B;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.55;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 72px; }
+  .stack { display: flex; flex-direction: column; }
+
+  .eyebrow {
+    font-size: 11px; font-weight: 650; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--faint); margin: 0 0 10px;
+  }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.08; letter-spacing: -.02em; margin: 0; text-wrap: balance; font-weight: 720; }
+  h2 { font-size: 15px; font-weight: 680; letter-spacing: .01em; margin: 0; }
+  p { margin: 0; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* Header */
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 12px; }
+  .lede { color: var(--muted); font-size: 15px; margin-top: 12px; max-width: 60ch; }
+  .header-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .phase-badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px;
+    background: var(--accent-soft); color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    font-size: 12.5px; font-weight: 640; white-space: nowrap;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+  .toggle {
+    appearance: none; cursor: pointer; width: 34px; height: 34px; border-radius: 9px;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted);
+    font-size: 15px; display: grid; place-items: center; transition: background .15s, color .15s;
+  }
+  .toggle:hover { color: var(--ink); background: var(--surface-2); }
+  .toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  hr.rule { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Stat tiles */
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 18px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 3px;
+  }
+  .tile .k { font-size: 11px; font-weight: 640; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); }
+  .tile .v { font-size: 25px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; margin-top: 4px; }
+  .tile .sub { font-size: 12.5px; color: var(--muted); }
+  .tile .v.live { color: var(--accent); display: inline-flex; align-items: center; gap: 8px; }
+
+  /* Section heading */
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+  .sec-head .num { font-family: var(--mono); font-size: 12px; color: var(--faint); font-weight: 600; }
+  .sec-title { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+
+  /* Timeline (Phase 1) */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .step { display: grid; grid-template-columns: 26px 1fr; gap: 16px; }
+  .rail { display: flex; flex-direction: column; align-items: center; }
+  .rail .mark {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--done-bg); color: var(--done);
+    display: grid; place-items: center; flex-shrink: 0; margin-top: 2px;
+    border: 1px solid color-mix(in srgb, var(--done) 30%, transparent);
+  }
+  .rail .mark svg { width: 12px; height: 12px; }
+  .rail .line { width: 2px; flex: 1; background: var(--border); margin: 4px 0; }
+  .step:last-child .rail .line { display: none; }
+  .step-body { padding-bottom: 26px; }
+  .step-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .step-head .slice { font-size: 15.5px; font-weight: 660; }
+  .chip {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    background: var(--done-bg); color: var(--done);
+  }
+  .chip.new { background: var(--next-bg); color: var(--next); }
+  .step-desc { color: var(--muted); font-size: 14px; margin-top: 5px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tag {
+    font-size: 11.5px; font-family: var(--mono); color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 7px;
+  }
+
+  /* Stack grid */
+  .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .row:last-child { border-bottom: 0; }
+  .row .label { font-size: 13px; color: var(--muted); }
+  .row .val { font-size: 13px; font-weight: 560; text-align: right; }
+  .card > .card-k { font-size: 11px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--accent-ink); margin-bottom: 6px; display: block; }
+
+  /* Next tracks */
+  .track { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .track-top { padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
+  .track-tag { font-size: 11px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; }
+  .track-a .track-tag { color: var(--next); }
+  .track-b .track-tag { color: var(--warn); }
+  .track-title { font-size: 17px; font-weight: 700; letter-spacing: -.01em; margin-top: 6px; }
+  .track-note { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .track ul { list-style: none; margin: 0; padding: 14px 20px 18px; display: flex; flex-direction: column; gap: 11px; }
+  .track li { display: grid; grid-template-columns: 16px 1fr; gap: 10px; font-size: 13.5px; color: var(--ink); align-items: start; }
+  .track li .b { margin-top: 6px; width: 6px; height: 6px; border-radius: 50%; }
+  .track-a li .b { background: var(--next); }
+  .track-b li .b { background: var(--warn); }
+  .track li span.d { color: var(--muted); }
+
+  /* Follow-ups */
+  .followups { display: flex; flex-direction: column; gap: 10px; }
+  .fu {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 13px 16px;
+  }
+  .fu .txt { font-size: 13.5px; }
+  .fu .txt b { font-weight: 620; }
+  .fu .txt .why { color: var(--muted); }
+  .sev { font-size: 10.5px; font-weight: 680; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .sev.high { background: var(--warn-bg); color: var(--warn); }
+  .sev.med { background: var(--next-bg); color: var(--next); }
+  .sev.low { background: var(--pending-bg); color: var(--pending); }
+  .fu .area { font-family: var(--mono); font-size: 11.5px; color: var(--faint); white-space: nowrap; }
+
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+  @media (max-width: 720px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .grid2 { grid-template-columns: 1fr; }
+    header { flex-direction: column; }
+    .fu { grid-template-columns: auto 1fr; }
+    .fu .area { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap stack">
+
+  <header>
+    <div>
+      <p class="eyebrow">Trạng thái dự án</p>
+      <h1>Ultimate website</h1>
+      <p class="lede">Blog cá nhân — Frontend · Backend · AI. Modular monolith (Go) + blog công khai (Next.js) + admin SPA, dùng chung packages trong monorepo.</p>
+    </div>
+    <div class="header-meta">
+      <span class="phase-badge"><span class="dot"></span>Phase 1 + Hardening + UI Mạch</span>
+      <button class="toggle" id="themeToggle" aria-label="Đổi giao diện sáng/tối" title="Sáng / Tối">◐</button>
+    </div>
+  </header>
+
+  <hr class="rule" style="margin-top:24px" />
+
+  <!-- State strip -->
+  <section class="tiles" aria-label="Tình trạng hiện tại">
+    <div class="tile">
+      <span class="k">Slice hoàn tất</span>
+      <span class="v mono">10</span>
+      <span class="sub">Phase 1 (1–4) · 5a–5e · 6</span>
+    </div>
+    <div class="tile">
+      <span class="k">Test xanh</span>
+      <span class="v mono">98</span>
+      <span class="sub">web 56 · admin 39 · ui 3 · core ✓</span>
+    </div>
+    <div class="tile">
+      <span class="k">Trang chủ "Mạch"</span>
+      <span class="v live"><span class="dot"></span>Live</span>
+      <span class="sub">Magazine UI · SSG + ISR</span>
+    </div>
+    <div class="tile">
+      <span class="k">Lưu trữ ảnh</span>
+      <span class="v" style="font-size:20px">MinIO → R2</span>
+      <span class="sub">R2 verify end-to-end</span>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- Timeline -->
+  <section>
+    <div class="sec-head"><span class="num">01</span><span class="sec-title">Đã hoàn tất</span></div>
+    <div class="timeline">
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 1 — Nền móng Go core</span><span class="chip">done</span></div>
+          <p class="step-desc">Modular monolith: module <span class="mono">posts</span> (CRUD + tags, slug tiếng Việt, quan hệ M–N, status workflow), chạy end-to-end.</p>
+          <div class="tags"><span class="tag">Gin</span><span class="tag">GORM</span><span class="tag">Atlas</span><span class="tag">Postgres 16 + pgvector</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 2 — Auth Google OAuth (BFF)</span><span class="chip">done</span></div>
+          <p class="step-desc">OAuth theo BFF pattern: session server-side (scs + Postgres), cookie httpOnly, allowlist email; <span class="mono">RequireAuth</span> bọc các endpoint ghi.</p>
+          <div class="tags"><span class="tag">oauth2</span><span class="tag">scs</span><span class="tag">PKCE S256</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 3 (a–e) — Admin dashboard SPA</span><span class="chip">done</span></div>
+          <p class="step-desc">Vite + React + TS + Tailwind (theme HiveQ). Posts CRUD UI, editor Tiptap + Lexical + upload ảnh presigned, TanStack Router (file-based) + Query + Table.</p>
+          <div class="tags"><span class="tag">Vite</span><span class="tag">TanStack Router/Query/Table</span><span class="tag">Tiptap</span><span class="tag">Lexical</span><span class="tag">Zod</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 4 — Blog công khai + packages/ui</span><span class="chip">done</span></div>
+          <p class="step-desc"><span class="mono">apps/web</span> Next.js 14 (App Router, RSC, SSG + ISR): danh sách + phân trang, <span class="mono">/blog/[slug]</span>, <span class="mono">/tags</span>. Luôn ép <span class="mono">PUBLISHED</span>, bài nháp → 404. SEO: OG, sitemap, RSS, robots. <span class="mono">@ultimate/ui</span> chung. Verify E2E live OK.</p>
+          <div class="tags"><span class="tag">Next.js 14</span><span class="tag">React 18</span><span class="tag">@ultimate/ui</span><span class="tag">SSG + ISR</span><span class="tag">SEO</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 5 (a–e) — Hardening & robustness</span><span class="chip">done</span></div>
+          <p class="step-desc">Sau senior code review: visibility policy session-aware + presign enforce size + CSRF guard (5a); <span class="mono">http.Server</span> timeouts + graceful shutdown + <span class="mono">/healthz</span> ping DB + reqlog + path-based pagination (5b); SEO/CSP/JSON-LD + sanitize <span class="mono">content_html</span> + next/font (5c); body limit + allowlist re-check + <b>optimistic locking</b> + <b>transactional outbox</b> (5d); dọn backlog low + test DB cách li (5e).</p>
+          <div class="tags"><span class="tag">visibility policy</span><span class="tag">graceful shutdown</span><span class="tag">CSP + sanitize</span><span class="tag">optimistic locking</span><span class="tag">outbox → Phase 2</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 6 — Trang chủ blog "Mạch" (UI/UX)</span><span class="chip new">mới</span></div>
+          <p class="step-desc">Dựng pixel-close trang chủ tạp chí "Mạch" trong <span class="mono">apps/web</span>: <b>Server Component shell + client island</b> (giữ ISR + SEO), <b>chống re-render</b> (Zustand selector + <span class="mono">React.memo</span> + <span class="mono">useDeferredValue</span>). Token Mạch scope riêng web + font Bricolage/Be Vietnam Pro/Space Mono. Tương tác (search, lọc category, dark mode, bookmark, auth, newsletter) <b>chạy cục bộ qua interface service</b> — có seam cắm backend thật sau. Seed ~12 bài. Verify E2E live.</p>
+          <div class="tags"><span class="tag">Next.js RSC</span><span class="tag">Zustand</span><span class="tag">next/font</span><span class="tag">design tokens</span><span class="tag">lucide-react</span><span class="tag">service seam</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- Stack snapshot -->
+  <section>
+    <div class="sec-head"><span class="num">02</span><span class="sec-title">Stack hiện tại</span></div>
+    <div class="grid2">
+      <div class="card">
+        <span class="card-k">Backend & dữ liệu</span>
+        <div class="row"><span class="label">Core</span><span class="val">Go · Gin + GORM + Atlas</span></div>
+        <div class="row"><span class="label">Kiến trúc</span><span class="val">Modular monolith · Clean-lite</span></div>
+        <div class="row"><span class="label">DB</span><span class="val">Postgres 16 + pgvector</span></div>
+        <div class="row"><span class="label">Auth</span><span class="val">Google OAuth (BFF) + scs</span></div>
+        <div class="row"><span class="label">Robustness</span><span class="val">Optimistic lock · outbox · healthz</span></div>
+      </div>
+      <div class="card">
+        <span class="card-k">Frontend & monorepo</span>
+        <div class="row"><span class="label">Blog "Mạch"</span><span class="val">Next.js 14 · RSC + client island</span></div>
+        <div class="row"><span class="label">State trang chủ</span><span class="val">Zustand (selector)</span></div>
+        <div class="row"><span class="label">Admin</span><span class="val">Vite + React 18 + TanStack</span></div>
+        <div class="row"><span class="label">UI / Types chung</span><span class="val">@ultimate/ui · @ultimate/types (Zod)</span></div>
+        <div class="row"><span class="label">Monorepo</span><span class="val">pnpm workspaces + Turborepo</span></div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- Next steps -->
+  <section>
+    <div class="sec-head"><span class="num">03</span><span class="sec-title">Bước kế tiếp — hai hướng</span></div>
+    <div class="grid2">
+      <div class="track track-a">
+        <div class="track-top">
+          <span class="track-tag">Hướng A</span>
+          <div class="track-title">Đưa lên production</div>
+          <p class="track-note">Biến sản phẩm chạy local thành online thật.</p>
+        </div>
+        <ul>
+          <li><span class="b"></span><span><b>web</b> → Vercel hoặc Cloudflare Pages <span class="d">(SSR/ISR sẵn)</span></span></li>
+          <li><span class="b"></span><span><b>core</b> → VPS / Coolify <span class="d">(Docker + env thật)</span></span></li>
+          <li><span class="b"></span><span><b>Postgres</b> managed hoặc VPS <span class="d">(backup)</span></span></li>
+          <li><span class="b"></span><span><b>R2 Custom Domain</b> <span class="d">→ CDN cache/WAF thật thay r2.dev</span></span></li>
+        </ul>
+      </div>
+      <div class="track track-b">
+        <div class="track-top">
+          <span class="track-tag">Hướng B</span>
+          <div class="track-title">Phase 2 — AI</div>
+          <p class="track-note">Tận dụng pgvector + outbox đã sẵn trong stack.</p>
+        </div>
+        <ul>
+          <li><span class="b"></span><span><b>Chatbot RAG</b> <span class="d">hỏi đáp nội dung blog (embedding + pgvector)</span></span></li>
+          <li><span class="b"></span><span><b>AI worker</b> <span class="d">Python + LangGraph, consume outbox</span></span></li>
+          <li><span class="b"></span><span><b>Research tự viết bài</b> <span class="d">duyệt qua Telegram (human-in-the-loop)</span></span></li>
+          <li><span class="b"></span><span><b>Trợ lý viết</b> <span class="d">gợi ý ngay trong editor</span></span></li>
+        </ul>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-top:14px">Chưa chốt hướng — bàn sau. Cả hai độc lập; có thể deploy trước rồi mới AI.</p>
+  </section>
+
+  <hr class="rule" />
+
+  <!-- Follow-ups -->
+  <section>
+    <div class="sec-head"><span class="num">04</span><span class="sec-title">Việc tồn đọng</span></div>
+    <div class="followups">
+      <div class="fu">
+        <span class="sev high">Cao</span>
+        <span class="txt"><b>Backend consumer cho tương tác Mạch</b> <span class="why">— auth người đọc + bookmark + newsletter hiện chạy cục bộ (mock/localStorage). Cần API thật (Go core / Firebase) cắm vào interface service đã có seam.</span></span>
+        <span class="area">core · apps/web</span>
+      </div>
+      <div class="fu">
+        <span class="sev med">TB</span>
+        <span class="txt"><b>Redesign <span class="mono">/blog/[slug]</span> &amp; <span class="mono">/tags</span> theo chrome Mạch</b> <span class="why">— trang chi tiết + tag chưa mang masthead/typography Mạch (Slice 6 mới làm trang chủ).</span></span>
+        <span class="area">apps/web</span>
+      </div>
+      <div class="fu">
+        <span class="sev med">TB</span>
+        <span class="txt"><b>Fix checksum migration Atlas</b> <span class="why">— <span class="mono">20260711204848_add_post_version.sql</span> bị chỉnh tay → <span class="mono">atlas migrate hash</span>. Không cản chạy (schema đã áp), nhưng cản migrate máy mới.</span></span>
+        <span class="area">services/core</span>
+      </div>
+      <div class="fu">
+        <span class="sev low">Thấp</span>
+        <span class="txt"><b>Backlog low L1–L6</b> <span class="why">— các finding low còn mở trong senior review, chưa được yêu cầu ưu tiên.</span></span>
+        <span class="area">core · fe</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Ultimate website · Phase 1 + Hardening + Slice 6 (UI Mạch)</span>
+    <span class="mono">Cập nhật 2026-07-14</span>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeToggle');
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      if (!cur) {
+        cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+    });
+  })();
+</script>
