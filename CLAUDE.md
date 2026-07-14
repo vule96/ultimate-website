@@ -6,10 +6,11 @@ Dự án website blog cá nhân (FE + BE + AI). Xây dựng mới từ đầu.
 
 Tài liệu phân tích kiến trúc, stack, chi phí và roadmap đầy đủ nằm ở:
 **`docs/personal-blog-ai-analysis.md`** (đọc file này trước khi bắt đầu bất kỳ việc gì).
-Bản xem đẹp (Artifact, UTF-8, sáng/tối): `https://claude.ai/code/artifact/8104b3d2-efe4-4736-8f9f-8587e71253fe`
-(`docs/personal-blog-ai-analysis.html` là **fragment kiểu Artifact** — mở raw sẽ lỗi font; publish qua Artifact mới đúng.)
+Bản xem đẹp: **`docs/personal-blog-ai-analysis.html`** (standalone, tự mở trong trình duyệt được — UTF-8, sáng/tối, nền kem dịu mắt; **không dùng Artifact**).
 
-**Kiến trúc vận hành thực tế** (sơ đồ, luồng BE↔FE, cache từng tầng, AI tương lai): **`docs/architecture.md`** · Artifact: `https://claude.ai/code/artifact/52ff8b32-c745-43be-a23e-d3b1717fa57d`.
+**Kiến trúc vận hành thực tế** (sơ đồ, luồng BE↔FE, cache từng tầng, AI tương lai): **`docs/architecture.md`**.
+
+**Trạng thái & roadmap trực quan** (timeline slice, stack, việc tồn đọng): **`docs/status-roadmap.html`** (standalone, mở trực tiếp trong trình duyệt).
 
 Tóm tắt định hướng đã chốt:
 - Mục tiêu: cân bằng học + sản phẩm dùng thật. Ngân sách ~15–40 USD/tháng.
@@ -28,7 +29,7 @@ Triển khai Phase 1 theo **4 slice tuần tự** (spec từng slice ở `docs/s
 
 > **🩺 Issue tracker (2026-07-11):** Senior code review toàn codebase (Go core B+, admin B+, web B) — findings đầy đủ ở **`docs/reviews/2026-07-11-senior-code-review.md`**. Đây là **nơi note & track mọi issue**: khi resolve issue nào phải đánh dấu `✅ RESOLVED (ngày, commit)` ngay tại finding đó trong file; issue mới phát hiện cũng note vào đây. **Slice 5a DONE: C1, H1, H4, A1, A4, M7. Slice 5b DONE: W1, W2, H2, H3, A2, A3 (+M6, L7). Slice 5c DONE: W3, W4, W5, W6, W7 + low SEO + next/font + A5–A9 + admin low. Slice 5d DONE: M1, M2, M3, M4, M5 + outbox (chuẩn bị Phase 2). Slice 5e DONE: L8, L9, L10, L11, L12.** Toàn bộ finding Critical/High/Medium/Low đã **yêu cầu** resolve đều DONE; backlog Low còn mở chỉ còn **L1–L6** (chưa được yêu cầu ưu tiên, note sẵn trong tracker chờ khi cần).
 >
-> **📍 Điểm hiện tại (2026-07-14):** **Phase 1 HOÀN TẤT** (Slice 1→4) + **Slice 5a–5e DONE** + **Slice 6 DONE (trang chủ blog "Mạch" — UI/UX, verify E2E live)** — toàn bộ issue Critical/High/Medium từ senior review đã resolved, và backlog Low đợt đầu (L8–L12) cũng đã dọn xong; core giờ có body limit, allowlist recheck, optimistic locking end-to-end, **transactional outbox** sẵn cho Phase 2, và hết các nợ kỹ thuật nhỏ (presign config, message lỗi generic, orphan-tag cleanup, config fail-fast, test DB cách li). Chỉ còn **L1–L6** (low, chưa được yêu cầu) ở backlog. Blog verify live; storage R2 (dev=MinIO/prod=R2). **Bước kế tiếp CHƯA chốt** — **Deploy production** *hoặc* **Phase 2 (AI: chatbot RAG + AI worker consume outbox)**; khi chốt → brainstorm → spec. Roadmap: Artifact "Status & Roadmap" (`https://claude.ai/code/artifact/78ac518f-fc25-44d0-9385-d85dfbfde92e`).
+> **📍 Điểm hiện tại (2026-07-14):** **Phase 1 HOÀN TẤT** (Slice 1→4) + **Slice 5a–5e DONE** + **Slice 6 DONE (trang chủ blog "Mạch" — UI/UX, verify E2E live)** — toàn bộ issue Critical/High/Medium từ senior review đã resolved, và backlog Low đợt đầu (L8–L12) cũng đã dọn xong; core giờ có body limit, allowlist recheck, optimistic locking end-to-end, **transactional outbox** sẵn cho Phase 2, và hết các nợ kỹ thuật nhỏ (presign config, message lỗi generic, orphan-tag cleanup, config fail-fast, test DB cách li). Chỉ còn **L1–L6** (low, chưa được yêu cầu) ở backlog. Blog verify live; storage R2 (dev=MinIO/prod=R2). **Bước kế tiếp CHƯA chốt** — **Backend consumer cho tương tác Mạch** (auth/bookmark/newsletter thật), **redesign trang chi tiết/tags** theo chrome Mạch, **Deploy production**, hoặc **Phase 2 (AI: chatbot RAG + AI worker consume outbox)**; khi chốt → brainstorm → spec. Roadmap trực quan: **`docs/status-roadmap.html`**.
 
 - ✅ **Slice 1 — DONE**: nền móng Go core + module `posts` (CRUD + tags), chạy end-to-end.
   Spec: `docs/superpowers/specs/2026-07-05-slice1-posts-foundation-design.md`.

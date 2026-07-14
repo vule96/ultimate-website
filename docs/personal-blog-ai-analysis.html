@@ -1,24 +1,38 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('mach-doc-theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
 <title>Phân tích & Kiến trúc — Ultimate website</title>
 <style>
   :root {
-    --bg: #F6F8FA;
-    --surface: #FFFFFF;
-    --surface-2: #F0F3F6;
-    --ink: #1A2230;
-    --muted: #5A6472;
-    --faint: #8A94A2;
-    --border: #E3E7EC;
+    /* Light — kem ấm, dịu (không trắng xanh chói) */
+    --bg: #F5F1E8;
+    --surface: #FCFAF4;
+    --surface-2: #ECE6D8;
+    --ink: #2A2621;
+    --muted: #6E6557;
+    --faint: #9C9284;
+    --border: #E4DCCB;
     --accent: #0E7C86;
-    --accent-soft: #E2F1F2;
+    --accent-soft: #E1EEEC;
     --accent-ink: #0A5A62;
     --good: #157F3B;
-    --good-bg: #E5F4EA;
+    --good-bg: #E7F0E3;
     --warn: #A96410;
-    --warn-bg: #FBF0DE;
+    --warn-bg: #F3E8D4;
     --crit: #B4231F;
-    --crit-bg: #FBE7E6;
-    --code-bg: #F4F6F8;
-    --shadow: 0 1px 2px rgba(20,30,48,.05), 0 4px 16px rgba(20,30,48,.05);
+    --crit-bg: #F6E3DF;
+    --code-bg: #ECE6D8;
+    --shadow: 0 1px 2px rgba(60,50,30,.05), 0 4px 16px rgba(60,50,30,.06);
     --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono", Consolas, Menlo, monospace;
   }
@@ -45,11 +59,11 @@
     }
   }
   :root[data-theme="light"] {
-    --bg: #F6F8FA; --surface: #FFFFFF; --surface-2: #F0F3F6; --ink: #1A2230;
-    --muted: #5A6472; --faint: #8A94A2; --border: #E3E7EC; --accent: #0E7C86;
-    --accent-soft: #E2F1F2; --accent-ink: #0A5A62; --good: #157F3B; --good-bg: #E5F4EA;
-    --warn: #A96410; --warn-bg: #FBF0DE; --crit: #B4231F; --crit-bg: #FBE7E6; --code-bg: #F4F6F8;
-    --shadow: 0 1px 2px rgba(20,30,48,.05), 0 4px 16px rgba(20,30,48,.05);
+    --bg: #F5F1E8; --surface: #FCFAF4; --surface-2: #ECE6D8; --ink: #2A2621;
+    --muted: #6E6557; --faint: #9C9284; --border: #E4DCCB; --accent: #0E7C86;
+    --accent-soft: #E1EEEC; --accent-ink: #0A5A62; --good: #157F3B; --good-bg: #E7F0E3;
+    --warn: #A96410; --warn-bg: #F3E8D4; --crit: #B4231F; --crit-bg: #F6E3DF; --code-bg: #ECE6D8;
+    --shadow: 0 1px 2px rgba(60,50,30,.05), 0 4px 16px rgba(60,50,30,.06);
   }
   :root[data-theme="dark"] {
     --bg: #0E1116; --surface: #161B22; --surface-2: #1C222B; --ink: #E7EAF0;
@@ -231,6 +245,8 @@
   }
   @media (min-width: 901px) { nav.toc summary { display: none; } nav.toc .toc-inner { display: block !important; } }
 </style>
+</head>
+<body>
 
 <div class="topbar">
   <div class="topbar-inner">
@@ -282,13 +298,14 @@
     </header>
 
     <div class="verdict">
-      <div class="verdict-head">● Trạng thái triển khai · cập nhật 2026-07-11</div>
+      <div class="verdict-head">● Trạng thái triển khai · cập nhật 2026-07-14</div>
       <dl>
         <div class="row"><dt>Phase 0 + 1</dt><dd class="yes">HOÀN TẤT — Slice 1→4. Blog công khai chạy live (Next.js SSG/ISR + SEO), admin dashboard, storage R2 đã cấu hình &amp; verify.</dd></div>
-        <div class="row"><dt>Hardening</dt><dd class="yes">3 đợt 5a/5b/5c HOÀN TẤT sau senior code review — đã đóng mọi issue high+ và polish FE (bảo mật visibility/CSRF/presign + mất-dữ-liệu form; graceful shutdown + request logging + path-based SSG pagination + 401-aware admin; SEO đầy đủ + sanitize + CSP + <code>next/font</code>).</dd></div>
-        <div class="row"><dt>Đang ở đâu</dt><dd>Nền móng + blog cơ bản xong &amp; đã siết chất lượng. Storage: <b>dev = MinIO / prod = R2</b> (đã chốt).</dd></div>
-        <div class="row"><dt>Bước kế tiếp</dt><dd>Chưa chốt — <b>Slice 5d</b> (backend robustness: optimistic locking, outbox) hoặc <b>Deploy production</b> hoặc <b>Phase 2 (AI: RAG, tự viết bài, trợ lý viết)</b>.</dd></div>
-        <div class="row"><dt>Chi tiết tiến độ</dt><dd>Xem <code>CLAUDE.md</code> + <code>docs/reviews/2026-07-11-senior-code-review.md</code>. Kiến trúc vận hành thực tế: <code>docs/architecture.md</code>. Tài liệu này là định hướng/đánh giá gốc.</dd></div>
+        <div class="row"><dt>Hardening</dt><dd class="yes">5 đợt 5a–5e HOÀN TẤT sau senior code review — đã đóng mọi issue Critical/High/Medium/Low <b>được yêu cầu</b> (bảo mật visibility/CSRF/presign; graceful shutdown + request logging + path-based SSG pagination; SEO đầy đủ + sanitize + CSP + <code>next/font</code>; body limit + <b>optimistic locking</b> + <b>transactional outbox</b>; dọn backlog low). Chỉ còn L1–L6 (thấp, chưa yêu cầu).</dd></div>
+        <div class="row"><dt>Slice 6 — UI/UX</dt><dd class="yes">HOÀN TẤT — dựng lại trang chủ tạp chí <b>"Mạch"</b> pixel-close trong <code>apps/web</code>: server shell + client island, chống re-render (Zustand selector + <code>React.memo</code> + <code>useDeferredValue</code>), token/design system riêng, tương tác (search/filter/dark mode/bookmark/auth/newsletter) chạy cục bộ qua service seam. Verify E2E live.</dd></div>
+        <div class="row"><dt>Đang ở đâu</dt><dd>Nền móng + blog + hardening + UI trang chủ mới xong &amp; đã siết chất lượng. Storage: <b>dev = MinIO / prod = R2</b> (đã chốt).</dd></div>
+        <div class="row"><dt>Bước kế tiếp</dt><dd>Chưa chốt — <b>Backend consumer cho tương tác Mạch</b> (auth/bookmark/newsletter thật) và/hoặc <b>redesign trang chi tiết/tags</b> theo chrome Mạch, hoặc <b>Deploy production</b>, hoặc <b>Phase 2 (AI: RAG, tự viết bài, trợ lý viết — outbox đã sẵn)</b>.</dd></div>
+        <div class="row"><dt>Chi tiết tiến độ</dt><dd>Xem <code>CLAUDE.md</code> + <code>docs/reviews/2026-07-11-senior-code-review.md</code>. Kiến trúc vận hành thực tế: <code>docs/architecture.md</code>. Bản tóm tắt trực quan: <code>docs/status-roadmap.html</code>. Tài liệu này là định hướng/đánh giá gốc.</dd></div>
       </dl>
     </div>
 
@@ -827,9 +844,11 @@ type DraftState =
       icon.textContent = mode === 'dark' ? '☾' : '☀';
       label.textContent = mode === 'dark' ? 'Tối' : 'Sáng';
     }
-    apply(systemDark() ? 'dark' : 'light');
+    apply(root.getAttribute('data-theme') || (systemDark() ? 'dark' : 'light'));
     btn.addEventListener('click', function () {
-      apply(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      apply(next);
+      try { localStorage.setItem('mach-doc-theme', next); } catch (e) {}
     });
 
     // Scrollspy for TOC
@@ -852,3 +871,5 @@ type DraftState =
     }
   })();
 </script>
+</body>
+</html>
