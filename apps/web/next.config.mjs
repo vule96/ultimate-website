@@ -6,7 +6,13 @@ if (isProd && !mediaHost) {
   throw new Error("next.config: NEXT_PUBLIC_MEDIA_HOST là bắt buộc ở production build");
 }
 
-const imgSrc = ["'self'", "data:", mediaHost ? `https://${mediaHost}` : ""]
+const imgSrc = [
+  "'self'",
+  "data:",
+  "https://picsum.photos",
+  "https://fastly.picsum.photos",
+  mediaHost ? `https://${mediaHost}` : "",
+]
   .filter(Boolean)
   .join(" ");
 
@@ -25,6 +31,8 @@ const nextConfig = {
   transpilePackages: ["@ultimate/ui", "@ultimate/types"],
   images: {
     remotePatterns: [
+      { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "fastly.picsum.photos" },
       ...(isProd ? [] : [{ protocol: "http", hostname: "localhost" }]),
       ...(mediaHost ? [{ protocol: "https", hostname: mediaHost }] : []),
     ],

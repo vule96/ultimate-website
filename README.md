@@ -34,6 +34,11 @@ Postgres `:5432` · MinIO `:9000` (console `:9001`, minioadmin/minioadmin). Dữ
 > ./atlas.exe migrate apply --env gorm --url "postgres://blog:blog@localhost:5432/blog?sslmode=disable"
 > ```
 
+> **Seed dữ liệu mẫu** (để trang chủ "sống" — ~12 bài phủ nhiều category, idempotent):
+> ```bash
+> docker compose exec -T postgres psql -U blog -d blog < services/core/seed/seed_articles.sql
+> ```
+
 ### 2. Core — Go backend (`:8080`)
 
 ```bash

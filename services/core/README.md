@@ -24,6 +24,14 @@ cp .env.example .env
 go run ./cmd/api          # lắng nghe :8080, GET /healthz
 ```
 
+### Seed dữ liệu mẫu (trang chủ "sống")
+
+Chèn ~12 bài PUBLISHED phủ nhiều category (idempotent, chạy lại an toàn):
+
+```bash
+docker compose exec -T postgres psql -U blog -d blog < services/core/seed/seed_articles.sql
+```
+
 ## Migrations (Atlas, sinh từ GORM model)
 
 Schema là các GORM model trong `internal/modules/*` (khai báo qua `Models()`),
