@@ -164,7 +164,17 @@ Icon từ `lucide-react` (16px, stroke 2). Map tag (theo `slug`/`name` của Go 
 - **Component:** `MagazineBoard` render; search lọc rows; chọn category lọc; bookmark khi chưa login → mở modal; dark toggle đổi class; auth modal validate.
 - **SEO:** khẳng định link bài render trong HTML server (crawlable).
 
-## 12. Rủi ro & lưu ý
+## 12. Seed data (để trang "sống" khi demo)
+
+Thêm **file SQL seed idempotent** để feed có bài thật, phủ nhiều category, có `cover_image`.
+
+- Vị trí: `services/core/seed/seed_articles.sql` (thư mục mới).
+- Nội dung: `INSERT ... ON CONFLICT (slug) DO NOTHING` cho **~10–12 bài** `status = 'PUBLISHED'`, `published_at` rải trong vài tuần gần đây; mỗi bài có `title`, `slug`, `excerpt`, `content_html` (vài đoạn thật để tính `readTime` + xem ở trang detail), `content_json = '{}'`, `cover_image` (URL ảnh Unsplash public — hoặc để `NULL` để rơi về khối màu category nếu không muốn host ngoài).
+- Tags: chèn ~8–10 tag khớp `CategoryKey` (`name`/`slug`: IT, AI, Tài chính, Chứng khoán, Kiến trúc, Văn hóa, Giải trí, Tin tức, Phát triển bản thân, Review sách) `ON CONFLICT (slug) DO NOTHING`; nối `post_tags` để mỗi bài có 1 category chính (khớp map ở mục 10).
+- Chạy: ghi lệnh vào `README.md`/`services/core/README.md` — `docker compose exec -T postgres psql -U blog -d blog < services/core/seed/seed_articles.sql` (idempotent, chạy lại an toàn).
+- **Quyết định ảnh cover:** dùng URL Unsplash public cho ảnh thật → phải thêm host vào `next.config.mjs` `images.remotePatterns` **và** cùng cơ chế `NEXT_PUBLIC_MEDIA_HOST` (mục 8). Nếu muốn tránh phụ thuộc host ngoài, để `cover_image = NULL` → fallback khối màu category (vẫn "sống" nhờ màu + số thứ tự kiểu báo in).
+
+## 13. Rủi ro & lưu ý
 
 - Palette Mạch khác theme `packages/ui` → chỉ scope trong web, tránh vỡ admin.
 - `next/image` cần cấu hình host media; nếu bài chưa có `cover_image` → khối màu category (đúng như prototype) làm fallback.
