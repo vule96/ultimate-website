@@ -27,7 +27,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
       className="flex cursor-pointer items-start gap-[18px] border-b border-line py-[19px] [contain-intrinsic-size:auto_129px] [content-visibility:auto]"
     >
       <div
-        className="relative flex h-[90px] w-[132px] flex-none items-end overflow-hidden rounded-lg p-[9px]"
+        className="relative hidden h-[90px] w-[132px] flex-none items-end overflow-hidden rounded-lg p-[9px] sm:flex"
         style={{ backgroundColor: article.color }}
       >
         {article.coverImage && (
@@ -51,7 +51,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
           </span>
           <span className="font-mono text-[11px] text-muted">{article.dateLabel}</span>
         </div>
-        <h3 className="mb-[6px] font-display text-[20px] font-bold leading-[1.22] tracking-[-0.01em] text-fg">
+        <h3 className="mb-[6px] font-display text-[17px] font-bold leading-[1.25] tracking-[-0.01em] text-fg sm:text-[20px] sm:leading-[1.22]">
           {article.title}
         </h3>
         {article.excerpt && (
@@ -82,7 +82,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
         >
           <Star size={15} fill={saved ? "currentColor" : "none"} strokeWidth={2} />
         </button>
-        <div className="text-right font-mono text-[10.5px] leading-[1.7] text-muted">
+        <div className="hidden text-right font-mono text-[10.5px] leading-[1.7] text-muted sm:block">
           {article.views !== null && (
             <>
               {formatViews(article.views)}

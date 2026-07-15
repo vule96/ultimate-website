@@ -9,8 +9,8 @@ export function MagazineFooter() {
   const t = useTranslations("footer");
   const tc = useTranslations("categories");
   return (
-    <footer className="bg-ink px-[30px] pb-6 pt-[46px] text-ink-fg">
-      <div className="mx-auto grid max-w-shell grid-cols-[1.7fr_1fr_1fr_1.3fr] gap-[38px] border-b border-ink-fg/15 pb-8">
+    <footer className="bg-ink px-5 pb-6 pt-10 text-ink-fg sm:px-[30px] sm:pt-[46px]">
+      <div className="mx-auto grid max-w-shell grid-cols-1 gap-8 border-b border-ink-fg/15 pb-8 sm:grid-cols-2 lg:grid-cols-[1.7fr_1fr_1fr_1.3fr] lg:gap-[38px]">
         <div>
           <div className="mb-[11px] font-display text-[27px] font-extrabold tracking-[-0.015em] text-accent">
             Mạch

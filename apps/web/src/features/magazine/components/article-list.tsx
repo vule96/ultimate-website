@@ -24,7 +24,7 @@ export function ArticleList({ articles }: { articles: ArticleVM[] }) {
   );
 
   return (
-    <main className="min-w-0 flex-1 px-[26px] py-6">
+    <main className="min-w-0 flex-1 px-5 py-6 sm:px-[26px]">
       <div className="mb-[18px] flex items-baseline justify-between">
         <h2 className="m-0 font-display text-[26px] font-extrabold tracking-[-0.02em]">
           <span className="bg-[linear-gradient(transparent_58%,var(--highlight)_58%)] px-[2px]">

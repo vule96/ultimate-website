@@ -12,6 +12,8 @@ import { useMagazineStore } from "../store/magazine-store";
 import { Masthead } from "./masthead";
 import { SubNav } from "./sub-nav";
 import { CategoryRail } from "./category-rail";
+import { MobileCategoryBar } from "./mobile-category-bar";
+import { NewsletterBox } from "./newsletter-box";
 import { ArticleList } from "./article-list";
 import { TrendingChips } from "./trending-chips";
 import { TopViewedList } from "./top-viewed-list";
@@ -42,10 +44,11 @@ export function MagazineBoard({
       <LazyMotion features={loadMotionFeatures} strict>
         <Masthead />
         <SubNav />
+        <MobileCategoryBar />
         <div className="mx-auto flex max-w-shell">
           <CategoryRail />
           <ArticleList articles={articles} />
-          <aside className="w-[250px] flex-none border-l border-line bg-surface px-[22px] py-6">
+          <aside className="hidden w-[250px] flex-none border-l border-line bg-surface px-[22px] py-6 xl:block">
             <div className="mb-[14px] font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
               {t("trending")}
             </div>
@@ -62,6 +65,7 @@ export function MagazineBoard({
             </a>
           </aside>
         </div>
+        <NewsletterBox variant="band" />
         <Toast />
         {authOpen && <AuthModal />}
       </LazyMotion>

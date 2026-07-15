@@ -6,7 +6,7 @@ import { NewsletterBox } from "./newsletter-box";
 
 describe("NewsletterBox", () => {
   it("email sai → báo lỗi inline + aria-invalid", async () => {
-    renderWithIntl(<NewsletterBox variant="rail" />);
+    renderWithIntl(<NewsletterBox variant="band" />);
     await userEvent.type(screen.getByPlaceholderText("Email của bạn"), "sai");
     await userEvent.click(screen.getByRole("button", { name: "Đăng ký" }));
     expect(screen.getByRole("alert")).toHaveTextContent("Email không hợp lệ.");

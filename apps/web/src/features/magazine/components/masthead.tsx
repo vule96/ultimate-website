@@ -11,12 +11,12 @@ export function Masthead() {
   const t = useTranslations("masthead");
   return (
     <header className="border-b border-chrome-line bg-chrome-bg text-chrome-fg">
-      <div className="mx-auto flex max-w-shell items-center justify-between gap-[22px] px-[30px] py-5">
+      <div className="mx-auto flex max-w-shell flex-wrap items-center justify-between gap-x-[22px] gap-y-3 px-5 py-4 sm:px-[30px] sm:py-5">
         <div className="flex items-baseline gap-[14px]">
-          <span className="font-display text-[34px] font-extrabold leading-[0.9] tracking-[-0.015em] text-accent">
+          <span className="font-display text-[30px] font-extrabold leading-[0.9] tracking-[-0.015em] text-accent sm:text-[34px]">
             Mạch
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-chrome-muted">
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.28em] text-chrome-muted sm:inline">
             {t("tagline")}
           </span>
         </div>

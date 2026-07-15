@@ -8,7 +8,7 @@ export function SearchBar() {
   const query = useMagazineStore((s) => s.query);
   const setQuery = useMagazineStore((s) => s.setQuery);
   return (
-    <div className="flex max-w-[400px] flex-1 items-center gap-[9px] rounded-[9px] border border-chrome-line bg-field-bg px-[15px] py-[10px] focus-within:ring-2 focus-within:ring-field-ring">
+    <div className="order-3 flex w-full items-center gap-[9px] rounded-[9px] border border-chrome-line bg-field-bg px-[15px] py-[10px] focus-within:ring-2 focus-within:ring-field-ring md:order-none md:w-auto md:max-w-[400px] md:flex-1">
       <Search size={15} className="flex-none text-chrome-muted" strokeWidth={2} />
       <input
         value={query}

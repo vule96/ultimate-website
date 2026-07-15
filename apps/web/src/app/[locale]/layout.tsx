@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Playfair_Display, Be_Vietnam_Pro, Space_Mono } from "next/font/google";
+import { Roboto, Be_Vietnam_Pro, Space_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
@@ -10,9 +10,9 @@ import { routing, isLocale } from "@/i18n/routing";
 import { MagazineFooter } from "@/features/magazine/components/magazine-footer";
 import { THEME_SCRIPT } from "@/features/magazine/hooks/use-theme";
 
-const display = Playfair_Display({
+const display = Roboto({
   subsets: ["latin", "vietnamese"],
-  weight: ["700", "800"],
+  weight: ["700", "900"],
   variable: "--font-display-next",
   display: "swap",
 });
@@ -66,6 +66,10 @@ export default async function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {/* JS bị chặn/hỏng → bỏ trạng thái initial của framer-motion, nội dung vẫn đọc được */}
+        <noscript>
+          <style>{`article{opacity:1 !important;transform:none !important}`}</style>
+        </noscript>
       </head>
       <body className="flex min-h-screen flex-col bg-bg text-fg">
         <NextIntlClientProvider messages={messages}>
