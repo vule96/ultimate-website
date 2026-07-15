@@ -29,7 +29,7 @@ describe("magazine-store", () => {
     const s = useMagazineStore.getState();
     expect(s.saved["a1"]).toBeUndefined();
     expect(s.authOpen).toBe(true);
-    expect(s.toast).toMatch(/Đăng nhập/);
+    expect(s.toast).toEqual({ key: "authRequired" });
   });
 
   it("login rồi toggleSave → lưu/bỏ lưu", () => {

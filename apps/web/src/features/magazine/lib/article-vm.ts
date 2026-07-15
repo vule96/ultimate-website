@@ -1,9 +1,15 @@
 import type { Post } from "@ultimate/types";
-import type { ArticleVM } from "../types";
+import type { ArticleVM, CategoryKey } from "../types";
 import { categoryFromTags, CATEGORY_BY_KEY } from "../categories";
-import { formatDate, readTimeFromHtml } from "./format";
+import { formatDate, readMinutesFromHtml } from "./format";
 
-export function postToArticleVM(post: Post): ArticleVM {
+/** Chuỗi hiển thị phụ thuộc locale — server page bơm từ next-intl. */
+export interface ArticleVMLabels {
+  category(key: CategoryKey): string;
+  readTime(minutes: number): string;
+}
+
+export function postToArticleVM(post: Post, labels: ArticleVMLabels): ArticleVM {
   const category = categoryFromTags(post.tags);
   const cfg = CATEGORY_BY_KEY[category];
   const date = post.published_at ?? post.created_at;
@@ -13,11 +19,11 @@ export function postToArticleVM(post: Post): ArticleVM {
     title: post.title,
     excerpt: post.excerpt ?? "",
     category,
-    categoryLabel: cfg.label,
+    categoryLabel: labels.category(category),
     color: cfg.color,
     date,
     dateLabel: formatDate(date),
-    readTime: readTimeFromHtml(post.content_html),
+    readTime: labels.readTime(readMinutesFromHtml(post.content_html)),
     coverImage: post.cover_image,
     author: null,
     views: null,
@@ -25,6 +31,6 @@ export function postToArticleVM(post: Post): ArticleVM {
   };
 }
 
-export function postsToArticleVMs(posts: Post[]): ArticleVM[] {
-  return posts.map(postToArticleVM);
+export function postsToArticleVMs(posts: Post[], labels: ArticleVMLabels): ArticleVM[] {
+  return posts.map((p) => postToArticleVM(p, labels));
 }

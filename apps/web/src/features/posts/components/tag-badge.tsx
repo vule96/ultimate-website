@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { Tag } from "@ultimate/types";
 
 export function TagBadge({ tag }: { tag: Tag }) {

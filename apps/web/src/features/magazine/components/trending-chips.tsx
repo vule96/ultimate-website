@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import type { Category, CategoryKey } from "../types";
 
 function TrendingChipsBase({
@@ -8,6 +9,7 @@ function TrendingChipsBase({
   categories: Category[];
   onSelect: (k: CategoryKey) => void;
 }) {
+  const t = useTranslations("categories");
   return (
     <div className="mb-[30px] flex flex-wrap gap-2">
       {categories.map((c) => (
@@ -21,7 +23,7 @@ function TrendingChipsBase({
             background: `color-mix(in srgb, ${c.color} var(--tint-strength), transparent)`,
           }}
         >
-          #{c.label}
+          #{t(c.key)}
         </button>
       ))}
     </div>

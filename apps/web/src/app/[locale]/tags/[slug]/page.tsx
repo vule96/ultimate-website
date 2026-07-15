@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import { listTags } from "@/features/posts/api";
 import { PostsPage } from "@/features/posts/components/posts-page";
 import { SITE_URL } from "@/lib/config";
@@ -9,7 +10,14 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   return {
     title: `#${params.slug}`,
     description: `Các bài viết về chủ đề #${params.slug}.`,
-    alternates: { canonical: `${SITE_URL}/tags/${params.slug}` },
+    alternates: {
+      canonical: `${SITE_URL}/tags/${params.slug}`,
+      languages: {
+        vi: `/tags/${params.slug}`,
+        en: `/en/tags/${params.slug}`,
+        "x-default": `/tags/${params.slug}`,
+      },
+    },
   };
 }
 
@@ -22,6 +30,7 @@ export async function generateStaticParams() {
   }
 }
 
-export default function TagPage({ params }: { params: { slug: string } }) {
+export default function TagPage({ params }: { params: { locale: string; slug: string } }) {
+  setRequestLocale(params.locale);
   return <PostsPage page={1} tag={params.slug} basePath={`/tags/${params.slug}`} />;
 }

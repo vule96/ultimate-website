@@ -1,3 +1,7 @@
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === "production";
 const mediaHost = process.env.NEXT_PUBLIC_MEDIA_HOST;
@@ -18,7 +22,10 @@ const imgSrc = [
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // Dev cần 'unsafe-eval' cho react-refresh/HMR của Next — nếu thiếu, TOÀN BỘ
+  // JS client chết ngay khi nạp (trang "đơ", framer-motion giữ opacity:0).
+  // Production tuyệt đối KHÔNG có 'unsafe-eval'.
+  isProd ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   `img-src ${imgSrc}`,
   "font-src 'self' data:",
@@ -51,4 +58,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

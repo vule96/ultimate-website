@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 import { listPublished } from "@/features/posts/api";
 import { PostsPage } from "@/features/posts/components/posts-page";
 import { totalPages } from "@/features/posts/pagination-utils";
@@ -17,7 +18,8 @@ export async function generateStaticParams() {
   }
 }
 
-export default function HomePaged({ params }: { params: { n: string } }) {
+export default function HomePaged({ params }: { params: { locale: string; n: string } }) {
+  setRequestLocale(params.locale);
   const page = Number(params.n);
   if (!Number.isInteger(page) || page < 2) notFound();
   return <PostsPage page={page} basePath="/" />;

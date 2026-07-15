@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { postToArticleVM } from "./article-vm";
+import { postToArticleVM, type ArticleVMLabels } from "./article-vm";
 import type { Post } from "@ultimate/types";
+
+// Labels stub — bản vi tĩnh cho test (production bơm từ next-intl).
+const labels: ArticleVMLabels = {
+  category: (key) => (key === "ai" ? "AI" : key === "news" ? "Tin tức" : key),
+  readTime: (minutes) => `${minutes} phút`,
+};
 
 const base: Post = {
   id: "11111111-1111-1111-1111-111111111111" as Post["id"],
@@ -22,26 +28,26 @@ const base: Post = {
 
 describe("postToArticleVM", () => {
   it("map category từ tag", () => {
-    expect(postToArticleVM(base).category).toBe("ai");
-    expect(postToArticleVM(base).categoryLabel).toBe("AI");
+    expect(postToArticleVM(base, labels).category).toBe("ai");
+    expect(postToArticleVM(base, labels).categoryLabel).toBe("AI");
   });
   it("dùng published_at cho date, fallback created_at khi null", () => {
-    expect(postToArticleVM(base).dateLabel).toBe("12/07/2026");
-    expect(postToArticleVM({ ...base, published_at: null }).dateLabel).toBe("01/07/2026");
+    expect(postToArticleVM(base, labels).dateLabel).toBe("12/07/2026");
+    expect(postToArticleVM({ ...base, published_at: null }, labels).dateLabel).toBe("01/07/2026");
   });
   it("tính readTime từ html", () => {
-    expect(postToArticleVM(base).readTime).toBe("1 phút");
+    expect(postToArticleVM(base, labels).readTime).toBe("1 phút");
   });
   it("field backend chưa có = null", () => {
-    const vm = postToArticleVM(base);
+    const vm = postToArticleVM(base, labels);
     expect(vm.author).toBeNull();
     expect(vm.views).toBeNull();
     expect(vm.comments).toBeNull();
   });
   it("excerpt null → chuỗi rỗng", () => {
-    expect(postToArticleVM({ ...base, excerpt: null }).excerpt).toBe("");
+    expect(postToArticleVM({ ...base, excerpt: null }, labels).excerpt).toBe("");
   });
   it("không tag → category news", () => {
-    expect(postToArticleVM({ ...base, tags: [] }).category).toBe("news");
+    expect(postToArticleVM({ ...base, tags: [] }, labels).category).toBe("news");
   });
 });

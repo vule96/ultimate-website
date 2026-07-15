@@ -1,7 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { getPublishedBySlug, listAllPublished } from "@/features/posts/api";
 import { buildPostMetadata } from "@/features/posts/metadata";
 import { PostContent } from "@/features/posts/components/post-content";
@@ -16,11 +17,22 @@ export const dynamicParams = true;
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: { locale: string; slug: string };
 }): Promise<Metadata> {
   const post = await getPublishedBySlug(params.slug);
   if (!post) return {};
-  return buildPostMetadata(post);
+  const meta = buildPostMetadata(post);
+  return {
+    ...meta,
+    alternates: {
+      ...meta.alternates,
+      languages: {
+        vi: `/blog/${post.slug}`,
+        en: `/en/blog/${post.slug}`,
+        "x-default": `/blog/${post.slug}`,
+      },
+    },
+  };
 }
 
 export async function generateStaticParams() {
@@ -36,10 +48,12 @@ export async function generateStaticParams() {
 export default async function BlogPostPage({
   params,
 }: {
-  params: { slug: string };
+  params: { locale: string; slug: string };
 }) {
+  setRequestLocale(params.locale);
   const post = await getPublishedBySlug(params.slug);
   if (!post) notFound();
+  const t = await getTranslations("detail");
 
   const date = formatDate(post.published_at);
   const mins = readingTime(post.content_html);
@@ -69,7 +83,7 @@ export default async function BlogPostPage({
           href="/"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          <span aria-hidden>←</span> Bài viết
+          <span aria-hidden>←</span> {t("back")}
         </Link>
 
         <article>
@@ -85,7 +99,7 @@ export default async function BlogPostPage({
                 <time dateTime={post.published_at ?? undefined}>{date}</time>
               ) : null}
               {date ? <span aria-hidden className="text-border">•</span> : null}
-              <span>{mins} phút đọc</span>
+              <span>{t("readMinutes", { minutes: mins })}</span>
             </div>
           </header>
 
@@ -112,7 +126,7 @@ export default async function BlogPostPage({
           {post.tags.length > 0 ? (
             <>
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Chủ đề
+                {t("topics")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {post.tags.map((t) => (
@@ -126,7 +140,7 @@ export default async function BlogPostPage({
               href="/"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-opacity hover:opacity-75"
             >
-              <span aria-hidden>←</span> Xem tất cả bài viết
+              <span aria-hidden>←</span> {t("viewAll")}
             </Link>
           </div>
         </footer>

@@ -1,0 +1,112 @@
+{
+  "masthead": {
+    "tagline": "Tạp chí tri thức",
+    "themeToggleAria": "Đổi giao diện sáng/tối",
+    "themeDark": "Tối",
+    "themeLight": "Sáng",
+    "langSwitchAria": "Switch to English"
+  },
+  "subnav": {
+    "home": "Trang chủ",
+    "categories": "Danh mục",
+    "explore": "Khám phá",
+    "meta": "SỐ 128 · 12.07.2026 · CẬP NHẬT MỖI NGÀY"
+  },
+  "search": { "placeholder": "Tìm bài viết, chủ đề, tác giả…" },
+  "rail": { "heading": "Lĩnh vực" },
+  "sidebar": {
+    "trending": "Thịnh hành",
+    "topViewed": "Top xem nhiều",
+    "fbCta": "Tham gia nhóm Facebook →"
+  },
+  "list": {
+    "latest": "Mới nhất",
+    "results": "{count} kết quả",
+    "empty": "Không tìm thấy bài viết phù hợp.",
+    "saveAria": "Lưu bài viết",
+    "unsaveAria": "Bỏ lưu",
+    "comments": "{count} bình luận",
+    "readTime": "{minutes} phút"
+  },
+  "newsletter": {
+    "title": "Bản tin Mạch",
+    "benefit": "Mỗi sáng thứ Hai · 5 phút đọc · Huỷ bất kỳ lúc nào",
+    "placeholder": "Email của bạn",
+    "submit": "Đăng ký",
+    "success": "Đã đăng ký — hẹn bạn thứ Hai!",
+    "privacy": "Không spam. Huỷ bằng 1 click.",
+    "errInvalid": "Email không hợp lệ.",
+    "errSystem": "Có lỗi xảy ra, thử lại sau nhé."
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Thoát",
+    "savedCount": "Đã lưu {count}",
+    "subtitleLogin": "Đăng nhập để lưu bài viết yêu thích.",
+    "subtitleRegister": "Tạo tài khoản để lưu bài và nhận bản tin.",
+    "namePlaceholder": "Tên hiển thị",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Mật khẩu",
+    "closeAria": "Đóng",
+    "haveAccount": "Đã có tài khoản?",
+    "noAccount": "Chưa có tài khoản?",
+    "errInvalidEmail": "Email không hợp lệ.",
+    "errNoPassword": "Vui lòng nhập mật khẩu."
+  },
+  "toast": {
+    "authRequired": "Đăng nhập để lưu bài viết yêu thích.",
+    "saved": "Đã lưu bài viết.",
+    "unsaved": "Đã bỏ lưu.",
+    "hello": "Xin chào, {name}!",
+    "loggedOut": "Đã đăng xuất."
+  },
+  "detail": {
+    "back": "Bài viết",
+    "readMinutes": "{minutes} phút đọc",
+    "topics": "Chủ đề",
+    "viewAll": "Xem tất cả bài viết"
+  },
+  "tagsPage": {
+    "kicker": "Chủ đề",
+    "title": "Tags",
+    "empty": "Chưa có tag nào.",
+    "metaTitle": "Chủ đề",
+    "metaDesc": "Tất cả chủ đề trên blog."
+  },
+  "footer": {
+    "desc": "Tạp chí tri thức cho người trẻ dám nghĩ — công nghệ, tài chính, kiến trúc, văn hoá và những gì đáng đọc mỗi ngày.",
+    "colCategories": "Chuyên mục",
+    "colAbout": "Về Mạch",
+    "about": "Giới thiệu",
+    "write": "Viết cho Mạch",
+    "contact": "Liên hệ",
+    "jobs": "Tuyển dụng",
+    "colNewsletter": "Bản tin",
+    "newsletterDesc": "Bài hay nhất mỗi sáng thứ Hai.",
+    "copyright": "© 2026 Mạch. Bảo lưu mọi quyền.",
+    "legal": "Điều khoản · Bảo mật · Cookie"
+  },
+  "categories": {
+    "all": "Tất cả",
+    "it": "IT",
+    "ai": "AI",
+    "finance": "Tài chính",
+    "stock": "Chứng khoán",
+    "arch": "Kiến trúc",
+    "culture": "Văn hóa",
+    "ent": "Giải trí",
+    "news": "Tin tức",
+    "growth": "Phát triển bản thân",
+    "book": "Review sách"
+  },
+  "errors": {
+    "notFoundTitle": "Không tìm thấy trang",
+    "notFoundDesc": "Trang bạn tìm không tồn tại hoặc đã bị gỡ.",
+    "errorTitle": "Đã xảy ra lỗi",
+    "errorDesc": "Không tải được nội dung. Vui lòng thử lại.",
+    "retry": "Thử lại",
+    "backHome": "Về trang chủ"
+  },
+  "meta": { "description": "Mạch — tạp chí tri thức cho người trẻ." }
+}
