@@ -1,6 +1,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import { m } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Star } from "lucide-react";
 import type { ArticleVM } from "../types";
 import { formatViews } from "../lib/format";
@@ -14,6 +15,7 @@ interface Props {
 }
 
 function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) {
+  const t = useTranslations("list");
   const tint = `color-mix(in srgb, ${article.color} var(--tint-strength), transparent)`;
   return (
     <m.article
@@ -60,7 +62,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
           {article.comments !== null && (
             <>
               <span>·</span>
-              <span>{article.comments} bình luận</span>
+              <span>{t("comments", { count: article.comments })}</span>
             </>
           )}
         </div>
@@ -69,7 +71,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
       <div className="flex flex-none flex-col items-end gap-[11px]">
         <button
           type="button"
-          aria-label={saved ? "Bỏ lưu" : "Lưu bài viết"}
+          aria-label={saved ? t("unsaveAria") : t("saveAria")}
           aria-pressed={saved}
           onClick={(e) => {
             e.stopPropagation();

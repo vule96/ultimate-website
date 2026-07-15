@@ -1,8 +1,10 @@
 "use client";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMagazineStore } from "../store/magazine-store";
 
 export function SearchBar() {
+  const t = useTranslations("search");
   const query = useMagazineStore((s) => s.query);
   const setQuery = useMagazineStore((s) => s.setQuery);
   return (
@@ -11,7 +13,7 @@ export function SearchBar() {
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Tìm bài viết, chủ đề, tác giả…"
+        placeholder={t("placeholder")}
         className="flex-1 border-none bg-transparent text-[13.5px] text-field-fg outline-none placeholder:text-chrome-muted"
       />
     </div>

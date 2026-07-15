@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import type { Category } from "../types";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 function CategoryRailItemBase({ category, active, onSelect }: Props) {
+  const t = useTranslations("categories");
   const Icon = category.icon;
   return (
     <button
@@ -21,7 +23,7 @@ function CategoryRailItemBase({ category, active, onSelect }: Props) {
       }
     >
       <Icon size={16} strokeWidth={2} style={{ color: active ? "#fff" : category.color }} />
-      <span className={active ? "text-white" : "text-fg"}>{category.label}</span>
+      <span className={active ? "text-white" : "text-fg"}>{t(category.key)}</span>
     </button>
   );
 }

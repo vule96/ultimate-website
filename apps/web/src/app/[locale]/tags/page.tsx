@@ -1,35 +1,40 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { listTags } from "@/features/posts/api";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Chủ đề",
-  description: "Tất cả chủ đề trên blog.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const t = await getTranslations({ locale: params.locale, namespace: "tagsPage" });
+  return { title: t("metaTitle"), description: t("metaDesc") };
+}
 
 export default async function TagsPage({ params }: { params: { locale: string } }) {
   setRequestLocale(params.locale);
+  const t = await getTranslations("tagsPage");
   const tags = await listTags().catch(() => []);
   return (
     <main className="mx-auto max-w-3xl px-5 py-14 sm:py-20">
       <header className="mb-10">
-        <p className="article-kicker">Chủ đề</p>
-        <h1 className="article-title mt-3 text-[2.4rem] sm:text-[2.9rem]">Tags</h1>
+        <p className="article-kicker">{t("kicker")}</p>
+        <h1 className="article-title mt-3 text-[2.4rem] sm:text-[2.9rem]">{t("title")}</h1>
       </header>
       {tags.length === 0 ? (
-        <p className="text-muted-foreground">Chưa có tag nào.</p>
+        <p className="text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="flex flex-wrap gap-2.5">
-          {tags.map((t) => (
+          {tags.map((tag) => (
             <Link
-              key={t.slug}
-              href={`/tags/${t.slug}`}
+              key={tag.slug}
+              href={`/tags/${tag.slug}`}
               className="card-lift inline-flex items-center rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-card)] hover:text-primary"
             >
-              {t.name}
+              {tag.name}
             </Link>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
+import { renderWithIntl } from "@/test/render-intl";
 import { ArticleRow } from "./article-row";
 import type { ArticleVM } from "../types";
 
@@ -26,7 +27,7 @@ const vm: ArticleVM = {
 
 describe("ArticleRow", () => {
   it("hiện tiêu đề + read time; ẩn author/views/comments khi null", () => {
-    render(<ArticleRow article={vm} index={0} saved={false} onToggleSave={() => {}} onOpen={() => {}} />);
+    renderWithIntl(<ArticleRow article={vm} index={0} saved={false} onToggleSave={() => {}} onOpen={() => {}} />);
     expect(screen.getByText("Học Go")).toBeInTheDocument();
     expect(screen.getByText("5 phút")).toBeInTheDocument();
     expect(screen.queryByText(/bình luận/)).not.toBeInTheDocument();
@@ -35,7 +36,7 @@ describe("ArticleRow", () => {
   it("click sao gọi onToggleSave, không bubble sang onOpen", () => {
     const onToggle = vi.fn();
     const onOpen = vi.fn();
-    render(<ArticleRow article={vm} index={0} saved={false} onToggleSave={onToggle} onOpen={onOpen} />);
+    renderWithIntl(<ArticleRow article={vm} index={0} saved={false} onToggleSave={onToggle} onOpen={onOpen} />);
     fireEvent.click(screen.getByLabelText("Lưu bài viết"));
     expect(onToggle).toHaveBeenCalledWith("a1");
     expect(onOpen).not.toHaveBeenCalled();

@@ -10,7 +10,13 @@ export type NewsletterStatus =
   | { kind: "success" }
   | { kind: "error"; message: string };
 
-export function useNewsletterForm(service: NewsletterService) {
+/** Message lỗi bơm từ ngoài (đã dịch qua next-intl) — hook không giữ chuỗi cứng. */
+export interface NewsletterErrors {
+  invalid: string;
+  system: string;
+}
+
+export function useNewsletterForm(service: NewsletterService, errors: NewsletterErrors) {
   const [email, setEmailRaw] = useState("");
   const [status, setStatus] = useState<NewsletterStatus>({ kind: "idle" });
 
@@ -22,7 +28,7 @@ export function useNewsletterForm(service: NewsletterService) {
 
   const submit = useCallback(async () => {
     if (!EMAIL_RE.test(email)) {
-      setStatus({ kind: "error", message: "Email không hợp lệ." });
+      setStatus({ kind: "error", message: errors.invalid });
       return;
     }
     setStatus({ kind: "submitting" });
@@ -31,9 +37,9 @@ export function useNewsletterForm(service: NewsletterService) {
       setEmailRaw("");
       setStatus({ kind: "success" });
     } catch {
-      setStatus({ kind: "error", message: "Có lỗi xảy ra, thử lại sau nhé." });
+      setStatus({ kind: "error", message: errors.system });
     }
-  }, [email, service]);
+  }, [email, service, errors.invalid, errors.system]);
 
   return { email, setEmail, status, submit };
 }

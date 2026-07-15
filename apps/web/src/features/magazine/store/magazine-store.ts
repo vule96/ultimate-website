@@ -4,6 +4,13 @@ import { localBookmarkService } from "../services/bookmark-service";
 
 type AuthMode = "login" | "register";
 
+// Toast lưu key (+ params) thay vì chuỗi — component Toast dịch qua next-intl.
+export type ToastKey = "authRequired" | "saved" | "unsaved" | "hello" | "loggedOut";
+export interface ToastMsg {
+  key: ToastKey;
+  params?: Record<string, string>;
+}
+
 interface MagazineState {
   query: string;
   cat: CategoryKey;
@@ -11,15 +18,15 @@ interface MagazineState {
   user: MockUser | null;
   authOpen: boolean;
   authMode: AuthMode;
-  toast: string | null;
+  toast: ToastMsg | null;
   setQuery(q: string): void;
   setCat(c: CategoryKey): void;
   toggleSave(id: string): void;
   login(user: MockUser): void;
   logout(): void;
-  openAuth(mode: AuthMode, msg?: string): void;
+  openAuth(mode: AuthMode): void;
   closeAuth(): void;
-  setToast(msg: string): void;
+  setToast(msg: ToastMsg): void;
   clearToast(): void;
 }
 
@@ -41,17 +48,13 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
   toggleSave: (id) => {
     const { user } = get();
     if (!user) {
-      set({
-        authOpen: true,
-        authMode: "login",
-        toast: "Đăng nhập để lưu bài viết yêu thích.",
-      });
+      set({ authOpen: true, authMode: "login", toast: { key: "authRequired" } });
       return;
     }
     const next = localBookmarkService.toggle(user.email, id);
     set({
       saved: savedRecord(next),
-      toast: next.has(id) ? "Đã lưu bài viết." : "Đã bỏ lưu.",
+      toast: { key: next.has(id) ? "saved" : "unsaved" },
     });
   },
 
@@ -60,12 +63,12 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
       user,
       authOpen: false,
       saved: savedRecord(localBookmarkService.load(user.email)),
-      toast: `Xin chào, ${user.name}!`,
+      toast: { key: "hello", params: { name: user.name } },
     }),
 
-  logout: () => set({ user: null, saved: {}, toast: "Đã đăng xuất." }),
+  logout: () => set({ user: null, saved: {}, toast: { key: "loggedOut" } }),
 
-  openAuth: (authMode, msg) => set({ authOpen: true, authMode, toast: msg ?? null }),
+  openAuth: (authMode) => set({ authOpen: true, authMode }),
   closeAuth: () => set({ authOpen: false }),
   setToast: (toast) => set({ toast }),
   clearToast: () => set({ toast: null }),

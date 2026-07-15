@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { m } from "framer-motion";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMagazineStore } from "../store/magazine-store";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // MOCK auth: chỉ validate + set user cục bộ. TODO: nối Firebase/Go core BFF.
 export function AuthModal() {
+  const t = useTranslations("auth");
   const mode = useMagazineStore((s) => s.authMode);
   const close = useMagazineStore((s) => s.closeAuth);
   const openAuth = useMagazineStore((s) => s.openAuth);
@@ -19,8 +21,8 @@ export function AuthModal() {
   const isRegister = mode === "register";
 
   const submit = () => {
-    if (!EMAIL_RE.test(email)) return setMsg("Email không hợp lệ.");
-    if (!pass) return setMsg("Vui lòng nhập mật khẩu.");
+    if (!EMAIL_RE.test(email)) return setMsg(t("errInvalidEmail"));
+    if (!pass) return setMsg(t("errNoPassword"));
     const displayName = isRegister ? name.trim() || email.split("@")[0] : email.split("@")[0];
     login({ name: displayName, email });
   };
@@ -42,40 +44,38 @@ export function AuthModal() {
       >
         <div className="mb-[6px] flex items-start justify-between">
           <h3 className="m-0 font-display text-[24px] font-extrabold tracking-[-0.02em]">
-            {isRegister ? "Đăng ký" : "Đăng nhập"}
+            {isRegister ? t("register") : t("login")}
           </h3>
           <button
             onClick={close}
-            aria-label="Đóng"
+            aria-label={t("closeAria")}
             className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-soft text-muted"
           >
             <X size={17} />
           </button>
         </div>
         <p className="mb-5 text-[13px] leading-[1.5] text-muted">
-          {isRegister
-            ? "Tạo tài khoản để lưu bài và nhận bản tin."
-            : "Đăng nhập để lưu bài viết yêu thích."}
+          {isRegister ? t("subtitleRegister") : t("subtitleLogin")}
         </p>
         {isRegister && (
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Tên hiển thị"
+            placeholder={t("namePlaceholder")}
             className="mb-[11px] w-full rounded-[9px] border border-line bg-bg px-[14px] py-3 text-[13.5px] text-fg outline-none"
           />
         )}
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
+          placeholder={t("emailPlaceholder")}
           className="mb-[11px] w-full rounded-[9px] border border-line bg-bg px-[14px] py-3 text-[13.5px] text-fg outline-none"
         />
         <input
           value={pass}
           onChange={(e) => setPass(e.target.value)}
           type="password"
-          placeholder="Mật khẩu"
+          placeholder={t("passwordPlaceholder")}
           className="mb-[11px] w-full rounded-[9px] border border-line bg-bg px-[14px] py-3 text-[13.5px] text-fg outline-none"
         />
         {msg && <p className="mb-3 text-[12.5px] font-semibold text-accent">{msg}</p>}
@@ -83,10 +83,10 @@ export function AuthModal() {
           onClick={submit}
           className="mb-[15px] w-full rounded-[9px] bg-accent py-[13px] text-[14px] font-bold text-white"
         >
-          {isRegister ? "Đăng ký" : "Đăng nhập"}
+          {isRegister ? t("register") : t("login")}
         </button>
         <div className="text-center text-[13px] text-muted">
-          {isRegister ? "Đã có tài khoản?" : "Chưa có tài khoản?"}{" "}
+          {isRegister ? t("haveAccount") : t("noAccount")}{" "}
           <button
             onClick={() => {
               setMsg("");
@@ -94,7 +94,7 @@ export function AuthModal() {
             }}
             className="font-bold text-accent"
           >
-            {isRegister ? "Đăng nhập" : "Đăng ký"}
+            {isRegister ? t("login") : t("register")}
           </button>
         </div>
       </m.div>

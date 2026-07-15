@@ -1,9 +1,11 @@
 "use client";
 import { useEffect } from "react";
 import { m } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useMagazineStore } from "../store/magazine-store";
 
 export function Toast() {
+  const t = useTranslations("toast");
   const toast = useMagazineStore((s) => s.toast);
   const clearToast = useMagazineStore((s) => s.clearToast);
   useEffect(() => {
@@ -21,7 +23,7 @@ export function Toast() {
       role="alert"
       className="fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-lg bg-fg px-5 py-3 text-[13px] font-semibold text-bg shadow-modal"
     >
-      {toast}
+      {t(toast.key, toast.params)}
     </m.div>
   );
 }

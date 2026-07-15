@@ -3,18 +3,20 @@ import { act, renderHook } from "@testing-library/react";
 import { useNewsletterForm } from "./use-newsletter-form";
 import type { NewsletterService } from "../services/newsletter-service";
 
+const errors = { invalid: "Email không hợp lệ.", system: "Có lỗi xảy ra, thử lại sau nhé." };
+
 const okService: NewsletterService = { subscribe: vi.fn().mockResolvedValue(undefined) };
 
 describe("useNewsletterForm", () => {
   it("bắt đầu ở idle với email rỗng", () => {
-    const { result } = renderHook(() => useNewsletterForm(okService));
+    const { result } = renderHook(() => useNewsletterForm(okService, errors));
     expect(result.current.status).toEqual({ kind: "idle" });
     expect(result.current.email).toBe("");
   });
 
   it("email sai → error, không gọi service", async () => {
     const service: NewsletterService = { subscribe: vi.fn() };
-    const { result } = renderHook(() => useNewsletterForm(service));
+    const { result } = renderHook(() => useNewsletterForm(service, errors));
     act(() => result.current.setEmail("khong-phai-email"));
     await act(() => result.current.submit());
     expect(result.current.status).toEqual({ kind: "error", message: "Email không hợp lệ." });
@@ -23,7 +25,7 @@ describe("useNewsletterForm", () => {
 
   it("email đúng → submitting rồi success, gọi service với email, reset email", async () => {
     const subscribe = vi.fn().mockResolvedValue(undefined);
-    const { result } = renderHook(() => useNewsletterForm({ subscribe }));
+    const { result } = renderHook(() => useNewsletterForm({ subscribe }, errors));
     act(() => result.current.setEmail("a@b.vn"));
     await act(() => result.current.submit());
     expect(subscribe).toHaveBeenCalledWith("a@b.vn");
@@ -33,7 +35,7 @@ describe("useNewsletterForm", () => {
 
   it("service ném lỗi → error hệ thống", async () => {
     const subscribe = vi.fn().mockRejectedValue(new Error("boom"));
-    const { result } = renderHook(() => useNewsletterForm({ subscribe }));
+    const { result } = renderHook(() => useNewsletterForm({ subscribe }, errors));
     act(() => result.current.setEmail("a@b.vn"));
     await act(() => result.current.submit());
     expect(result.current.status).toEqual({
@@ -43,7 +45,7 @@ describe("useNewsletterForm", () => {
   });
 
   it("sửa email sau lỗi → quay về idle", async () => {
-    const { result } = renderHook(() => useNewsletterForm(okService));
+    const { result } = renderHook(() => useNewsletterForm(okService, errors));
     act(() => result.current.setEmail("sai"));
     await act(() => result.current.submit());
     act(() => result.current.setEmail("sai@roi.vn"));

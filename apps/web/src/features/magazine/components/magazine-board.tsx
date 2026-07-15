@@ -1,7 +1,8 @@
 "use client";
 import { useCallback } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 import { LazyMotion, MotionConfig } from "framer-motion";
 
 // Nạp animation features async — giữ bundle đầu nhẹ (LazyMotion chỉ cần m. lúc hydrate).
@@ -30,6 +31,7 @@ export function MagazineBoard({
   articles: ArticleVM[];
   topViewed: ArticleVM[];
 }) {
+  const t = useTranslations("sidebar");
   const router = useRouter();
   const authOpen = useMagazineStore((s) => s.authOpen);
   const setCat = useMagazineStore((s) => s.setCat);
@@ -45,18 +47,18 @@ export function MagazineBoard({
           <ArticleList articles={articles} />
           <aside className="w-[250px] flex-none border-l border-line bg-surface px-[22px] py-6">
             <div className="mb-[14px] font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-              Thịnh hành
+              {t("trending")}
             </div>
             <TrendingChips categories={TRENDING} onSelect={setCat} />
             <div className="mb-[14px] font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-              Top xem nhiều
+              {t("topViewed")}
             </div>
             <TopViewedList items={topViewed} onOpen={openArticle} />
             <a
               href="/"
               className="mt-[26px] block rounded-[9px] bg-accent py-3 text-center text-[13px] font-bold text-white no-underline"
             >
-              Tham gia nhóm Facebook →
+              {t("fbCta")}
             </a>
           </aside>
         </div>

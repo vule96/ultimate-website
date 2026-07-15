@@ -57,7 +57,22 @@
   "toast": {
     "authRequired": "Đăng nhập để lưu bài viết yêu thích.",
     "saved": "Đã lưu bài viết.",
-    "unsaved": "Đã bỏ lưu."
+    "unsaved": "Đã bỏ lưu.",
+    "hello": "Xin chào, {name}!",
+    "loggedOut": "Đã đăng xuất."
+  },
+  "detail": {
+    "back": "Bài viết",
+    "readMinutes": "{minutes} phút đọc",
+    "topics": "Chủ đề",
+    "viewAll": "Xem tất cả bài viết"
+  },
+  "tagsPage": {
+    "kicker": "Chủ đề",
+    "title": "Tags",
+    "empty": "Chưa có tag nào.",
+    "metaTitle": "Chủ đề",
+    "metaDesc": "Tất cả chủ đề trên blog."
   },
   "footer": {
     "desc": "Tạp chí tri thức cho người trẻ dám nghĩ — công nghệ, tài chính, kiến trúc, văn hoá và những gì đáng đọc mỗi ngày.",

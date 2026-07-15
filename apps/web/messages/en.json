@@ -61,7 +61,22 @@
   "toast": {
     "authRequired": "Log in to save your favorite articles.",
     "saved": "Article saved.",
-    "unsaved": "Removed from saved."
+    "unsaved": "Removed from saved.",
+    "hello": "Hello, {name}!",
+    "loggedOut": "Logged out."
+  },
+  "detail": {
+    "back": "Articles",
+    "readMinutes": "{minutes} min read",
+    "topics": "Topics",
+    "viewAll": "View all articles"
+  },
+  "tagsPage": {
+    "kicker": "Topics",
+    "title": "Tags",
+    "empty": "No tags yet.",
+    "metaTitle": "Topics",
+    "metaDesc": "All topics on the blog."
   },
   "footer": {
     "desc": "A knowledge magazine for young people who dare to think — technology, finance, architecture, culture and what's worth reading every day.",
