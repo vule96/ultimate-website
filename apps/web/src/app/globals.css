@@ -18,7 +18,21 @@
   --tint-strength: 13%;
   --shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.45);
 
-  --font-display: var(--font-display-next), "Bricolage Grotesque", ui-sans-serif, sans-serif;
+  /* Chrome (masthead + subnav) */
+  --chrome-bg: #fffdf8;
+  --chrome-fg: #1c1a16;
+  --chrome-muted: #726a5b;
+  --chrome-line: rgba(28, 26, 22, 0.11);
+  /* Ink (footer + newsletter card) */
+  --ink: #232019;
+  --ink-fg: #f3efe6;
+  --ink-muted: rgba(243, 239, 230, 0.62);
+  /* Field (input) */
+  --field-bg: #ffffff;
+  --field-fg: #1c1a16;
+  --field-ring: color-mix(in srgb, var(--accent) 55%, transparent);
+
+  --font-display: var(--font-display-next), "Playfair Display", Georgia, serif;
   --font-sans: var(--font-sans-next), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-serif-next), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-mono-next), "Space Mono", ui-monospace, monospace;
@@ -33,6 +47,16 @@
   --line: rgba(239, 233, 223, 0.14);
   --soft: rgba(239, 233, 223, 0.05);
   --tint-strength: 24%;
+
+  --chrome-bg: #201d18;
+  --chrome-fg: #efe9df;
+  --chrome-muted: #a89d8b;
+  --chrome-line: rgba(239, 233, 223, 0.14);
+  --ink: #12100d;
+  --ink-fg: #e8e2d6;
+  --ink-muted: rgba(232, 226, 214, 0.55);
+  --field-bg: #2a2620;
+  --field-fg: #efe9df;
 }
 
 @layer base {

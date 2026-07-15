@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Bricolage_Grotesque, Be_Vietnam_Pro, Space_Mono } from "next/font/google";
+import { Playfair_Display, Be_Vietnam_Pro, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { SITE_URL, SITE_NAME } from "@/lib/config";
 import { MagazineFooter } from "@/features/magazine/components/magazine-footer";
 import { THEME_SCRIPT } from "@/features/magazine/hooks/use-theme";
 
-const display = Bricolage_Grotesque({
+const display = Playfair_Display({
   subsets: ["latin", "vietnamese"],
   weight: ["700", "800"],
   variable: "--font-display-next",

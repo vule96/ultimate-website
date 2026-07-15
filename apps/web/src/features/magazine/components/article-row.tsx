@@ -1,5 +1,6 @@
 import { memo } from "react";
 import Image from "next/image";
+import { m } from "framer-motion";
 import { Star } from "lucide-react";
 import type { ArticleVM } from "../types";
 import { formatViews } from "../lib/format";
@@ -15,9 +16,13 @@ interface Props {
 function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) {
   const tint = `color-mix(in srgb, ${article.color} var(--tint-strength), transparent)`;
   return (
-    <article
+    <m.article
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.3, ease: "easeOut", delay: Math.min(index, 5) * 0.05 }}
       onClick={() => onOpen(article.slug)}
-      className="flex cursor-pointer items-start gap-[18px] border-b border-line py-[19px] [content-visibility:auto]"
+      className="flex cursor-pointer items-start gap-[18px] border-b border-line py-[19px] [contain-intrinsic-size:auto_129px] [content-visibility:auto]"
     >
       <div
         className="relative flex h-[90px] w-[132px] flex-none items-end overflow-hidden rounded-lg p-[9px]"
@@ -85,7 +90,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
           {article.readTime}
         </div>
       </div>
-    </article>
+    </m.article>
   );
 }
 

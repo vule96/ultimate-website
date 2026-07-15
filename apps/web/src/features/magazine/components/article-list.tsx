@@ -1,5 +1,5 @@
 "use client";
-import { useDeferredValue, useMemo } from "react";
+import { useCallback, useDeferredValue, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMagazineStore } from "../store/magazine-store";
 import { filterArticles } from "../lib/filter";
@@ -13,6 +13,7 @@ export function ArticleList({ articles }: { articles: ArticleVM[] }) {
   const saved = useMagazineStore((s) => s.saved);
   const toggleSave = useMagazineStore((s) => s.toggleSave);
 
+  const openArticle = useCallback((slug: string) => router.push(`/blog/${slug}`), [router]);
   const deferredQuery = useDeferredValue(query);
   const isStale = deferredQuery !== query;
   const visible = useMemo(
@@ -38,7 +39,7 @@ export function ArticleList({ articles }: { articles: ArticleVM[] }) {
             index={i}
             saved={Boolean(saved[a.id])}
             onToggleSave={toggleSave}
-            onOpen={(slug) => router.push(`/blog/${slug}`)}
+            onOpen={openArticle}
           />
         ))}
         {visible.length === 0 && (

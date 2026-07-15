@@ -12,13 +12,13 @@ export function AuthMenu() {
       <div className="flex items-center gap-[9px]">
         <button
           onClick={() => openAuth("login")}
-          className="rounded-lg border border-white/40 bg-white/15 px-[14px] py-[9px] text-[12.5px] font-semibold text-white"
+          className="rounded-lg border border-chrome-line bg-soft px-[14px] py-[9px] text-[12.5px] font-semibold text-chrome-fg"
         >
           Đăng nhập
         </button>
         <button
           onClick={() => openAuth("register")}
-          className="rounded-lg bg-white px-[14px] py-[9px] text-[12.5px] font-bold text-accent"
+          className="rounded-lg bg-accent px-[14px] py-[9px] text-[12.5px] font-bold text-white"
         >
           Đăng ký
         </button>
@@ -27,18 +27,18 @@ export function AuthMenu() {
   }
   return (
     <div className="flex items-center gap-[11px]">
-      <span className="rounded-lg border border-white/40 bg-white/15 px-[13px] py-[9px] text-[12.5px] font-bold text-white">
+      <span className="rounded-lg border border-chrome-line bg-soft px-[13px] py-[9px] text-[12.5px] font-bold text-chrome-fg">
         Đã lưu {savedCount}
       </span>
       <div className="flex items-center gap-2">
-        <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white text-[13px] font-bold text-accent">
+        <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-accent text-[13px] font-bold text-white">
           {user.name.charAt(0).toUpperCase()}
         </span>
-        <span className="text-[13px] font-semibold text-white">{user.name}</span>
+        <span className="text-[13px] font-semibold text-chrome-fg">{user.name}</span>
       </div>
       <button
         onClick={logout}
-        className="rounded-lg border border-white/40 px-[12px] py-[9px] text-[12px] text-white"
+        className="rounded-lg border border-chrome-line px-[12px] py-[9px] text-[12px] text-chrome-muted"
       >
         Thoát
       </button>
