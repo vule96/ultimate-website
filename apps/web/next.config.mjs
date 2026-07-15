@@ -22,7 +22,10 @@ const imgSrc = [
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // Dev cần 'unsafe-eval' cho react-refresh/HMR của Next — nếu thiếu, TOÀN BỘ
+  // JS client chết ngay khi nạp (trang "đơ", framer-motion giữ opacity:0).
+  // Production tuyệt đối KHÔNG có 'unsafe-eval'.
+  isProd ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   `img-src ${imgSrc}`,
   "font-src 'self' data:",
