@@ -32,7 +32,7 @@
   --field-fg: #1c1a16;
   --field-ring: color-mix(in srgb, var(--accent) 55%, transparent);
 
-  --font-display: var(--font-display-next), "Bricolage Grotesque", ui-sans-serif, sans-serif;
+  --font-display: var(--font-display-next), "Playfair Display", Georgia, serif;
   --font-sans: var(--font-sans-next), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-serif-next), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-mono-next), "Space Mono", ui-monospace, monospace;
