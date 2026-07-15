@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { m } from "framer-motion";
 import { X } from "lucide-react";
 import { useMagazineStore } from "../store/magazine-store";
 
@@ -25,11 +26,17 @@ export function AuthModal() {
   };
 
   return (
-    <div
+    <m.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18 }}
       onClick={close}
       className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(8,12,22,0.55)] p-5"
     >
-      <div
+      <m.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
         onClick={(e) => e.stopPropagation()}
         className="w-[384px] max-w-full rounded-[14px] bg-surface p-[30px] text-fg shadow-modal"
       >
@@ -90,7 +97,7 @@ export function AuthModal() {
             {isRegister ? "Đăng nhập" : "Đăng ký"}
           </button>
         </div>
-      </div>
-    </div>
+      </m.div>
+    </m.div>
   );
 }
