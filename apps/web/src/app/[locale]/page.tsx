@@ -1,10 +1,12 @@
+import { setRequestLocale } from "next-intl/server";
 import { listAllPublished } from "@/features/posts/api";
 import { postsToArticleVMs } from "@/features/magazine/lib/article-vm";
 import { MagazineBoard } from "@/features/magazine/components/magazine-board";
 
 export const revalidate = 60;
 
-export default async function HomePage() {
+export default async function HomePage({ params }: { params: { locale: string } }) {
+  setRequestLocale(params.locale);
   const posts = await listAllPublished();
   const articles = postsToArticleVMs(posts);
   // Top xem nhiều: backend chưa có `views` → tạm lấy 5 bài mới nhất.

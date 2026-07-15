@@ -7,3 +7,8 @@ export const routing = defineRouting({
 });
 
 export type Locale = (typeof routing.locales)[number];
+
+/** Type guard: chuỗi bất kỳ (param URL) có phải locale hợp lệ. */
+export function isLocale(value: string | undefined): value is Locale {
+  return value !== undefined && routing.locales.includes(value as Locale);
+}

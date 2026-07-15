@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import { listTags } from "@/features/posts/api";
 
 export const revalidate = 60;
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
   description: "Tất cả chủ đề trên blog.",
 };
 
-export default async function TagsPage() {
+export default async function TagsPage({ params }: { params: { locale: string } }) {
+  setRequestLocale(params.locale);
   const tags = await listTags().catch(() => []);
   return (
     <main className="mx-auto max-w-3xl px-5 py-14 sm:py-20">

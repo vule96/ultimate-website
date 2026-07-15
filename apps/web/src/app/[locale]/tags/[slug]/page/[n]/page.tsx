@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 import { listPublished, listTags } from "@/features/posts/api";
 import { PostsPage } from "@/features/posts/components/posts-page";
 import { totalPages } from "@/features/posts/pagination-utils";
@@ -31,7 +32,12 @@ export async function generateStaticParams() {
   }
 }
 
-export default function TagPaged({ params }: { params: { slug: string; n: string } }) {
+export default function TagPaged({
+  params,
+}: {
+  params: { locale: string; slug: string; n: string };
+}) {
+  setRequestLocale(params.locale);
   const page = Number(params.n);
   if (!Number.isInteger(page) || page < 2) notFound();
   return <PostsPage page={page} tag={params.slug} basePath={`/tags/${params.slug}`} />;

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 import { getPublishedBySlug, listAllPublished } from "@/features/posts/api";
 import { buildPostMetadata } from "@/features/posts/metadata";
 import { PostContent } from "@/features/posts/components/post-content";
@@ -36,8 +37,9 @@ export async function generateStaticParams() {
 export default async function BlogPostPage({
   params,
 }: {
-  params: { slug: string };
+  params: { locale: string; slug: string };
 }) {
+  setRequestLocale(params.locale);
   const post = await getPublishedBySlug(params.slug);
   if (!post) notFound();
 
