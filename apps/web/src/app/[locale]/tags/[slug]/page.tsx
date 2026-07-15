@@ -10,7 +10,14 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   return {
     title: `#${params.slug}`,
     description: `Các bài viết về chủ đề #${params.slug}.`,
-    alternates: { canonical: `${SITE_URL}/tags/${params.slug}` },
+    alternates: {
+      canonical: `${SITE_URL}/tags/${params.slug}`,
+      languages: {
+        vi: `/tags/${params.slug}`,
+        en: `/en/tags/${params.slug}`,
+        "x-default": `/tags/${params.slug}`,
+      },
+    },
   };
 }
 

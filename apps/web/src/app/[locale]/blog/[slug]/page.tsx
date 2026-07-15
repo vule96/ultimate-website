@@ -17,11 +17,22 @@ export const dynamicParams = true;
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: { locale: string; slug: string };
 }): Promise<Metadata> {
   const post = await getPublishedBySlug(params.slug);
   if (!post) return {};
-  return buildPostMetadata(post);
+  const meta = buildPostMetadata(post);
+  return {
+    ...meta,
+    alternates: {
+      ...meta.alternates,
+      languages: {
+        vi: `/blog/${post.slug}`,
+        en: `/en/blog/${post.slug}`,
+        "x-default": `/blog/${post.slug}`,
+      },
+    },
+  };
 }
 
 export async function generateStaticParams() {
