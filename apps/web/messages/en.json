@@ -1,0 +1,103 @@
+{
+  "masthead": {
+    "tagline": "The knowledge magazine",
+    "themeToggleAria": "Toggle light/dark theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "langSwitchAria": "Chuyển sang tiếng Việt"
+  },
+  "subnav": {
+    "home": "Home",
+    "categories": "Categories",
+    "explore": "Explore",
+    "meta": "ISSUE 128 · 12.07.2026 · UPDATED DAILY"
+  },
+  "search": {
+    "placeholder": "Search articles, topics, authors…"
+  },
+  "rail": {
+    "heading": "Fields"
+  },
+  "sidebar": {
+    "trending": "Trending",
+    "topViewed": "Most viewed",
+    "fbCta": "Join our Facebook group →"
+  },
+  "list": {
+    "latest": "Latest",
+    "results": "{count} results",
+    "empty": "No matching articles found.",
+    "saveAria": "Save article",
+    "unsaveAria": "Unsave",
+    "comments": "{count} comments",
+    "readTime": "{minutes} min"
+  },
+  "newsletter": {
+    "title": "Mạch Newsletter",
+    "benefit": "Every Monday morning · 5-min read · Unsubscribe anytime",
+    "placeholder": "Your email",
+    "submit": "Subscribe",
+    "success": "Subscribed — see you Monday!",
+    "privacy": "No spam. Unsubscribe in 1 click.",
+    "errInvalid": "Invalid email address.",
+    "errSystem": "Something went wrong, please try again."
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "savedCount": "Saved {count}",
+    "subtitleLogin": "Log in to save your favorite articles.",
+    "subtitleRegister": "Create an account to save articles and get the newsletter.",
+    "namePlaceholder": "Display name",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "closeAria": "Close",
+    "haveAccount": "Already have an account?",
+    "noAccount": "No account yet?",
+    "errInvalidEmail": "Invalid email address.",
+    "errNoPassword": "Please enter a password."
+  },
+  "toast": {
+    "authRequired": "Log in to save your favorite articles.",
+    "saved": "Article saved.",
+    "unsaved": "Removed from saved."
+  },
+  "footer": {
+    "desc": "A knowledge magazine for young people who dare to think — technology, finance, architecture, culture and what's worth reading every day.",
+    "colCategories": "Categories",
+    "colAbout": "About Mạch",
+    "about": "About us",
+    "write": "Write for Mạch",
+    "contact": "Contact",
+    "jobs": "Careers",
+    "colNewsletter": "Newsletter",
+    "newsletterDesc": "The best reads, every Monday morning.",
+    "copyright": "© 2026 Mạch. All rights reserved.",
+    "legal": "Terms · Privacy · Cookies"
+  },
+  "categories": {
+    "all": "All",
+    "it": "IT",
+    "ai": "AI",
+    "finance": "Finance",
+    "stock": "Stocks",
+    "arch": "Architecture",
+    "culture": "Culture",
+    "ent": "Entertainment",
+    "news": "News",
+    "growth": "Personal growth",
+    "book": "Book reviews"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundDesc": "The page you're looking for doesn't exist or was removed.",
+    "errorTitle": "Something went wrong",
+    "errorDesc": "Failed to load content. Please try again.",
+    "retry": "Retry",
+    "backHome": "Back to home"
+  },
+  "meta": {
+    "description": "Mạch — a knowledge magazine for the young."
+  }
+}
