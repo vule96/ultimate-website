@@ -17,7 +17,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
   return (
     <article
       onClick={() => onOpen(article.slug)}
-      className="flex cursor-pointer items-start gap-[18px] border-b border-line py-[19px] [content-visibility:auto]"
+      className="flex cursor-pointer items-start gap-[18px] border-b border-line py-[19px] [contain-intrinsic-size:auto_129px] [content-visibility:auto]"
     >
       <div
         className="relative flex h-[90px] w-[132px] flex-none items-end overflow-hidden rounded-lg p-[9px]"

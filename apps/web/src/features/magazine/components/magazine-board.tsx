@@ -1,4 +1,5 @@
 "use client";
+import { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { CATEGORIES } from "../categories";
@@ -28,6 +29,7 @@ export function MagazineBoard({
   const router = useRouter();
   const authOpen = useMagazineStore((s) => s.authOpen);
   const setCat = useMagazineStore((s) => s.setCat);
+  const openArticle = useCallback((slug: string) => router.push(`/blog/${slug}`), [router]);
 
   return (
     <>
@@ -44,7 +46,7 @@ export function MagazineBoard({
           <div className="mb-[14px] font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
             Top xem nhiều
           </div>
-          <TopViewedList items={topViewed} onOpen={(slug) => router.push(`/blog/${slug}`)} />
+          <TopViewedList items={topViewed} onOpen={openArticle} />
           <a
             href="/"
             className="mt-[26px] block rounded-[9px] bg-accent py-3 text-center text-[13px] font-bold text-white no-underline"
