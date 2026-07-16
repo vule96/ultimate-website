@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,14 +37,18 @@ type Fetcher interface {
 // HTTPFetcher tải ảnh qua HTTP với timeout + giới hạn size (chống ảnh khổng lồ
 // hoặc server treo làm nghẽn worker).
 //
-// Chống SSRF: URL do admin nhập nhưng vẫn không tin — host phải nằm trong
-// AllowedHosts (host của storage + env), host lạ chỉ được phép khi resolve ra
-// IP công khai (chặn loopback/private/link-local — không cho worker chọc vào
-// metadata endpoint hay service nội bộ).
+// Chống SSRF theo tầng:
+//  1. checkURL: scheme http(s) + host allowlist (host storage + env).
+//  2. Host KHÔNG allowlist → đi qua guardedClient: chặn IP nội bộ ngay tại
+//     TẦNG DIAL (Dialer.Control thấy IP THẬT đang connect) — miễn nhiễm
+//     DNS rebinding (resolve lúc check khác lúc fetch).
+//  3. Redirect: mỗi hop re-check checkURL — host hợp lệ 302 sang metadata
+//     endpoint / service nội bộ vẫn bị chặn.
 type HTTPFetcher struct {
-	Client       *http.Client
-	MaxBytes     int64
-	AllowedHosts map[string]struct{}
+	plainClient   *http.Client // cho host allowlist (vd MinIO nội bộ ở dev)
+	guardedClient *http.Client // cho host lạ — dial guard chặn IP non-public
+	MaxBytes      int64
+	AllowedHosts  map[string]struct{}
 }
 
 // NewHTTPFetcher tạo fetcher với timeout + cap size + allowlist host.
@@ -54,10 +59,49 @@ func NewHTTPFetcher(timeout time.Duration, maxBytes int64, allowedHosts []string
 			allow[h] = struct{}{}
 		}
 	}
-	return &HTTPFetcher{Client: &http.Client{Timeout: timeout}, MaxBytes: maxBytes, AllowedHosts: allow}
+	f := &HTTPFetcher{MaxBytes: maxBytes, AllowedHosts: allow}
+
+	redirectGuard := func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 5 {
+			return fmt.Errorf("blurhash: too many redirects")
+		}
+		return f.checkURL(req.URL.String())
+	}
+
+	f.plainClient = &http.Client{Timeout: timeout, CheckRedirect: redirectGuard}
+
+	// Dialer.Control chạy SAU khi resolve, TRƯỚC khi connect — address là IP
+	// thật sắp nối tới, không tin DNS lần hai.
+	guardDialer := &net.Dialer{
+		Timeout: timeout,
+		Control: func(_, address string, _ syscall.RawConn) error {
+			host, _, err := net.SplitHostPort(address)
+			if err != nil {
+				return err
+			}
+			ip := net.ParseIP(host)
+			if ip == nil || !isPublicIP(ip) {
+				return fmt.Errorf("blurhash: dial to non-public ip %s blocked (SSRF guard)", host)
+			}
+			return nil
+		},
+	}
+	f.guardedClient = &http.Client{
+		Timeout:       timeout,
+		CheckRedirect: redirectGuard,
+		Transport:     &http.Transport{DialContext: guardDialer.DialContext},
+	}
+	return f
 }
 
-// checkURL chặn scheme lạ + host không allowlist mà resolve ra IP nội bộ.
+// isPublicIP false với loopback/private/link-local/unspecified.
+func isPublicIP(ip net.IP) bool {
+	return !(ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsUnspecified())
+}
+
+// checkURL chặn scheme lạ; host không allowlist phải resolve ra IP công khai
+// (lớp check sớm — lớp chặn thật nằm ở dial guard).
 func (f *HTTPFetcher) checkURL(raw string) error {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -75,12 +119,21 @@ func (f *HTTPFetcher) checkURL(raw string) error {
 		return fmt.Errorf("blurhash: resolve %s: %w", host, err)
 	}
 	for _, ip := range ips {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
-			ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		if !isPublicIP(ip) {
 			return fmt.Errorf("blurhash: host %s resolves to non-public ip %s (SSRF guard)", host, ip)
 		}
 	}
 	return nil
+}
+
+// clientFor chọn client theo host: allowlist → plain; lạ → guarded (dial guard).
+func (f *HTTPFetcher) clientFor(raw string) *http.Client {
+	if u, err := url.Parse(raw); err == nil {
+		if _, ok := f.AllowedHosts[strings.ToLower(u.Hostname())]; ok {
+			return f.plainClient
+		}
+	}
+	return f.guardedClient
 }
 
 // Fetch tải URL, trả lỗi khi vi phạm SSRF guard, status ≠ 200 hoặc body vượt MaxBytes.
@@ -92,7 +145,7 @@ func (f *HTTPFetcher) Fetch(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := f.Client.Do(req)
+	resp, err := f.clientFor(url).Do(req)
 	if err != nil {
 		return nil, err
 	}
