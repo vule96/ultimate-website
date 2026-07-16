@@ -33,6 +33,20 @@ type Dispatcher struct {
 	log      *slog.Logger
 	interval time.Duration
 	batch    int
+	obs      Observer // optional — metrics (nil = không đo)
+}
+
+// Observer nhận số liệu outbox (impl bởi platform/metrics) — interface tại chỗ
+// dùng để dispatcher không phụ thuộc cứng package metrics.
+type Observer interface {
+	OutboxProcessed()
+	SetOutboxPending(n float64)
+}
+
+// WithObserver gắn observer đo metrics (chainable).
+func (d *Dispatcher) WithObserver(o Observer) *Dispatcher {
+	d.obs = o
+	return d
 }
 
 // NewDispatcher tạo Dispatcher với batch mặc định 50 event/vòng.
@@ -67,6 +81,9 @@ func (d *Dispatcher) dispatchPending(ctx context.Context) {
 		d.log.Error("outbox: fetch pending failed", "err", err)
 		return
 	}
+	if d.obs != nil {
+		d.obs.SetOutboxPending(float64(len(events)))
+	}
 	for _, e := range events {
 		if err := d.handler.Handle(ctx, e); err != nil {
 			d.log.Error("outbox: handle failed — giữ lại retry", "id", e.ID, "err", err)
@@ -76,6 +93,10 @@ func (d *Dispatcher) dispatchPending(ctx context.Context) {
 		if err := d.db.WithContext(ctx).Model(&Event{}).
 			Where("id = ?", e.ID).Update("processed_at", now).Error; err != nil {
 			d.log.Error("outbox: mark processed failed", "id", e.ID, "err", err)
+			continue
+		}
+		if d.obs != nil {
+			d.obs.OutboxProcessed()
 		}
 	}
 }

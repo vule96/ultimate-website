@@ -22,6 +22,13 @@ import (
 type Handler struct {
 	svc    *Service
 	authed func(ctx context.Context) bool // request hiện tại đã đăng nhập admin chưa
+	views  *ViewCounter                   // optional — đếm view batch (Slice 9)
+}
+
+// WithViewCounter gắn view counter (chainable, optional).
+func (h *Handler) WithViewCounter(vc *ViewCounter) *Handler {
+	h.views = vc
+	return h
 }
 
 // NewHandler tạo Handler từ Service và checker đăng nhập (vd auth.IsAuthenticated(sm)).
@@ -36,6 +43,9 @@ func (h *Handler) RegisterRoutes(rg gin.IRouter, protectedMW ...gin.HandlerFunc)
 	rg.GET("/posts", h.list)
 	rg.GET("/posts/:slug", h.getBySlug)
 	rg.GET("/tags", h.listTags)
+	// Đếm view: public, không body — handler chỉ đẩy id vào channel rồi trả 202
+	// ngay (KHÔNG chạm DB trong request path; flush batch ở ViewCounter).
+	rg.POST("/posts/:slug/view", h.view)
 
 	protected := rg.Group("", protectedMW...)
 	// Aggregate endpoints tách namespace /stats — tránh route tĩnh che slug bài viết (M3).
@@ -69,21 +79,23 @@ type tagResponse struct {
 }
 
 type postResponse struct {
-	ID          uuid.UUID       `json:"id"`
-	Title       string          `json:"title"`
-	Slug        string          `json:"slug"`
-	ContentJSON json.RawMessage `json:"content_json"`
-	ContentHTML string          `json:"content_html"`
-	Excerpt     *string         `json:"excerpt"`
-	CoverImage  *string         `json:"cover_image"`
-	Status      PostStatus      `json:"status"`
-	MetaTitle   *string         `json:"meta_title"`
-	MetaDesc    *string         `json:"meta_desc"`
-	PublishedAt *time.Time      `json:"published_at"`
-	Version     int64           `json:"version"`
-	Tags        []tagResponse   `json:"tags"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID            uuid.UUID       `json:"id"`
+	Title         string          `json:"title"`
+	Slug          string          `json:"slug"`
+	ContentJSON   json.RawMessage `json:"content_json"`
+	ContentHTML   string          `json:"content_html"`
+	Excerpt       *string         `json:"excerpt"`
+	CoverImage    *string         `json:"cover_image"`
+	CoverBlurhash *string         `json:"cover_blurhash"`
+	Status        PostStatus      `json:"status"`
+	MetaTitle     *string         `json:"meta_title"`
+	MetaDesc      *string         `json:"meta_desc"`
+	PublishedAt   *time.Time      `json:"published_at"`
+	Version       int64           `json:"version"`
+	Views         int64           `json:"views"`
+	Tags          []tagResponse   `json:"tags"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
 }
 
 type listResponse struct {
@@ -289,26 +301,43 @@ func respondError(c *gin.Context, err error) {
 	}
 }
 
+// view ghi nhận 1 lượt xem. Param là POST ID (uuid) — gin bắt buộc trùng tên
+// param với route /posts/:slug nên tên là :slug nhưng giá trị là id.
+// Trả 202 Accepted: view được gom batch, không ghi DB ngay.
+func (h *Handler) view(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("slug"))
+	if err != nil {
+		httperr.Write(c, http.StatusBadRequest, "INVALID_ID", "post id must be a valid uuid")
+		return
+	}
+	if h.views != nil {
+		h.views.Add(id)
+	}
+	c.Status(http.StatusAccepted)
+}
+
 func toResponse(p Post) postResponse {
 	tags := make([]tagResponse, len(p.Tags))
 	for i, t := range p.Tags {
 		tags[i] = tagResponse{ID: t.ID, Name: t.Name, Slug: t.Slug}
 	}
 	return postResponse{
-		ID:          p.ID,
-		Title:       p.Title,
-		Slug:        p.Slug,
-		ContentJSON: defaultJSON(p.ContentJSON),
-		ContentHTML: p.ContentHTML,
-		Excerpt:     p.Excerpt,
-		CoverImage:  p.CoverImage,
-		Status:      p.Status,
-		MetaTitle:   p.MetaTitle,
-		MetaDesc:    p.MetaDesc,
-		PublishedAt: p.PublishedAt,
-		Version:     p.Version,
-		Tags:        tags,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		ID:            p.ID,
+		Title:         p.Title,
+		Slug:          p.Slug,
+		ContentJSON:   defaultJSON(p.ContentJSON),
+		ContentHTML:   p.ContentHTML,
+		Excerpt:       p.Excerpt,
+		CoverImage:    p.CoverImage,
+		CoverBlurhash: p.CoverBlurhash,
+		Status:        p.Status,
+		MetaTitle:     p.MetaTitle,
+		MetaDesc:      p.MetaDesc,
+		PublishedAt:   p.PublishedAt,
+		Version:       p.Version,
+		Views:         p.Views,
+		Tags:          tags,
+		CreatedAt:     p.CreatedAt,
+		UpdatedAt:     p.UpdatedAt,
 	}
 }

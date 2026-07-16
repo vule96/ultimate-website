@@ -95,3 +95,58 @@ func TestLoad_PresignExpiresDefault(t *testing.T) {
 		t.Errorf("StoragePresignExpires = %v, want 15m", cfg.StoragePresignExpires)
 	}
 }
+
+func TestLoad_Slice9Defaults(t *testing.T) {
+	setRequiredEnv(t)
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.MetricsPort != "9091" {
+		t.Errorf("MetricsPort = %q, want 9091", cfg.MetricsPort)
+	}
+	if cfg.LogLevel != "info" {
+		t.Errorf("LogLevel = %q, want info", cfg.LogLevel)
+	}
+	if cfg.ViewFlushInterval != 5*time.Second {
+		t.Errorf("ViewFlushInterval = %v, want 5s", cfg.ViewFlushInterval)
+	}
+	if cfg.ViewBufferSize != 1024 {
+		t.Errorf("ViewBufferSize = %d, want 1024", cfg.ViewBufferSize)
+	}
+	if cfg.BlurhashWorkers != 3 {
+		t.Errorf("BlurhashWorkers = %d, want 3", cfg.BlurhashWorkers)
+	}
+	if cfg.BlurhashMaxBytes != 10<<20 {
+		t.Errorf("BlurhashMaxBytes = %d, want 10MiB", cfg.BlurhashMaxBytes)
+	}
+	if cfg.BlurhashFetchTimeout != 10*time.Second {
+		t.Errorf("BlurhashFetchTimeout = %v, want 10s", cfg.BlurhashFetchTimeout)
+	}
+}
+
+func TestLoad_InvalidLogLevelFails(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("LOG_LEVEL", "verbose")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error for invalid LOG_LEVEL, got nil")
+	}
+}
+
+func TestConfig_LogValueRedactsSecrets(t *testing.T) {
+	cfg := Config{
+		DatabaseURL:        "postgres://user:secretpw@host:5432/db",
+		RedisURL:           "redis://:redispw@rhost:6379/0",
+		GoogleClientSecret: "supersecret",
+		StorageSecretKey:   "storagesecret",
+	}
+	s := cfg.LogValue().String()
+	for _, leak := range []string{"secretpw", "redispw", "supersecret", "storagesecret"} {
+		if strings.Contains(s, leak) {
+			t.Errorf("LogValue leaks %q: %s", leak, s)
+		}
+	}
+	if !strings.Contains(s, "host:5432") {
+		t.Errorf("LogValue should keep db host: %s", s)
+	}
+}

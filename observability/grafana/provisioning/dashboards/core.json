@@ -1,0 +1,59 @@
+{
+  "uid": "ultimate-core",
+  "title": "Ultimate Core — Overview",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "RPS theo route",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum by (route) (rate(http_requests_total[1m]))", "legendFormat": "{{route}}" }]
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "Latency p95 (s)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))", "legendFormat": "{{route}}" }]
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "Error rate 5xx (%)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [{ "expr": "100 * sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))", "legendFormat": "5xx %" }]
+    },
+    {
+      "id": 4, "type": "timeseries", "title": "Cache hit ratio (%)",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [{ "expr": "100 * sum by (key_group) (rate(cache_hits_total[5m])) / (sum by (key_group) (rate(cache_hits_total[5m])) + sum by (key_group) (rate(cache_misses_total[5m])))", "legendFormat": "{{key_group}}" }]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "DB pool (connections)",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "go_sql_open_connections{db_name=\"core\"}", "legendFormat": "open" },
+        { "expr": "go_sql_idle_connections{db_name=\"core\"}", "legendFormat": "idle" },
+        { "expr": "go_sql_in_use_connections{db_name=\"core\"}", "legendFormat": "in-use" }
+      ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "Outbox pending / processed",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "outbox_pending", "legendFormat": "pending" },
+        { "expr": "rate(outbox_processed_total[5m])", "legendFormat": "processed/s" }
+      ]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Views: flushed / dropped",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "rate(views_flushed_total[5m])", "legendFormat": "flushed/s" },
+        { "expr": "rate(views_dropped_total[5m])", "legendFormat": "dropped/s" }
+      ]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "Blurhash jobs theo kết quả",
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum by (result) (rate(blurhash_jobs_total[5m]))", "legendFormat": "{{result}}" }]
+    }
+  ]
+}

@@ -603,3 +603,57 @@ func TestRepo_DeleteCleansOrphanTags(t *testing.T) {
 		t.Errorf("orphan tag %q vẫn còn sau delete post", orphan)
 	}
 }
+
+func TestIncrementViews_Batch(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	a := samplePost("Bài A views", "bai-a-views-"+uuid.NewString()[:8], StatusPublished)
+	b := samplePost("Bài B views", "bai-b-views-"+uuid.NewString()[:8], StatusPublished)
+	if err := repo.Create(ctx, a); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.Create(ctx, b); err != nil {
+		t.Fatal(err)
+	}
+
+	err := repo.IncrementViews(ctx, map[uuid.UUID]int64{a.ID: 3, b.ID: 1, uuid.New(): 5})
+	if err != nil {
+		t.Fatalf("IncrementViews: %v", err)
+	}
+
+	gotA, err := repo.GetByID(ctx, a.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotA.Views != 3 {
+		t.Errorf("views A = %d, want 3", gotA.Views)
+	}
+	gotB, _ := repo.GetByID(ctx, b.ID)
+	if gotB.Views != 1 {
+		t.Errorf("views B = %d, want 1", gotB.Views)
+	}
+}
+
+func TestSetBlurhash(t *testing.T) {
+	repo := newRepoTx(t)
+	ctx := context.Background()
+
+	p := samplePost("Bài blurhash", "bai-blur-"+uuid.NewString()[:8], StatusPublished)
+	if err := repo.Create(ctx, p); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.SetBlurhash(ctx, p.ID, "LKO2?U%2Tw=w]~RBVZRi};RPxuwH"); err != nil {
+		t.Fatalf("SetBlurhash: %v", err)
+	}
+	got, err := repo.GetByID(ctx, p.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.CoverBlurhash == nil || *got.CoverBlurhash == "" {
+		t.Error("cover_blurhash phải được lưu")
+	}
+	if got.Version != p.Version {
+		t.Errorf("SetBlurhash không được đổi version: %d != %d", got.Version, p.Version)
+	}
+}

@@ -46,14 +46,18 @@ type Post struct {
 	ContentHTML string          // HTML render sẵn cho public/SEO
 	Excerpt     *string
 	CoverImage  *string
-	Status      PostStatus
-	MetaTitle   *string
-	MetaDesc    *string
-	PublishedAt *time.Time
-	Version     int64
-	Tags        []Tag
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// CoverBlurhash do worker nền tính từ CoverImage (Slice 9) — nil khi chưa có.
+	CoverBlurhash *string
+	Status        PostStatus
+	MetaTitle     *string
+	MetaDesc      *string
+	PublishedAt   *time.Time
+	Version       int64
+	// Views cộng dồn bởi ViewCounter batch (Slice 9).
+	Views     int64
+	Tags      []Tag
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Các lỗi domain (tầng ngoài dùng errors.Is để map sang HTTP).

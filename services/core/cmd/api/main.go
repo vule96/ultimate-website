@@ -4,22 +4,28 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 
 	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/media"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/posts"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/blurhash"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/cache"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/metrics"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/outbox"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
@@ -27,6 +33,9 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
+
+// version được inject lúc build: -ldflags "-X main.version=<git sha>".
+var version = "dev"
 
 func main() {
 	// Nạp .env nếu có (dev). Bỏ qua lỗi khi file không tồn tại (prod dùng env thật).
@@ -37,7 +46,8 @@ func main() {
 		panic(err)
 	}
 
-	log := logger.New(cfg.IsProduction())
+	log := logger.New(cfg.IsProduction(), cfg.LogLevel)
+	log.Info("core service starting", "service", "core", "version", version, "config", cfg)
 
 	db, err := database.Open(cfg.DatabaseURL, cfg.IsProduction())
 	if err != nil {
@@ -55,6 +65,10 @@ func main() {
 	sqlDB.SetMaxIdleConns(5)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
+	// Prometheus metrics (registry riêng) + theo dõi pool DB.
+	m := metrics.New()
+	m.RegisterDBStats(sqlDB)
+
 	// Session manager (scs + Postgres).
 	sm := session.New(sqlDB, session.Config{
 		Lifetime: 7 * 24 * time.Hour,
@@ -68,9 +82,37 @@ func main() {
 	authSvc := auth.NewService(provider, allowlist)
 	authHandler := auth.NewHandler(authSvc, sm, cfg.AppBaseURL)
 
+	// Cache Redis (cache-aside, key-versioning). REDIS_URL rỗng → no-op (cache tắt).
+	var cch cache.Cache = cache.NewNoop()
+	if cfg.RedisURL != "" {
+		rc, err := cache.NewRedis(cfg.RedisURL, log)
+		if err != nil {
+			log.Warn("cache: REDIS_URL không hợp lệ — chạy không cache", "err", err)
+		} else {
+			cch = rc
+			log.Info("cache: redis enabled")
+		}
+	}
+
 	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
-	// chưa (anonymous chỉ thấy bài PUBLISHED).
-	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)), auth.IsAuthenticated(sm))
+	// chưa (anonymous chỉ thấy bài PUBLISHED). Repo bọc cache decorator.
+	gormRepo := posts.NewGormRepository(db)
+	postsRepo := posts.NewCachedRepository(gormRepo, cch, m)
+
+	// Blurhash worker pool (Slice 9 — goroutine): request chỉ enqueue non-blocking,
+	// N worker nền tải ảnh + tính hash + lưu DB.
+	bhWorker := blurhash.NewWorker(
+		gormRepo,
+		blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes, cfg.BlurhashFetchAllowlist()),
+		m, log, cfg.BlurhashWorkers, 256,
+	)
+	postsSvc := posts.NewService(postsRepo).WithBlurhashEnqueuer(func(id uuid.UUID, coverURL string) {
+		bhWorker.Enqueue(blurhash.Job{PostID: id, URL: coverURL})
+	})
+	// View counter batch (Slice 9 — goroutine): gom view trong channel,
+	// flush xuống DB theo chu kỳ/ngưỡng; shutdown flush nốt.
+	viewCounter := posts.NewViewCounter(gormRepo, m, log, cfg.ViewBufferSize, cfg.ViewFlushInterval)
+	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm)).WithViewCounter(viewCounter)
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
@@ -89,8 +131,16 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.New()
-	r.Use(gin.Recovery())
+	// Panic → log structured qua slog (kèm stack) + trả JSON envelope thay vì
+	// writer mặc định của Gin (in thẳng stdout không cấu trúc).
+	r.Use(gin.CustomRecoveryWithWriter(io.Discard, func(c *gin.Context, err any) {
+		reqlog.From(c.Request.Context()).Error("panic recovered",
+			"panic", err, "stack", string(debug.Stack()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			gin.H{"error": gin.H{"code": "INTERNAL", "message": "internal error"}})
+	}))
 	r.Use(reqlog.Middleware(log))
+	r.Use(m.GinMiddleware())
 	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
 	r.Use(bodylimit.Middleware(cfg.MaxBodyBytes))
 
@@ -132,8 +182,15 @@ func main() {
 
 	// Outbox dispatcher (chuẩn bị Phase 2): poll event chưa xử lý, handler hiện
 	// tại chỉ log. Dừng theo ctx shutdown — event còn lại nằm trong DB, không mất.
-	dispatcher := outbox.NewDispatcher(db, outbox.LogHandler{Log: log}, log, 10*time.Second)
+	dispatcher := outbox.NewDispatcher(db, outbox.LogHandler{Log: log}, log, 10*time.Second).WithObserver(m)
 	go dispatcher.Run(ctx)
+
+	// Metrics server riêng (:METRICS_PORT) — Prometheus scrape nội bộ, kèm pprof khi bật.
+	go metrics.Serve(ctx, cfg.MetricsPort, m, cfg.PprofEnabled, log)
+
+	// Blurhash worker pool + view counter chạy nền theo ctx.
+	bhWorker.Start(ctx)
+	go viewCounter.Run(ctx)
 
 	go func() {
 		log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)
@@ -150,5 +207,7 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Error("graceful shutdown failed", "err", err)
 	}
+	// Drain job blurhash còn trong queue (tối đa 5s) rồi mới đóng DB.
+	bhWorker.Close(5 * time.Second)
 	_ = sqlDB.Close()
 }

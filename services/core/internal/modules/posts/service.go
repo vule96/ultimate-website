@@ -82,11 +82,31 @@ type UpdateInput struct {
 type Service struct {
 	repo Repository
 	now  func() time.Time
+	// enqueueBlurhash đẩy job tính blurhash cho cover (worker nền, Slice 9).
+	// nil = tính năng tắt. KHÔNG blocking — impl là channel send non-blocking.
+	enqueueBlurhash func(id uuid.UUID, coverURL string)
 }
 
 // NewService tạo Service với đồng hồ mặc định time.Now.
 func NewService(repo Repository) *Service {
 	return &Service{repo: repo, now: time.Now}
+}
+
+// WithBlurhashEnqueuer gắn hook enqueue blurhash (chainable, optional).
+func (s *Service) WithBlurhashEnqueuer(fn func(id uuid.UUID, coverURL string)) *Service {
+	s.enqueueBlurhash = fn
+	return s
+}
+
+// maybeEnqueueBlurhash đẩy job khi cover mới non-empty và khác cover cũ.
+func (s *Service) maybeEnqueueBlurhash(p *Post, oldCover *string) {
+	if s.enqueueBlurhash == nil || p.CoverImage == nil || *p.CoverImage == "" {
+		return
+	}
+	if oldCover != nil && *oldCover == *p.CoverImage {
+		return // cover không đổi — blurhash cũ vẫn đúng
+	}
+	s.enqueueBlurhash(p.ID, *p.CoverImage)
 }
 
 // Create validate đầu vào, chuẩn hoá slug/status/tags rồi lưu bài viết.
@@ -129,6 +149,7 @@ func (s *Service) Create(ctx context.Context, in CreateInput) (*Post, error) {
 	if err := s.repo.Create(ctx, p); err != nil {
 		return nil, err
 	}
+	s.maybeEnqueueBlurhash(p, nil)
 	return p, nil
 }
 
@@ -138,6 +159,8 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 	if err != nil {
 		return nil, err
 	}
+	// Giữ cover cũ trước khi ghi đè — quyết định có cần tính lại blurhash không.
+	existingCoverBeforeUpdate := existing.CoverImage
 
 	title := strings.TrimSpace(in.Title)
 	if title == "" {
@@ -178,9 +201,11 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 		existing.PublishedAt = nil
 	}
 
+	oldCover := existingCoverBeforeUpdate
 	if err := s.repo.Update(ctx, existing); err != nil {
 		return nil, err
 	}
+	s.maybeEnqueueBlurhash(existing, oldCover)
 	return existing, nil
 }
 

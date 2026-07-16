@@ -35,6 +35,8 @@ const csp = [
 ].join("; ");
 
 const nextConfig = {
+  // Docker: gom server + deps tối thiểu vào .next/standalone (image nhỏ).
+  output: "standalone",
   transpilePackages: ["@ultimate/ui", "@ultimate/types"],
   images: {
     remotePatterns: [
