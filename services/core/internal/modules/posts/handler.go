@@ -69,21 +69,23 @@ type tagResponse struct {
 }
 
 type postResponse struct {
-	ID          uuid.UUID       `json:"id"`
-	Title       string          `json:"title"`
-	Slug        string          `json:"slug"`
-	ContentJSON json.RawMessage `json:"content_json"`
-	ContentHTML string          `json:"content_html"`
-	Excerpt     *string         `json:"excerpt"`
-	CoverImage  *string         `json:"cover_image"`
-	Status      PostStatus      `json:"status"`
-	MetaTitle   *string         `json:"meta_title"`
-	MetaDesc    *string         `json:"meta_desc"`
-	PublishedAt *time.Time      `json:"published_at"`
-	Version     int64           `json:"version"`
-	Tags        []tagResponse   `json:"tags"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
+	ID            uuid.UUID       `json:"id"`
+	Title         string          `json:"title"`
+	Slug          string          `json:"slug"`
+	ContentJSON   json.RawMessage `json:"content_json"`
+	ContentHTML   string          `json:"content_html"`
+	Excerpt       *string         `json:"excerpt"`
+	CoverImage    *string         `json:"cover_image"`
+	CoverBlurhash *string         `json:"cover_blurhash"`
+	Status        PostStatus      `json:"status"`
+	MetaTitle     *string         `json:"meta_title"`
+	MetaDesc      *string         `json:"meta_desc"`
+	PublishedAt   *time.Time      `json:"published_at"`
+	Version       int64           `json:"version"`
+	Views         int64           `json:"views"`
+	Tags          []tagResponse   `json:"tags"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
 }
 
 type listResponse struct {
@@ -295,20 +297,22 @@ func toResponse(p Post) postResponse {
 		tags[i] = tagResponse{ID: t.ID, Name: t.Name, Slug: t.Slug}
 	}
 	return postResponse{
-		ID:          p.ID,
-		Title:       p.Title,
-		Slug:        p.Slug,
-		ContentJSON: defaultJSON(p.ContentJSON),
-		ContentHTML: p.ContentHTML,
-		Excerpt:     p.Excerpt,
-		CoverImage:  p.CoverImage,
-		Status:      p.Status,
-		MetaTitle:   p.MetaTitle,
-		MetaDesc:    p.MetaDesc,
-		PublishedAt: p.PublishedAt,
-		Version:     p.Version,
-		Tags:        tags,
-		CreatedAt:   p.CreatedAt,
-		UpdatedAt:   p.UpdatedAt,
+		ID:            p.ID,
+		Title:         p.Title,
+		Slug:          p.Slug,
+		ContentJSON:   defaultJSON(p.ContentJSON),
+		ContentHTML:   p.ContentHTML,
+		Excerpt:       p.Excerpt,
+		CoverImage:    p.CoverImage,
+		CoverBlurhash: p.CoverBlurhash,
+		Status:        p.Status,
+		MetaTitle:     p.MetaTitle,
+		MetaDesc:      p.MetaDesc,
+		PublishedAt:   p.PublishedAt,
+		Version:       p.Version,
+		Views:         p.Views,
+		Tags:          tags,
+		CreatedAt:     p.CreatedAt,
+		UpdatedAt:     p.UpdatedAt,
 	}
 }

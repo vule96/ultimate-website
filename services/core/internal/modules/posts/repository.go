@@ -19,6 +19,7 @@ var sortColumns = map[string]string{
 	"status":     "posts.status",
 	"updated_at": "posts.updated_at",
 	"created_at": "posts.created_at",
+	"views":      "posts.views",
 }
 
 // orderClause dựng mệnh đề ORDER BY an toàn từ field/order do client gửi.
@@ -36,21 +37,23 @@ func orderClause(sort, order string) string {
 // --- GORM models (tầng ngoài; chỉ file này biết về GORM) ---
 
 type gormPost struct {
-	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Title       string         `gorm:"not null"`
-	Slug        string         `gorm:"uniqueIndex;not null"`
-	ContentJSON datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'"`
-	ContentHTML string         `gorm:"not null;default:''"`
-	Excerpt     *string
-	CoverImage  *string
-	Status      string `gorm:"not null;default:'DRAFT';index;check:posts_status_check,status IN ('DRAFT','PENDING_APPROVAL','PUBLISHED')"`
-	MetaTitle   *string
-	MetaDesc    *string
-	PublishedAt *time.Time `gorm:"index"`
-	Version     int64      `gorm:"not null;default:1"`
-	Tags        []gormTag  `gorm:"many2many:post_tags;joinForeignKey:PostID;joinReferences:TagID;constraint:OnDelete:CASCADE;"`
-	CreatedAt   time.Time  `gorm:"not null;default:now()"`
-	UpdatedAt   time.Time  `gorm:"not null;default:now()"`
+	ID            uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Title         string         `gorm:"not null"`
+	Slug          string         `gorm:"uniqueIndex;not null"`
+	ContentJSON   datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'"`
+	ContentHTML   string         `gorm:"not null;default:''"`
+	Excerpt       *string
+	CoverImage    *string
+	CoverBlurhash *string `gorm:"type:text"`
+	Status        string  `gorm:"not null;default:'DRAFT';index;check:posts_status_check,status IN ('DRAFT','PENDING_APPROVAL','PUBLISHED')"`
+	MetaTitle     *string
+	MetaDesc      *string
+	PublishedAt   *time.Time `gorm:"index"`
+	Version       int64      `gorm:"not null;default:1"`
+	Views         int64      `gorm:"not null;default:0"`
+	Tags          []gormTag  `gorm:"many2many:post_tags;joinForeignKey:PostID;joinReferences:TagID;constraint:OnDelete:CASCADE;"`
+	CreatedAt     time.Time  `gorm:"not null;default:now()"`
+	UpdatedAt     time.Time  `gorm:"not null;default:now()"`
 }
 
 func (gormPost) TableName() string { return "posts" }
@@ -388,20 +391,22 @@ func toGormModel(p *Post) gormPost {
 
 func toDomain(gp gormPost) *Post {
 	p := &Post{
-		ID:          gp.ID,
-		Title:       gp.Title,
-		Slug:        gp.Slug,
-		ContentJSON: []byte(gp.ContentJSON),
-		ContentHTML: gp.ContentHTML,
-		Excerpt:     gp.Excerpt,
-		CoverImage:  gp.CoverImage,
-		Status:      PostStatus(gp.Status),
-		MetaTitle:   gp.MetaTitle,
-		MetaDesc:    gp.MetaDesc,
-		PublishedAt: gp.PublishedAt,
-		Version:     gp.Version,
-		CreatedAt:   gp.CreatedAt,
-		UpdatedAt:   gp.UpdatedAt,
+		ID:            gp.ID,
+		Title:         gp.Title,
+		Slug:          gp.Slug,
+		ContentJSON:   []byte(gp.ContentJSON),
+		ContentHTML:   gp.ContentHTML,
+		Excerpt:       gp.Excerpt,
+		CoverImage:    gp.CoverImage,
+		CoverBlurhash: gp.CoverBlurhash,
+		Status:        PostStatus(gp.Status),
+		MetaTitle:     gp.MetaTitle,
+		MetaDesc:      gp.MetaDesc,
+		PublishedAt:   gp.PublishedAt,
+		Version:       gp.Version,
+		Views:         gp.Views,
+		CreatedAt:     gp.CreatedAt,
+		UpdatedAt:     gp.UpdatedAt,
 	}
 	for _, gt := range gp.Tags {
 		p.Tags = append(p.Tags, Tag{ID: gt.ID, Name: gt.Name, Slug: gt.Slug})
