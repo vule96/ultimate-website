@@ -29,11 +29,15 @@ export const PostSchema = z.object({
   content_html: z.string(),
   excerpt: z.string().nullable(),
   cover_image: z.string().nullable(),
+  /** Blurhash của cover — worker nền core tính (Slice 9); null khi chưa có. */
+  cover_blurhash: z.string().nullable(),
   status: PostStatusSchema,
   meta_title: z.string().nullable(),
   meta_desc: z.string().nullable(),
   published_at: z.string().nullable(),
   version: z.number().int(),
+  /** Lượt xem cộng dồn bởi view counter batch (Slice 9). */
+  views: z.number().int(),
   tags: z.array(TagSchema),
   created_at: z.string(),
   updated_at: z.string(),

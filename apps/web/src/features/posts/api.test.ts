@@ -14,6 +14,8 @@ const basePost = {
   meta_desc: null,
   published_at: "2026-07-01T00:00:00Z",
   version: 1,
+  cover_blurhash: null,
+  views: 0,
   tags: [],
   created_at: "2026-07-01T00:00:00Z",
   updated_at: "2026-07-01T00:00:00Z",
