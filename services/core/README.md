@@ -119,3 +119,20 @@ browser **PUT thẳng** lên storage (không qua core) → lưu `public_url` và
 
 > `apps/web` cần `NEXT_PUBLIC_MEDIA_HOST` = host của `STORAGE_PUBLIC_URL` (cho `next/image`). Xem `apps/web/README.md`.
 > Giới hạn ảnh: PNG/JPEG/WebP/GIF, ≤ 5 MB (`media/domain.go`).
+
+## Observability & production (Slice 9)
+
+- **Logging**: slog — dev text / prod JSON; `LOG_LEVEL` env. reqlog kèm `request_id, route, ip, user_agent, bytes_out`; 5xx = level ERROR kèm `errors`; panic recovery ghi stack qua slog.
+- **Metrics**: Prometheus trên server riêng `:METRICS_PORT` (mặc định 9091, KHÔNG public) — http (route template), DB pool, cache hit/miss, outbox, views, blurhash. `PPROF_ENABLED` bật `/debug/pprof`.
+- **Redis cache** (`REDIS_URL`, rỗng = tắt): cache-aside cho read công khai (list/slug/tags), invalidation **key-versioning** (write bump `posts:ver` — O(1), không SCAN). Redis chết → log warn + fallback DB, request không fail. Lưu ý: flush view KHÔNG bump version (views stale tối đa TTL 60s — chủ ý).
+- **Goroutine patterns** (để học):
+  - `platform/blurhash`: worker pool — buffered channel + N goroutine, enqueue non-blocking từ service khi cover đổi; SSRF guard tầng dial + chặn decompression bomb; `cmd/blurhash-backfill` dùng errgroup `SetLimit(4)`.
+  - `posts.ViewCounter`: batch aggregation — `POST /api/v1/posts/:id/view` chỉ đẩy channel (202, không chạm DB), goroutine gom map + flush theo ticker/ngưỡng/shutdown.
+- **Docker**: `services/core/Dockerfile` (multi-stage → distroless static, ~95MB). Stack đầy đủ: `docker compose --env-file .env.prod -f docker-compose.prod.yml -f docker-compose.observability.yml up -d` — Grafana `:3001` (dashboard "Ultimate Core" provisioned sẵn, datasource Prometheus + Loki).
+
+### Checklist secrets production
+
+- `.env.prod` KHÔNG commit (đã gitignore) — copy từ `.env.prod.example`.
+- Đổi `POSTGRES_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`; DB user least-privilege khi tách managed DB.
+- Secret chỉ nằm trong env (12-factor); boot log tự redact (`Config.LogValue`).
+- Rotate `STORAGE_SECRET_KEY`/`GOOGLE_CLIENT_SECRET` định kỳ; `PPROF_ENABLED=false` ở production.
