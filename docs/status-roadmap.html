@@ -231,18 +231,18 @@
   <section class="tiles" aria-label="Tình trạng hiện tại">
     <div class="tile">
       <span class="k">Slice hoàn tất</span>
-      <span class="v mono">10</span>
-      <span class="sub">Phase 1 (1–4) · 5a–5e · 6</span>
+      <span class="v mono">12</span>
+      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–8</span>
     </div>
     <div class="tile">
       <span class="k">Test xanh</span>
-      <span class="v mono">98</span>
-      <span class="sub">web 56 · admin 39 · ui 3 · core ✓</span>
+      <span class="v mono">112</span>
+      <span class="sub">web 70 · admin 39 · ui 3 · core ✓</span>
     </div>
     <div class="tile">
       <span class="k">Trang chủ "Mạch"</span>
       <span class="v live"><span class="dot"></span>Live</span>
-      <span class="sub">Magazine UI · SSG + ISR</span>
+      <span class="sub">Magazine UI · i18n vi/en · responsive · SSG + ISR</span>
     </div>
     <div class="tile">
       <span class="k">Lưu trữ ảnh</span>
@@ -303,11 +303,29 @@
       </div>
 
       <div class="step">
-        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
         <div class="step-body">
-          <div class="step-head"><span class="slice">Slice 6 — Trang chủ blog "Mạch" (UI/UX)</span><span class="chip new">mới</span></div>
+          <div class="step-head"><span class="slice">Slice 6 — Trang chủ blog "Mạch" (UI/UX)</span><span class="chip">done</span></div>
           <p class="step-desc">Dựng pixel-close trang chủ tạp chí "Mạch" trong <span class="mono">apps/web</span>: <b>Server Component shell + client island</b> (giữ ISR + SEO), <b>chống re-render</b> (Zustand selector + <span class="mono">React.memo</span> + <span class="mono">useDeferredValue</span>). Token Mạch scope riêng web + font Bricolage/Be Vietnam Pro/Space Mono. Tương tác (search, lọc category, dark mode, bookmark, auth, newsletter) <b>chạy cục bộ qua interface service</b> — có seam cắm backend thật sau. Seed ~12 bài. Verify E2E live.</p>
           <div class="tags"><span class="tag">Next.js RSC</span><span class="tag">Zustand</span><span class="tag">next/font</span><span class="tag">design tokens</span><span class="tag">lucide-react</span><span class="tag">service seam</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 7 — Polish trang chủ Mạch</span><span class="chip">done</span></div>
+          <p class="step-desc">Hệ token <b>chrome/ink/field</b> (light + dark) — masthead/subnav nền kem hoà body, footer mực ấm; masthead + subnav bọc <span class="mono">max-w-shell</span> 1200px. <b>Newsletter redesign</b> (hook state machine TDD, lỗi/success inline). Perf: <span class="mono">useCallback</span> giữ <span class="mono">memo</span> hiệu lực. <b>Animation framer-motion</b> LazyMotion + features async (First Load +18kB), tôn trọng reduced-motion.</p>
+          <div class="tags"><span class="tag">design tokens</span><span class="tag">framer-motion</span><span class="tag">useNewsletterForm</span><span class="tag">perf</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 8 — i18n vi/en + polish feedback</span><span class="chip new">mới</span></div>
+          <p class="step-desc"><b>next-intl</b> routing <span class="mono">as-needed</span>: URL tiếng Việt giữ nguyên, <span class="mono">/en/...</span> cho tiếng Anh; bài viết giữ tiếng Việt, chrome dịch toàn bộ; switcher VI/EN. <b>Codegen <span class="mono">pnpm i18n:gen</span></b>: vi.json là source of truth → sinh types (sai key = compile error) + sync khung en.json, guard test đối xứng. SEO hreflang + sitemap 2 locale. Kèm đợt polish: font display <b>Roboto</b>, <b>newsletter band full-width</b>, <b>responsive mobile</b> (chips category, masthead wrap), fix CSP dev (<span class="mono">unsafe-eval</span>).</p>
+          <div class="tags"><span class="tag">next-intl</span><span class="tag">i18n:gen</span><span class="tag">hreflang</span><span class="tag">Roboto</span><span class="tag">responsive</span></div>
         </div>
       </div>
 
@@ -402,8 +420,8 @@
   </section>
 
   <footer>
-    <span>Ultimate website · Phase 1 + Hardening + Slice 6 (UI Mạch)</span>
-    <span class="mono">Cập nhật 2026-07-14</span>
+    <span>Ultimate website · Phase 1 + Hardening + Slice 6–8 (UI Mạch · i18n · responsive)</span>
+    <span class="mono">Cập nhật 2026-07-16</span>
   </footer>
 
 </div>

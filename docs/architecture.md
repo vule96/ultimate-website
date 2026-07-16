@@ -1,6 +1,6 @@
 # Kiến trúc & Vận hành — ultimate-website
 
-> Cập nhật: 2026-07-14 · Phản ánh **đúng những gì codebase đang có và cách nó thực sự chạy** (sau Phase 1 + hardening 5a–5e + Slice 6 trang chủ "Mạch").
+> Cập nhật: 2026-07-16 · Phản ánh **đúng những gì codebase đang có và cách nó thực sự chạy** (sau Phase 1 + hardening 5a–5e + Slice 6–7 trang chủ "Mạch" + Slice 8 i18n vi/en).
 > Bản xem đẹp (Artifact, sáng/tối, sơ đồ): `https://claude.ai/code/artifact/52ff8b32-c745-43be-a23e-d3b1717fa57d`
 > Tài liệu định hướng/đánh giá gốc: `docs/personal-blog-ai-analysis.md`. Tiến độ + issue tracker: `CLAUDE.md`, `docs/reviews/2026-07-11-senior-code-review.md`.
 > Phần **AI (Phase 2)** là **kế hoạch — CHƯA xây**, được đánh dấu rõ ở §9.
@@ -193,7 +193,7 @@ Envelope lỗi thống nhất: `{ "error": { "code": string, "message": string }
 
 | Route | Chế độ | Ghi chú |
 |---|---|---|
-| `/` | **Static (○)** | trang chủ tạp chí **"Mạch"** — RSC fetch + adapt `Post→ArticleVM`, hydrate 1 client island (`MagazineBoard`); ISR 60s (Slice 6) |
+| `/` | **Static (○)** | trang chủ tạp chí **"Mạch"** — RSC fetch + adapt `Post→ArticleVM`, hydrate 1 client island (`MagazineBoard`); ISR 60s (Slice 6). App tree nằm dưới `app/[locale]/` — vi mặc định **không prefix**, `/en/...` bản tiếng Anh (Slice 8) |
 | `/page/[n]` | **SSG (●)** | `generateStaticParams` từ `totalPages` |
 | `/blog/[slug]` | **SSG (●)** | `generateStaticParams` slug PUBLISHED + ISR on-demand (`dynamicParams`) |
 | `/tags`, `/tags/[slug]`, `/tags/[slug]/page/[n]` | **Static/SSG** | metadata + pagination theo path |
@@ -212,10 +212,11 @@ Envelope lỗi thống nhất: `{ "error": { "code": string, "message": string }
 - Metadata/OpenGraph mỗi bài (`generateMetadata`), OG image fallback, canonical; metadata cho tag pages; **JSON-LD `BlogPosting`** (escape `<` chống breakout); `sitemap.xml` + `/rss.xml` (atom self-link, language, lastBuildDate, escape URL) + `robots.txt`.
 - `not-found.tsx` + `error.tsx` branded.
 - **Sanitize**: `content_html` chạy qua `rehype-sanitize` server-side (RSC) trước `dangerouslySetInnerHTML` — allowlist mở cho output editor (table, task-list, `<mark>`, img, code), chặn `<script>`/`on*`/`javascript:`.
-- **CSP** header qua `next.config` `headers()` (không nonce → giữ SSG): `default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; img-src 'self' data: <media-host>` + `nosniff` + `Referrer-Policy`.
-- Font qua `next/font/google` — **Bricolage Grotesque** (heading) + **Be Vietnam Pro** (body) + **Space Mono** (meta) cho trang chủ Mạch (Slice 6; trước đó Lora + Inter) — preload, không FOUT.
+- **CSP** header qua `next.config` `headers()` (không nonce → giữ SSG): `default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; img-src 'self' data: <media-host>` + `nosniff` + `Referrer-Policy`. **Dev thêm `'unsafe-eval'`** (react-refresh của `next dev` cần eval — thiếu nó toàn bộ JS client chết); production KHÔNG có.
+- Font qua `next/font/google` — **Roboto** (heading, 700/900) + **Be Vietnam Pro** (body) + **Space Mono** (meta) — preload, không FOUT. (Lịch sử: Lora+Inter → Bricolage Grotesque (Slice 6) → Playfair Display (Slice 7) → Roboto theo feedback.)
+- **i18n (Slice 8)**: **next-intl** v3, routing `as-needed` + `localeDetection: false` — `/` luôn vi (canonical), `/en/...` tiếng Anh, đổi ngôn ngữ chỉ qua switcher trong masthead. `messages/vi.json` là **source of truth**; lệnh `pnpm i18n:gen` sinh `messages.d.ts` (type-safe key) + sync khung `en.json` (`__TODO__`/xoá key thừa), guard test giữ en/vi đối xứng. Bài viết giữ tiếng Việt ở cả 2 locale; chrome dịch toàn bộ; điều hướng nội bộ qua `Link/useRouter` của `src/i18n/navigation.ts`. SEO: hreflang vi/en/x-default + sitemap alternates 2 locale + `<html lang>` động.
 
-### 5.4. Trang chủ "Mạch" (Slice 6) — server shell + client island
+### 5.4. Trang chủ "Mạch" (Slice 6, polish Slice 7–8) — server shell + client island
 
 Trang chủ được dựng lại theo thiết kế tạp chí "Mạch" (`design/`), giữ nguyên SSG/ISR + SEO nhưng thêm tầng tương tác cao:
 
@@ -225,6 +226,8 @@ Trang chủ được dựng lại theo thiết kế tạp chí "Mạch" (`design
 - **Tương tác chạy cục bộ qua interface service** (`services/bookmark-service.ts`, `newsletter-service.ts`): bookmark localStorage, auth **mock**, newsletter no-op — **có seam** để cắm backend thật (Go core / Firebase) sau. Masthead + footer là chrome toàn site; rail + sidebar + feed chỉ ở trang chủ.
 - **Data gap**: `author/views/comments` backend chưa có → ẩn mềm; `category` suy từ tag đầu, `readTime` tính từ `content_html`. → backend bổ sung sau **không đổi UI**.
 - **Seed**: `services/core/seed/seed_articles.sql` (~12 bài PUBLISHED phủ 10 category, ảnh `picsum.photos`) để trang "sống".
+- **Polish Slice 7**: token **chrome/ink/field** (masthead/subnav kem hoà body, footer mực ấm), masthead+subnav bọc `max-w-shell` 1200px; **newsletter band full-width** trên footer (hook `useNewsletterForm` state machine, lỗi/success inline); animation **framer-motion** dạng `LazyMotion strict + m.` features nạp async, `MotionConfig reducedMotion="user"`; `useCallback` giữ `memo` hiệu lực.
+- **Responsive (2026-07-16)**: rail trái `hidden lg:block` + `MobileCategoryBar` chips cuộn ngang, sidebar phải `hidden xl:block`, masthead wrap (search full-width mobile), article row bỏ thumbnail trên mobile, footer grid 1→2→4 cột; `<noscript>` override chống kẹt `opacity:0` khi JS bị chặn.
 - **Còn ở phía trước**: backend consumer thật cho auth/bookmark/newsletter; redesign `/blog/[slug]` + `/tags` theo chrome Mạch.
 
 ---
