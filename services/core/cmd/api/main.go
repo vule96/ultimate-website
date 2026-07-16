@@ -103,7 +103,7 @@ func main() {
 	// N worker nền tải ảnh + tính hash + lưu DB.
 	bhWorker := blurhash.NewWorker(
 		gormRepo,
-		blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes),
+		blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes, cfg.BlurhashFetchAllowlist()),
 		m, log, cfg.BlurhashWorkers, 256,
 	)
 	postsSvc := posts.NewService(postsRepo).WithBlurhashEnqueuer(func(id uuid.UUID, coverURL string) {

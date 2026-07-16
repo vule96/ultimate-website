@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,18 +35,59 @@ type Fetcher interface {
 
 // HTTPFetcher tải ảnh qua HTTP với timeout + giới hạn size (chống ảnh khổng lồ
 // hoặc server treo làm nghẽn worker).
+//
+// Chống SSRF: URL do admin nhập nhưng vẫn không tin — host phải nằm trong
+// AllowedHosts (host của storage + env), host lạ chỉ được phép khi resolve ra
+// IP công khai (chặn loopback/private/link-local — không cho worker chọc vào
+// metadata endpoint hay service nội bộ).
 type HTTPFetcher struct {
-	Client   *http.Client
-	MaxBytes int64
+	Client       *http.Client
+	MaxBytes     int64
+	AllowedHosts map[string]struct{}
 }
 
-// NewHTTPFetcher tạo fetcher với timeout + cap size.
-func NewHTTPFetcher(timeout time.Duration, maxBytes int64) *HTTPFetcher {
-	return &HTTPFetcher{Client: &http.Client{Timeout: timeout}, MaxBytes: maxBytes}
+// NewHTTPFetcher tạo fetcher với timeout + cap size + allowlist host.
+func NewHTTPFetcher(timeout time.Duration, maxBytes int64, allowedHosts []string) *HTTPFetcher {
+	allow := make(map[string]struct{}, len(allowedHosts))
+	for _, h := range allowedHosts {
+		if h = strings.ToLower(strings.TrimSpace(h)); h != "" {
+			allow[h] = struct{}{}
+		}
+	}
+	return &HTTPFetcher{Client: &http.Client{Timeout: timeout}, MaxBytes: maxBytes, AllowedHosts: allow}
 }
 
-// Fetch tải URL, trả lỗi khi status ≠ 200 hoặc body vượt MaxBytes.
+// checkURL chặn scheme lạ + host không allowlist mà resolve ra IP nội bộ.
+func (f *HTTPFetcher) checkURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("blurhash: invalid url: %w", err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("blurhash: scheme %q not allowed", u.Scheme)
+	}
+	host := strings.ToLower(u.Hostname())
+	if _, ok := f.AllowedHosts[host]; ok {
+		return nil
+	}
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		return fmt.Errorf("blurhash: resolve %s: %w", host, err)
+	}
+	for _, ip := range ips {
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+			ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+			return fmt.Errorf("blurhash: host %s resolves to non-public ip %s (SSRF guard)", host, ip)
+		}
+	}
+	return nil
+}
+
+// Fetch tải URL, trả lỗi khi vi phạm SSRF guard, status ≠ 200 hoặc body vượt MaxBytes.
 func (f *HTTPFetcher) Fetch(ctx context.Context, url string) ([]byte, error) {
+	if err := f.checkURL(url); err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

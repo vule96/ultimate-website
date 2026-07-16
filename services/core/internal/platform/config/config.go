@@ -54,6 +54,9 @@ type Config struct {
 	BlurhashWorkers      int           // số goroutine worker blurhash
 	BlurhashMaxBytes     int64         // giới hạn size ảnh tải về tính blurhash
 	BlurhashFetchTimeout time.Duration // timeout tải ảnh
+	// BlurhashAllowedHosts: host được phép tải ảnh ngoài host storage
+	// (SSRF guard — host lạ phải resolve ra IP công khai). CSV.
+	BlurhashAllowedHosts []string
 }
 
 // Load đọc cấu hình từ env. DatabaseURL là bắt buộc; các giá trị khác có mặc định.
@@ -150,6 +153,7 @@ func Load() (Config, error) {
 		BlurhashWorkers:      blurhashWorkers,
 		BlurhashMaxBytes:     blurhashMaxBytes,
 		BlurhashFetchTimeout: blurhashFetchTimeout,
+		BlurhashAllowedHosts: splitCSV(os.Getenv("BLURHASH_ALLOWED_HOSTS")),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")
@@ -203,6 +207,29 @@ func getIntEnv(key string, fallback int) (int, error) {
 		return 0, fmt.Errorf("config: %s must be a positive integer, got %q", key, v)
 	}
 	return n, nil
+}
+
+// splitCSV tách chuỗi CSV, bỏ phần tử rỗng/khoảng trắng.
+func splitCSV(s string) []string {
+	var out []string
+	for _, p := range strings.Split(s, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// BlurhashFetchAllowlist trả allowlist host cho fetcher: host của storage
+// public URL (nguồn ảnh chính) + các host khai báo thêm qua env.
+func (c Config) BlurhashFetchAllowlist() []string {
+	hosts := append([]string{}, c.BlurhashAllowedHosts...)
+	if c.StoragePublicURL != "" {
+		if u, err := url.Parse(c.StoragePublicURL); err == nil && u.Hostname() != "" {
+			hosts = append(hosts, u.Hostname())
+		}
+	}
+	return hosts
 }
 
 func getEnv(key, fallback string) string {

@@ -3,6 +3,11 @@ package blurhash_test
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
+	"hash/crc32"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"image"
 	"image/color"
 	"image/png"
@@ -116,5 +121,59 @@ func TestCloseDrainsRemainingJobs(t *testing.T) {
 func TestEncodeRejectsNonImage(t *testing.T) {
 	if _, err := blurhash.Encode([]byte("not an image")); err == nil {
 		t.Fatal("Encode dữ liệu rác phải trả lỗi")
+	}
+}
+
+// bigPNGHeader dựng PNG chỉ có IHDR khai báo kích thước khổng lồ —
+// DecodeConfig đọc được header, nhưng Encode phải chặn trước khi decode pixel.
+func bigPNGHeader(w, h uint32) []byte {
+	var buf bytes.Buffer
+	buf.Write([]byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'})
+	ihdr := make([]byte, 13)
+	binary.BigEndian.PutUint32(ihdr[0:4], w)
+	binary.BigEndian.PutUint32(ihdr[4:8], h)
+	ihdr[8] = 8  // bit depth
+	ihdr[9] = 6  // color type RGBA
+	var length [4]byte
+	binary.BigEndian.PutUint32(length[:], 13)
+	buf.Write(length[:])
+	chunk := append([]byte("IHDR"), ihdr...)
+	buf.Write(chunk)
+	var crc [4]byte
+	binary.BigEndian.PutUint32(crc[:], crc32.ChecksumIEEE(chunk))
+	buf.Write(crc[:])
+	return buf.Bytes()
+}
+
+func TestEncodeRejectsDecompressionBomb(t *testing.T) {
+	if _, err := blurhash.Encode(bigPNGHeader(40000, 40000)); err == nil {
+		t.Fatal("ảnh 40000x40000 phải bị chặn trước khi decode (decompression bomb)")
+	}
+}
+
+func TestFetcherBlocksPrivateIPWhenNotAllowlisted(t *testing.T) {
+	f := blurhash.NewHTTPFetcher(time.Second, 1<<20, nil)
+	if _, err := f.Fetch(context.Background(), "http://127.0.0.1:1/x.png"); err == nil {
+		t.Fatal("host loopback không allowlist phải bị chặn (SSRF guard)")
+	}
+	if _, err := f.Fetch(context.Background(), "file:///etc/passwd"); err == nil {
+		t.Fatal("scheme file:// phải bị chặn")
+	}
+}
+
+func TestFetcherAllowsAllowlistedHost(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("img"))
+	}))
+	defer srv.Close()
+
+	u, _ := url.Parse(srv.URL)
+	f := blurhash.NewHTTPFetcher(time.Second, 1<<20, []string{u.Hostname()})
+	data, err := f.Fetch(context.Background(), srv.URL+"/x.png")
+	if err != nil {
+		t.Fatalf("host trong allowlist phải fetch được: %v", err)
+	}
+	if string(data) != "img" {
+		t.Errorf("data = %q", data)
 	}
 }

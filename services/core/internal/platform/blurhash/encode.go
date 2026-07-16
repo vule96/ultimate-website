@@ -18,8 +18,24 @@ import (
 // maxEdge: blurhash chỉ cần thumbnail — downscale trước khi encode cho rẻ CPU.
 const maxEdge = 64
 
+// Chống decompression bomb: PNG vài KB có thể khai báo 40000×40000 → decode
+// ngốn hàng GB RAM. Check header (DecodeConfig — không decode pixel) trước.
+const (
+	maxDimension = 10000
+	maxPixels    = 25_000_000 // ~25MP
+)
+
 // Encode decode ảnh (jpeg/png/gif/webp) → downscale ≤64px → blurhash 4x3.
 func Encode(data []byte) (string, error) {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return "", fmt.Errorf("blurhash: read image header: %w", err)
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 ||
+		cfg.Width > maxDimension || cfg.Height > maxDimension ||
+		cfg.Width*cfg.Height > maxPixels {
+		return "", fmt.Errorf("blurhash: image dimensions %dx%d exceed limit", cfg.Width, cfg.Height)
+	}
 	img, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return "", fmt.Errorf("blurhash: decode image: %w", err)

@@ -54,7 +54,7 @@ func main() {
 	}
 	log.Info("backfill: bắt đầu", "posts", len(rows))
 
-	fetcher := blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes)
+	fetcher := blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes, cfg.BlurhashFetchAllowlist())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
