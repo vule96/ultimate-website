@@ -14,11 +14,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 
 	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/media"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/posts"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/blurhash"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/cache"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
@@ -94,8 +96,20 @@ func main() {
 
 	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
 	// chưa (anonymous chỉ thấy bài PUBLISHED). Repo bọc cache decorator.
-	postsRepo := posts.NewCachedRepository(posts.NewGormRepository(db), cch, m)
-	postsHandler := posts.NewHandler(posts.NewService(postsRepo), auth.IsAuthenticated(sm))
+	gormRepo := posts.NewGormRepository(db)
+	postsRepo := posts.NewCachedRepository(gormRepo, cch, m)
+
+	// Blurhash worker pool (Slice 9 — goroutine): request chỉ enqueue non-blocking,
+	// N worker nền tải ảnh + tính hash + lưu DB.
+	bhWorker := blurhash.NewWorker(
+		gormRepo,
+		blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes),
+		m, log, cfg.BlurhashWorkers, 256,
+	)
+	postsSvc := posts.NewService(postsRepo).WithBlurhashEnqueuer(func(id uuid.UUID, coverURL string) {
+		bhWorker.Enqueue(blurhash.Job{PostID: id, URL: coverURL})
+	})
+	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm))
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
@@ -171,6 +185,9 @@ func main() {
 	// Metrics server riêng (:METRICS_PORT) — Prometheus scrape nội bộ, kèm pprof khi bật.
 	go metrics.Serve(ctx, cfg.MetricsPort, m, cfg.PprofEnabled, log)
 
+	// Blurhash worker pool chạy nền theo ctx.
+	bhWorker.Start(ctx)
+
 	go func() {
 		log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -186,5 +203,7 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Error("graceful shutdown failed", "err", err)
 	}
+	// Drain job blurhash còn trong queue (tối đa 5s) rồi mới đóng DB.
+	bhWorker.Close(5 * time.Second)
 	_ = sqlDB.Close()
 }
