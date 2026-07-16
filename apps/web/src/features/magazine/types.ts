@@ -32,6 +32,7 @@ export interface ArticleVM {
   dateLabel: string; // dd/mm/yyyy
   readTime: string; // "N phút"
   coverImage: string | null;
+  blurhash: string | null;
   author: string | null;
   views: number | null;
   comments: number | null;

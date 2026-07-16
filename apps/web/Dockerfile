@@ -20,6 +20,7 @@ ENV NEXT_PUBLIC_MEDIA_HOST=$NEXT_PUBLIC_MEDIA_HOST
 ENV NEXT_TELEMETRY_DISABLED=1
 # Build image không có core API: prerender fallback rỗng, ISR chữa lúc runtime.
 ENV BUILD_WITHOUT_API=1
+ENV NEXT_OUTPUT_STANDALONE=1
 RUN pnpm --filter @ultimate/web build
 
 # ── Stage 3: runtime ───────────────────────────────────────────────

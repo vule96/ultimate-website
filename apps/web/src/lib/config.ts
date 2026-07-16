@@ -8,3 +8,6 @@ export const SITE_NAME = "Ultimate website";
 
 export const REVALIDATE = 60;
 export const PAGE_SIZE = 10;
+
+/** Base URL core cho CLIENT (beacon view...) — bắt buộc NEXT_PUBLIC. */
+export const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
