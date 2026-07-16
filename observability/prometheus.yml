@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Core Go service — metrics server riêng cổng 9091 (nội bộ network).
+  - job_name: core
+    static_configs:
+      - targets: ["core:9091"]
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

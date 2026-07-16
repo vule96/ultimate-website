@@ -1,0 +1,90 @@
+# Production stack: postgres + redis + core + web + admin.
+# Chạy:  docker compose -f docker-compose.prod.yml up -d --build
+# Env:   copy .env.prod.example → .env.prod (KHÔNG commit — chứa secret thật).
+# Observability (tuỳ chọn): docker-compose.observability.yml (chung network).
+name: ultimate-prod
+
+networks:
+  ultimate_net:
+    name: ultimate_net
+
+volumes:
+  pg_data:
+  redis_data:
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-blog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.prod}
+      POSTGRES_DB: ${POSTGRES_DB:-blog}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: [ultimate_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blog}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks: [ultimate_net]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  core:
+    build:
+      context: ./services/core
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-blog}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-blog}?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8080:8080"
+      # 9091 (metrics/pprof) KHÔNG publish ra host — chỉ Prometheus trong network scrape.
+    networks: [ultimate_net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_MEDIA_HOST: ${NEXT_PUBLIC_MEDIA_HOST:-}
+    restart: unless-stopped
+    environment:
+      CORE_API_URL: http://core:8080
+    ports:
+      - "3000:3000"
+    networks: [ultimate_net]
+    depends_on: [core]
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        VITE_API_URL: ${ADMIN_API_URL:-http://localhost:8080}
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    networks: [ultimate_net]
+    depends_on: [core]

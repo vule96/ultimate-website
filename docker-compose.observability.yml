@@ -1,0 +1,55 @@
+# Observability stack: Prometheus (metrics) + Loki (logs) + Promtail (ship logs)
+# + Grafana (dashboard). Chạy CHUNG network với stack prod:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.observability.yml up -d
+# Grafana: http://localhost:3001 (admin / xem GRAFANA_ADMIN_PASSWORD, mặc định admin).
+name: ultimate-prod
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=14d
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prom_data:/prometheus
+    networks: [ultimate_net]
+
+  loki:
+    image: grafana/loki:3.1.0
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - loki_data:/loki
+    networks: [ultimate_net]
+
+  promtail:
+    image: grafana/promtail:3.1.0
+    restart: unless-stopped
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./observability/promtail-config.yml:/etc/promtail/config.yml:ro
+      # Đọc log container docker (json-file driver mặc định).
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [ultimate_net]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    networks: [ultimate_net]
+    depends_on: [prometheus, loki]
+
+volumes:
+  prom_data:
+  loki_data:
+  grafana_data:
