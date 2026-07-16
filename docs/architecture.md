@@ -1,6 +1,10 @@
 # Kiến trúc & Vận hành — ultimate-website
 
-> Cập nhật: 2026-07-16 · Phản ánh **đúng những gì codebase đang có và cách nó thực sự chạy** (sau Phase 1 + hardening 5a–5e + Slice 6–7 trang chủ "Mạch" + Slice 8 i18n vi/en).
+> Cập nhật: 2026-07-16 · Phản ánh **đúng những gì codebase đang có và cách nó thực sự chạy** (sau Phase 1 + hardening 5a–5e + Slice 6–8 UI Mạch/i18n + Slice 9 BE production-readiness + Slice 10 FE images).
+>
+> **Slice 9 (core):** logging production (reqlog route/ip/ua/bytes, 5xx=ERROR, panic→slog, `LOG_LEVEL`); **Prometheus metrics** server riêng `:9091` (+pprof gated) — http/DB pool/cache/outbox/views/blurhash; **Redis cache-aside** (`platform/cache`, decorator `NewCachedRepository`) cho read công khai, invalidation **key-versioning** (`INCR posts:ver` O(1)), Redis chết → fallback DB; env fail-fast + `Config.LogValue` redact; **goroutine**: `platform/blurhash` worker pool (enqueue non-blocking khi cover đổi; SSRF guard tầng dial + chặn decompression bomb; backfill errgroup) + `posts.ViewCounter` batch (`POST /posts/:id/view` → channel → flush ticker/ngưỡng/shutdown); Docker: core distroless, web Next standalone (`BUILD_WITHOUT_API` + `buildSafe`), admin nginx; `docker-compose.prod.yml` + `docker-compose.observability.yml` (Prometheus/Grafana `:3001`/Loki/Promtail).
+>
+> **Slice 10 (web):** `CoverImage` (aspect reserve → CLS 0) + `BlurhashCanvas` placeholder; images AVIF/WebP + sizes/priority/quality; "Top xem nhiều" dùng `views` thật (`sort=views`); `ViewTracker` beacon (CSP `connect-src` qua `NEXT_PUBLIC_API_URL`).
 > Bản xem đẹp (Artifact, sáng/tối, sơ đồ): `https://claude.ai/code/artifact/52ff8b32-c745-43be-a23e-d3b1717fa57d`
 > Tài liệu định hướng/đánh giá gốc: `docs/personal-blog-ai-analysis.md`. Tiến độ + issue tracker: `CLAUDE.md`, `docs/reviews/2026-07-11-senior-code-review.md`.
 > Phần **AI (Phase 2)** là **kế hoạch — CHƯA xây**, được đánh dấu rõ ở §9.

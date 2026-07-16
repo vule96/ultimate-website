@@ -1,22 +1,25 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { listAllPublished } from "@/features/posts/api";
+import { listAllPublished, listTopViewed } from "@/features/posts/api";
 import { buildSafe } from "@/features/posts/build-safe";
-import { postsToArticleVMs } from "@/features/magazine/lib/article-vm";
+import { postsToArticleVMs, type ArticleVMLabels } from "@/features/magazine/lib/article-vm";
 import { MagazineBoard } from "@/features/magazine/components/magazine-board";
 
 export const revalidate = 60;
 
 export default async function HomePage({ params }: { params: { locale: string } }) {
   setRequestLocale(params.locale);
-  const [posts, t] = await Promise.all([
+  const [posts, top, t] = await Promise.all([
     buildSafe(() => listAllPublished(), []),
+    buildSafe(() => listTopViewed(5), []),
     getTranslations(),
   ]);
-  const articles = postsToArticleVMs(posts, {
+  const labels: ArticleVMLabels = {
     category: (key) => t(`categories.${key}`),
     readTime: (minutes) => t("list.readTime", { minutes }),
-  });
-  // Top xem nhiều: backend chưa có `views` → tạm lấy 5 bài mới nhất.
-  const topViewed = articles.slice(0, 5);
+  };
+  const articles = postsToArticleVMs(posts, labels);
+  // Top xem nhiều: views thật từ core (sort=views) — fallback 5 bài mới nhất
+  // khi chưa có dữ liệu (build không API / DB mới).
+  const topViewed = top.length > 0 ? postsToArticleVMs(top, labels) : articles.slice(0, 5);
   return <MagazineBoard articles={articles} topViewed={topViewed} />;
 }

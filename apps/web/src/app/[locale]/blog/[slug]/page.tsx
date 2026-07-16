@@ -1,11 +1,12 @@
-import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getPublishedBySlug, listAllPublished } from "@/features/posts/api";
 import { buildPostMetadata } from "@/features/posts/metadata";
+import { CoverImage } from "@/features/posts/components/cover-image";
 import { PostContent } from "@/features/posts/components/post-content";
+import { ViewTracker } from "@/features/posts/components/view-tracker";
 import { TagBadge } from "@/features/posts/components/tag-badge";
 import { ReadingProgress } from "@/features/posts/components/reading-progress";
 import { formatDate, readingTime } from "@/lib/format";
@@ -106,16 +107,19 @@ export default async function BlogPostPage({
           <hr className="mt-8" />
 
           {post.cover_image ? (
-            <Image
+            // CoverImage: khung aspect reserve chỗ trước khi ảnh về (CLS = 0),
+            // blurhash placeholder hiện tức thì, ảnh thật fade-in.
+            <CoverImage
               src={post.cover_image}
               alt={post.title}
-              width={1200}
-              height={630}
+              hash={post.cover_blurhash}
               priority
               sizes="(max-width: 42rem) 100vw, 42rem"
-              className="mt-8 w-full rounded-2xl border border-border object-cover shadow-[var(--shadow-card)]"
+              className="mt-8 rounded-2xl border border-border shadow-[var(--shadow-card)]"
             />
           ) : null}
+
+          <ViewTracker postId={post.id} />
 
           <div className="mt-8">
             <PostContent html={post.content_html} />

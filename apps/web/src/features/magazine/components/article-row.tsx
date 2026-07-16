@@ -3,6 +3,7 @@ import Image from "next/image";
 import { m } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Star } from "lucide-react";
+import { BlurhashCanvas } from "@/features/posts/components/blurhash-canvas";
 import type { ArticleVM } from "../types";
 import { formatViews } from "../lib/format";
 
@@ -31,7 +32,18 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
         style={{ backgroundColor: article.color }}
       >
         {article.coverImage && (
-          <Image src={article.coverImage} alt="" fill sizes="132px" className="object-cover" />
+          <>
+            <BlurhashCanvas hash={article.blurhash} />
+            <Image
+              src={article.coverImage}
+              alt=""
+              fill
+              sizes="132px"
+              quality={75}
+              priority={index < 2}
+              className="object-cover"
+            />
+          </>
         )}
         <span className="absolute -top-[10px] right-[5px] font-display text-[58px] font-extrabold leading-none text-white/20">
           {index + 1}

@@ -25,8 +25,9 @@ export function postToArticleVM(post: Post, labels: ArticleVMLabels): ArticleVM 
     dateLabel: formatDate(date),
     readTime: labels.readTime(readMinutesFromHtml(post.content_html)),
     coverImage: post.cover_image,
+    blurhash: post.cover_blurhash,
     author: null,
-    views: null,
+    views: post.views > 0 ? post.views : null, // 0 = chưa có dữ liệu → ẩn mềm
     comments: null,
   };
 }

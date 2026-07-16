@@ -28,6 +28,8 @@ const csp = [
   isProd ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   `img-src ${imgSrc}`,
+  // Beacon đếm view bắn thẳng core API từ client (sendBeacon/fetch).
+  `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"}`,
   "font-src 'self' data:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -36,9 +38,13 @@ const csp = [
 
 const nextConfig = {
   // Docker: gom server + deps tối thiểu vào .next/standalone (image nhỏ).
-  output: "standalone",
+  // CHỈ bật trong Docker build (NEXT_OUTPUT_STANDALONE=1) — trên Windows local,
+  // standalone copy symlink pnpm sẽ EPERM.
+  ...(process.env.NEXT_OUTPUT_STANDALONE === "1" ? { output: "standalone" } : {}),
   transpilePackages: ["@ultimate/ui", "@ultimate/types"],
   images: {
+    // Serve AVIF/WebP khi browser hỗ trợ — nhẹ hơn JPEG 30–60%.
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },

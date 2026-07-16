@@ -14,6 +14,7 @@
   "dependencies": {
     "@ultimate/types": "workspace:*",
     "@ultimate/ui": "workspace:*",
+    "blurhash": "^2.0.5",
     "framer-motion": "^12.42.2",
     "lucide-react": "^0.469.0",
     "next": "^14.2.15",
