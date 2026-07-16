@@ -22,6 +22,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/metrics"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/outbox"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
@@ -60,6 +61,10 @@ func main() {
 	sqlDB.SetMaxOpenConns(10)
 	sqlDB.SetMaxIdleConns(5)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+
+	// Prometheus metrics (registry riêng) + theo dõi pool DB.
+	m := metrics.New()
+	m.RegisterDBStats(sqlDB)
 
 	// Session manager (scs + Postgres).
 	sm := session.New(sqlDB, session.Config{
@@ -104,6 +109,7 @@ func main() {
 			gin.H{"error": gin.H{"code": "INTERNAL", "message": "internal error"}})
 	}))
 	r.Use(reqlog.Middleware(log))
+	r.Use(m.GinMiddleware())
 	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
 	r.Use(bodylimit.Middleware(cfg.MaxBodyBytes))
 
@@ -145,8 +151,11 @@ func main() {
 
 	// Outbox dispatcher (chuẩn bị Phase 2): poll event chưa xử lý, handler hiện
 	// tại chỉ log. Dừng theo ctx shutdown — event còn lại nằm trong DB, không mất.
-	dispatcher := outbox.NewDispatcher(db, outbox.LogHandler{Log: log}, log, 10*time.Second)
+	dispatcher := outbox.NewDispatcher(db, outbox.LogHandler{Log: log}, log, 10*time.Second).WithObserver(m)
 	go dispatcher.Run(ctx)
+
+	// Metrics server riêng (:METRICS_PORT) — Prometheus scrape nội bộ, kèm pprof khi bật.
+	go metrics.Serve(ctx, cfg.MetricsPort, m, cfg.PprofEnabled, log)
 
 	go func() {
 		log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)
