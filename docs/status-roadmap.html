@@ -231,13 +231,13 @@
   <section class="tiles" aria-label="Tình trạng hiện tại">
     <div class="tile">
       <span class="k">Slice hoàn tất</span>
-      <span class="v mono">12</span>
-      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–8</span>
+      <span class="v mono">14</span>
+      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–10</span>
     </div>
     <div class="tile">
       <span class="k">Test xanh</span>
-      <span class="v mono">112</span>
-      <span class="sub">web 70 · admin 39 · ui 3 · core ✓</span>
+      <span class="v mono">119</span>
+      <span class="sub">web 77 · admin 39 · ui 3 · core ✓</span>
     </div>
     <div class="tile">
       <span class="k">Trang chủ "Mạch"</span>
@@ -329,6 +329,24 @@
         </div>
       </div>
 
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="line"></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 9 — BE production-readiness</span><span class="chip">done</span></div>
+          <p class="step-desc">Logging production (route/ip/ua/bytes, 5xx=ERROR, panic→slog) + <b>Prometheus metrics</b> server riêng :9091 + <b>Grafana/Loki/Promtail</b> (dashboard provisioned). <b>Redis cache-aside key-versioning</b> (write bump version O(1); Redis chết → fallback DB). 2 bài học <b>goroutine</b>: blurhash worker pool (channel + SSRF guard tầng dial + chặn decompression bomb) và view counter batch (channel → gom → flush). <b>Docker multi-stage</b>: core distroless ~95MB, web Next standalone, admin nginx; compose prod + observability. Verify trên stack prod thật (9 container).</p>
+          <div class="tags"><span class="tag">Prometheus</span><span class="tag">Grafana + Loki</span><span class="tag">Redis</span><span class="tag">goroutine</span><span class="tag">distroless</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 10 — FE image + blurhash</span><span class="chip new">mới</span></div>
+          <p class="step-desc"><b>CLS = 0</b> blog detail: <span class="mono">CoverImage</span> khung aspect reserve chỗ + <span class="mono">BlurhashCanvas</span> placeholder hiện tức thì, ảnh fade-in; thumbnail rows cùng cơ chế. Image optimize: AVIF/WebP, <span class="mono">sizes</span> đúng khung, <span class="mono">priority</span> LCP, quality 75. <b>"Top xem nhiều" dùng views thật</b> (sort=views) + <span class="mono">ViewTracker</span> beacon đếm view.</p>
+          <div class="tags"><span class="tag">blurhash</span><span class="tag">CLS 0</span><span class="tag">AVIF/WebP</span><span class="tag">views thật</span></div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -344,6 +362,8 @@
         <div class="row"><span class="label">DB</span><span class="val">Postgres 16 + pgvector</span></div>
         <div class="row"><span class="label">Auth</span><span class="val">Google OAuth (BFF) + scs</span></div>
         <div class="row"><span class="label">Robustness</span><span class="val">Optimistic lock · outbox · healthz</span></div>
+        <div class="row"><span class="label">Cache</span><span class="val">Redis · key-versioning · fallback DB</span></div>
+        <div class="row"><span class="label">Observability</span><span class="val">Prometheus · Grafana · Loki</span></div>
       </div>
       <div class="card">
         <span class="card-k">Frontend & monorepo</span>
@@ -420,7 +440,7 @@
   </section>
 
   <footer>
-    <span>Ultimate website · Phase 1 + Hardening + Slice 6–8 (UI Mạch · i18n · responsive)</span>
+    <span>Ultimate website · Phase 1 + Hardening + Slice 6–10 (UI Mạch · i18n · prod-readiness · images)</span>
     <span class="mono">Cập nhật 2026-07-16</span>
   </footer>
 
