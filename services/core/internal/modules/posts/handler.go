@@ -22,6 +22,13 @@ import (
 type Handler struct {
 	svc    *Service
 	authed func(ctx context.Context) bool // request hiện tại đã đăng nhập admin chưa
+	views  *ViewCounter                   // optional — đếm view batch (Slice 9)
+}
+
+// WithViewCounter gắn view counter (chainable, optional).
+func (h *Handler) WithViewCounter(vc *ViewCounter) *Handler {
+	h.views = vc
+	return h
 }
 
 // NewHandler tạo Handler từ Service và checker đăng nhập (vd auth.IsAuthenticated(sm)).
@@ -36,6 +43,9 @@ func (h *Handler) RegisterRoutes(rg gin.IRouter, protectedMW ...gin.HandlerFunc)
 	rg.GET("/posts", h.list)
 	rg.GET("/posts/:slug", h.getBySlug)
 	rg.GET("/tags", h.listTags)
+	// Đếm view: public, không body — handler chỉ đẩy id vào channel rồi trả 202
+	// ngay (KHÔNG chạm DB trong request path; flush batch ở ViewCounter).
+	rg.POST("/posts/:slug/view", h.view)
 
 	protected := rg.Group("", protectedMW...)
 	// Aggregate endpoints tách namespace /stats — tránh route tĩnh che slug bài viết (M3).
@@ -289,6 +299,21 @@ func respondError(c *gin.Context, err error) {
 		reqlog.From(c.Request.Context()).Error("request failed", "err", err)
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "internal server error")
 	}
+}
+
+// view ghi nhận 1 lượt xem. Param là POST ID (uuid) — gin bắt buộc trùng tên
+// param với route /posts/:slug nên tên là :slug nhưng giá trị là id.
+// Trả 202 Accepted: view được gom batch, không ghi DB ngay.
+func (h *Handler) view(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("slug"))
+	if err != nil {
+		httperr.Write(c, http.StatusBadRequest, "INVALID_ID", "post id must be a valid uuid")
+		return
+	}
+	if h.views != nil {
+		h.views.Add(id)
+	}
+	c.Status(http.StatusAccepted)
 }
 
 func toResponse(p Post) postResponse {

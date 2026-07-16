@@ -109,7 +109,10 @@ func main() {
 	postsSvc := posts.NewService(postsRepo).WithBlurhashEnqueuer(func(id uuid.UUID, coverURL string) {
 		bhWorker.Enqueue(blurhash.Job{PostID: id, URL: coverURL})
 	})
-	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm))
+	// View counter batch (Slice 9 — goroutine): gom view trong channel,
+	// flush xuống DB theo chu kỳ/ngưỡng; shutdown flush nốt.
+	viewCounter := posts.NewViewCounter(gormRepo, m, log, cfg.ViewBufferSize, cfg.ViewFlushInterval)
+	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm)).WithViewCounter(viewCounter)
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
@@ -185,8 +188,9 @@ func main() {
 	// Metrics server riêng (:METRICS_PORT) — Prometheus scrape nội bộ, kèm pprof khi bật.
 	go metrics.Serve(ctx, cfg.MetricsPort, m, cfg.PprofEnabled, log)
 
-	// Blurhash worker pool chạy nền theo ctx.
+	// Blurhash worker pool + view counter chạy nền theo ctx.
 	bhWorker.Start(ctx)
+	go viewCounter.Run(ctx)
 
 	go func() {
 		log.Info("core service listening", "port", cfg.Port, "env", cfg.AppEnv)
