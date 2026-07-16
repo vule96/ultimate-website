@@ -19,6 +19,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/media"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/posts"
+	"github.com/vule96/ultimate-website/services/core/internal/platform/cache"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/database"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/logger"
@@ -79,9 +80,22 @@ func main() {
 	authSvc := auth.NewService(provider, allowlist)
 	authHandler := auth.NewHandler(authSvc, sm, cfg.AppBaseURL)
 
+	// Cache Redis (cache-aside, key-versioning). REDIS_URL rỗng → no-op (cache tắt).
+	var cch cache.Cache = cache.NewNoop()
+	if cfg.RedisURL != "" {
+		rc, err := cache.NewRedis(cfg.RedisURL, log)
+		if err != nil {
+			log.Warn("cache: REDIS_URL không hợp lệ — chạy không cache", "err", err)
+		} else {
+			cch = rc
+			log.Info("cache: redis enabled")
+		}
+	}
+
 	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
-	// chưa (anonymous chỉ thấy bài PUBLISHED).
-	postsHandler := posts.NewHandler(posts.NewService(posts.NewGormRepository(db)), auth.IsAuthenticated(sm))
+	// chưa (anonymous chỉ thấy bài PUBLISHED). Repo bọc cache decorator.
+	postsRepo := posts.NewCachedRepository(posts.NewGormRepository(db), cch, m)
+	postsHandler := posts.NewHandler(posts.NewService(postsRepo), auth.IsAuthenticated(sm))
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
