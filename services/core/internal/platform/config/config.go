@@ -3,6 +3,8 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -40,6 +42,18 @@ type Config struct {
 	// Giới hạn body request (M4). Ảnh không đi qua core (presigned PUT) nên
 	// 2 MiB thoải mái cho content_html bài dài.
 	MaxBodyBytes int64
+
+	// Observability & workers (Slice 9)
+	LogLevel     string // debug | info | warn | error
+	MetricsPort  string // cổng HTTP /metrics (+ pprof nếu bật)
+	PprofEnabled bool   // bật /debug/pprof trên metrics server
+	RedisURL     string // rỗng = cache tắt (no-op)
+
+	ViewFlushInterval    time.Duration // chu kỳ flush view counter
+	ViewBufferSize       int           // buffer channel view counter
+	BlurhashWorkers      int           // số goroutine worker blurhash
+	BlurhashMaxBytes     int64         // giới hạn size ảnh tải về tính blurhash
+	BlurhashFetchTimeout time.Duration // timeout tải ảnh
 }
 
 // Load đọc cấu hình từ env. DatabaseURL là bắt buộc; các giá trị khác có mặc định.
@@ -68,6 +82,38 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
+	// Slice 9 — observability & workers (fail-fast khi env rác)
+	pprofEnabled, err := getBoolEnv("PPROF_ENABLED", appEnv != "production")
+	if err != nil {
+		return Config{}, err
+	}
+	viewFlushInterval, err := getDurationEnv("VIEW_FLUSH_INTERVAL", 5*time.Second)
+	if err != nil {
+		return Config{}, err
+	}
+	viewBufferSize, err := getIntEnv("VIEW_BUFFER_SIZE", 1024)
+	if err != nil {
+		return Config{}, err
+	}
+	blurhashWorkers, err := getIntEnv("BLURHASH_WORKERS", 3)
+	if err != nil {
+		return Config{}, err
+	}
+	blurhashMaxBytes, err := getInt64Env("BLURHASH_MAX_BYTES", 10<<20)
+	if err != nil {
+		return Config{}, err
+	}
+	blurhashFetchTimeout, err := getDurationEnv("BLURHASH_FETCH_TIMEOUT", 10*time.Second)
+	if err != nil {
+		return Config{}, err
+	}
+	logLevel := strings.ToLower(strings.TrimSpace(getEnv("LOG_LEVEL", "info")))
+	switch logLevel {
+	case "debug", "info", "warn", "error":
+	default:
+		return Config{}, fmt.Errorf("config: LOG_LEVEL must be debug|info|warn|error, got %q", logLevel)
+	}
+
 	cfg := Config{
 		AppEnv:      appEnv,
 		Port:        getEnv("PORT", "8080"),
@@ -93,6 +139,17 @@ func Load() (Config, error) {
 		StoragePresignExpires: presignExpires,
 
 		MaxBodyBytes: maxBodyBytes,
+
+		LogLevel:     logLevel,
+		MetricsPort:  getEnv("METRICS_PORT", "9091"),
+		PprofEnabled: pprofEnabled,
+		RedisURL:     os.Getenv("REDIS_URL"),
+
+		ViewFlushInterval:    viewFlushInterval,
+		ViewBufferSize:       viewBufferSize,
+		BlurhashWorkers:      blurhashWorkers,
+		BlurhashMaxBytes:     blurhashMaxBytes,
+		BlurhashFetchTimeout: blurhashFetchTimeout,
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")
@@ -106,6 +163,47 @@ func Load() (Config, error) {
 
 // IsProduction cho biết có đang chạy ở môi trường production hay không.
 func (c Config) IsProduction() bool { return c.AppEnv == "production" }
+
+// LogValue in config lúc boot mà KHÔNG leak secret (slog.LogValuer).
+// Secret (password DB/Redis, client secret, storage key) bị redact — chỉ giữ host.
+func (c Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("env", c.AppEnv),
+		slog.String("port", c.Port),
+		slog.String("db", redactURL(c.DatabaseURL)),
+		slog.String("redis", redactURL(c.RedisURL)),
+		slog.String("metrics_port", c.MetricsPort),
+		slog.Bool("pprof", c.PprofEnabled),
+		slog.String("log_level", c.LogLevel),
+		slog.String("storage_bucket", c.StorageBucket),
+		slog.Bool("auth_configured", c.GoogleClientID != "" && c.AdminAllowlist != ""),
+	)
+}
+
+// redactURL giữ scheme+host để nhận diện môi trường, che credential/path/query.
+func redactURL(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "<invalid>"
+	}
+	u.User = nil
+	return u.Scheme + "://" + u.Host
+}
+
+func getIntEnv(key string, fallback int) (int, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback, nil
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		return 0, fmt.Errorf("config: %s must be a positive integer, got %q", key, v)
+	}
+	return n, nil
+}
 
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {

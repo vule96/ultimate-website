@@ -37,7 +37,7 @@ func main() {
 		panic(err)
 	}
 
-	log := logger.New(cfg.IsProduction())
+	log := logger.New(cfg.IsProduction(), cfg.LogLevel)
 
 	db, err := database.Open(cfg.DatabaseURL, cfg.IsProduction())
 	if err != nil {
