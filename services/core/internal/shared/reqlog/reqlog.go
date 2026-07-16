@@ -31,12 +31,30 @@ func Middleware(base *slog.Logger) gin.HandlerFunc {
 		start := time.Now()
 		c.Next()
 
-		l.Info("request",
+		// route = template ("/posts/:slug") thay vì raw path — gom log/metrics theo
+		// endpoint, tránh cardinality nổ theo giá trị param.
+		route := c.FullPath()
+		if route == "" {
+			route = "unmatched"
+		}
+		attrs := []any{
 			"method", c.Request.Method,
 			"path", c.Request.URL.Path,
+			"route", route,
 			"status", c.Writer.Status(),
 			"latency_ms", time.Since(start).Milliseconds(),
-		)
+			"ip", c.ClientIP(),
+			"user_agent", c.Request.UserAgent(),
+			"bytes_out", c.Writer.Size(),
+		}
+		if len(c.Errors) > 0 {
+			attrs = append(attrs, "errors", c.Errors.String())
+		}
+		if c.Writer.Status() >= 500 {
+			l.Error("request", attrs...)
+			return
+		}
+		l.Info("request", attrs...)
 	}
 }
 

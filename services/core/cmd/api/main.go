@@ -4,9 +4,11 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -28,6 +30,9 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
 
+// version được inject lúc build: -ldflags "-X main.version=<git sha>".
+var version = "dev"
+
 func main() {
 	// Nạp .env nếu có (dev). Bỏ qua lỗi khi file không tồn tại (prod dùng env thật).
 	_ = godotenv.Load()
@@ -38,6 +43,7 @@ func main() {
 	}
 
 	log := logger.New(cfg.IsProduction(), cfg.LogLevel)
+	log.Info("core service starting", "service", "core", "version", version, "config", cfg)
 
 	db, err := database.Open(cfg.DatabaseURL, cfg.IsProduction())
 	if err != nil {
@@ -89,7 +95,14 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.New()
-	r.Use(gin.Recovery())
+	// Panic → log structured qua slog (kèm stack) + trả JSON envelope thay vì
+	// writer mặc định của Gin (in thẳng stdout không cấu trúc).
+	r.Use(gin.CustomRecoveryWithWriter(io.Discard, func(c *gin.Context, err any) {
+		reqlog.From(c.Request.Context()).Error("panic recovered",
+			"panic", err, "stack", string(debug.Stack()))
+		c.AbortWithStatusJSON(http.StatusInternalServerError,
+			gin.H{"error": gin.H{"code": "INTERNAL", "message": "internal error"}})
+	}))
 	r.Use(reqlog.Middleware(log))
 	r.Use(corsmw.New(strings.Split(cfg.CORSAllowedOrigins, ",")))
 	r.Use(bodylimit.Middleware(cfg.MaxBodyBytes))
