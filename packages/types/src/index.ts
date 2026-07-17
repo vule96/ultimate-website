@@ -40,7 +40,7 @@ export const PostSchema = z.object({
   /** Blurhash của cover — worker nền core tính (Slice 9); null khi chưa có. */
   cover_blurhash: z.string().nullable(),
   /** Meta ảnh trong content (Slice 12): src → {w,h,ph} — ph = placeholder PNG data URI. */
-  content_image_meta: z.record(ImageMetaSchema).nullable(),
+  content_image_meta: z.record(z.string(), ImageMetaSchema).nullable(),
   status: PostStatusSchema,
   meta_title: z.string().nullable(),
   meta_desc: z.string().nullable(),
