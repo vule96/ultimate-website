@@ -1,41 +1,61 @@
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import type { Post } from "@ultimate/types";
 import { formatDate, readingTime } from "@/lib/format";
+import { categoryColorForTag } from "@/features/magazine/categories";
+import { BlurhashCanvas } from "@/features/posts/components/blurhash-canvas";
 
-/** Một mục bài viết trong danh sách — kiểu tạp chí, chữ dẫn đầu. */
+/** Row bài viết kiểu Mạch: thumbnail blurhash + kicker màu category + meta mono. */
 export function PostCard({ post }: { post: Post }) {
   const date = formatDate(post.published_at);
   const mins = readingTime(post.content_html);
   const primaryTag = post.tags[0];
+  const color = primaryTag ? categoryColorForTag(primaryTag) : "var(--accent)";
 
   return (
-    <article className="group py-8 first:pt-0">
-      <Link href={`/blog/${post.slug}`} className="block">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
-          {primaryTag ? (
-            <span className="font-semibold uppercase tracking-wider text-primary">
-              {primaryTag.name}
-            </span>
-          ) : null}
-          {primaryTag && date ? <span aria-hidden className="text-border">•</span> : null}
-          {date ? <time className="text-muted-foreground">{date}</time> : null}
-          <span aria-hidden className="text-border">•</span>
-          <span className="text-muted-foreground">{mins} phút đọc</span>
-        </div>
-
-        <h2 className="mt-2.5 font-serif text-[1.7rem] font-semibold leading-[1.2] tracking-[-0.01em] text-foreground transition-colors group-hover:text-primary">
-          {post.title}
-        </h2>
-
-        {post.excerpt ? (
-          <p className="mt-2.5 max-w-[46rem] leading-relaxed text-muted-foreground">
-            {post.excerpt}
-          </p>
+    <article className="group border-b border-line py-6 last:border-0">
+      <Link href={`/blog/${post.slug}`} className="flex gap-[18px] no-underline">
+        {post.cover_image ? (
+          <div
+            data-thumb
+            className="relative hidden h-[90px] w-[132px] flex-none overflow-hidden rounded-lg sm:block"
+            style={{ backgroundColor: color }}
+          >
+            <BlurhashCanvas hash={post.cover_blurhash} />
+            <Image
+              src={post.cover_image}
+              alt=""
+              fill
+              sizes="132px"
+              quality={75}
+              className="object-cover"
+            />
+          </div>
         ) : null}
 
-        <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          Đọc bài <span aria-hidden>→</span>
-        </span>
+        <div className="min-w-0 flex-1">
+          <div className="mb-[6px] flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10.5px] text-muted">
+            {primaryTag ? (
+              <span className="font-bold uppercase tracking-wide" style={{ color }}>
+                {primaryTag.name}
+              </span>
+            ) : null}
+            {primaryTag && date ? <span aria-hidden>·</span> : null}
+            {date ? <time>{date}</time> : null}
+            <span aria-hidden>·</span>
+            <span>{mins} phút đọc</span>
+          </div>
+
+          <h2 className="font-display text-[20px] font-bold leading-[1.25] tracking-[-0.01em] text-fg transition-colors group-hover:text-accent">
+            {post.title}
+          </h2>
+
+          {post.excerpt ? (
+            <p className="mt-1.5 text-[14px] leading-[1.6] text-muted line-clamp-2">
+              {post.excerpt}
+            </p>
+          ) : null}
+        </div>
       </Link>
     </article>
   );

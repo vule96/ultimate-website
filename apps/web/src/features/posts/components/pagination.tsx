@@ -2,7 +2,7 @@ import { Link } from "@/i18n/navigation";
 import { pageHref } from "../pagination-utils";
 
 const LINK =
-  "card-lift inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-[var(--shadow-card)] hover:text-primary";
+  "inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-fg no-underline transition-colors hover:text-accent";
 
 export function Pagination({
   page,
@@ -15,7 +15,7 @@ export function Pagination({
 }) {
   if (totalPages <= 1) return null;
   return (
-    <nav className="mt-14 flex items-center justify-between border-t pt-8">
+    <nav className="mt-14 flex items-center justify-between border-t border-line pt-8">
       {page > 1 ? (
         <Link href={pageHref(basePath, page - 1)} className={LINK}>
           <span aria-hidden>←</span> Trước
@@ -23,7 +23,7 @@ export function Pagination({
       ) : (
         <span />
       )}
-      <span className="text-sm tabular-nums text-muted-foreground">
+      <span className="font-mono text-[12px] tabular-nums text-muted">
         Trang {page} / {totalPages}
       </span>
       {page < totalPages ? (
