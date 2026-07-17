@@ -19,6 +19,7 @@ const fixture: Post = {
   published_at: "2026-07-12T10:00:00Z",
   version: 1,
   views: 0,
+  content_image_meta: null,
   tags: [{ id: "t" as never, name: "AI", slug: "ai" }],
   created_at: "2026-07-01T00:00:00Z",
   updated_at: "2026-07-12T00:00:00Z",

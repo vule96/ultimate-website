@@ -138,7 +138,7 @@ export default async function BlogPostPage({
           <ViewTracker postId={post.id} />
 
           <div className="mt-8">
-            <PostContent html={post.content_html} />
+            <PostContent html={post.content_html} imageMeta={post.content_image_meta} />
           </div>
         </article>
 

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { renderWithIntl } from "@/test/render-intl";
 import { MagazineBoard } from "./magazine-board";
+import { Masthead } from "./masthead";
 import { useMagazineStore } from "../store/magazine-store";
 import type { ArticleVM } from "../types";
 
@@ -54,8 +55,13 @@ describe("MagazineBoard", () => {
     expect(screen.getByText("Mạng nơ-ron")).toBeInTheDocument();
   });
 
-  it("search lọc danh sách", () => {
-    renderWithIntl(<MagazineBoard articles={articles} topViewed={[]} />);
+  it("search lọc danh sách (Masthead giờ ở layout — render kèm)", () => {
+    renderWithIntl(
+      <>
+        <Masthead />
+        <MagazineBoard articles={articles} topViewed={[]} />
+      </>,
+    );
     fireEvent.change(screen.getByPlaceholderText(/Tìm bài viết/), { target: { value: "go" } });
     expect(screen.getByText("Học Go")).toBeInTheDocument();
     expect(screen.queryByText("Mạng nơ-ron")).not.toBeInTheDocument();

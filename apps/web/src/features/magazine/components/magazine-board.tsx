@@ -9,8 +9,6 @@ import { LazyMotion, MotionConfig } from "framer-motion";
 const loadMotionFeatures = () => import("framer-motion").then((mod) => mod.domAnimation);
 import { CATEGORIES } from "../categories";
 import { useMagazineStore } from "../store/magazine-store";
-import { Masthead } from "./masthead";
-import { SubNav } from "./sub-nav";
 import { CategoryRail } from "./category-rail";
 import { MobileCategoryBar } from "./mobile-category-bar";
 import { NewsletterBox } from "./newsletter-box";
@@ -42,8 +40,6 @@ export function MagazineBoard({
   return (
     <MotionConfig reducedMotion="user">
       <LazyMotion features={loadMotionFeatures} strict>
-        <Masthead />
-        <SubNav />
         <MobileCategoryBar />
         <div className="mx-auto flex max-w-shell">
           <CategoryRail />

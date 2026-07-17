@@ -26,6 +26,7 @@ function makePost(over: Partial<Record<keyof Post, unknown>> = {}): Post {
     published_at: null,
     version: 1,
   cover_blurhash: null,
+  content_image_meta: null,
   views: 0,
     tags: [{ id: "t1", name: "Go", slug: "go" }],
     created_at: "2026-07-07T00:00:00Z",

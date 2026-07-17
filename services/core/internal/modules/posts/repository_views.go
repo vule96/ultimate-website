@@ -2,8 +2,10 @@ package posts
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -32,4 +34,27 @@ func (r *GormRepository) IncrementViews(ctx context.Context, counts map[uuid.UUI
 func (r *GormRepository) SetBlurhash(ctx context.Context, id uuid.UUID, hash string) error {
 	return r.db.WithContext(ctx).Model(&gormPost{}).Where("id = ?", id).
 		UpdateColumn("cover_blurhash", hash).Error
+}
+
+// decodeImageMeta unmarshal cột jsonb content_image_meta (nil/lỗi → nil).
+func decodeImageMeta(raw []byte) map[string]ImageMeta {
+	if len(raw) == 0 {
+		return nil
+	}
+	var m map[string]ImageMeta
+	if err := json.Unmarshal(raw, &m); err != nil {
+		return nil
+	}
+	return m
+}
+
+// SetContentImageMeta lưu meta ảnh content do worker nền tính — 1 cột,
+// không đổi version/updated_at.
+func (r *GormRepository) SetContentImageMeta(ctx context.Context, id uuid.UUID, meta map[string]ImageMeta) error {
+	raw, err := json.Marshal(meta)
+	if err != nil {
+		return err
+	}
+	return r.db.WithContext(ctx).Model(&gormPost{}).Where("id = ?", id).
+		UpdateColumn("content_image_meta", datatypes.JSON(raw)).Error
 }
