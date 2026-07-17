@@ -1,11 +1,18 @@
 import { Link } from "@/i18n/navigation";
 import type { Tag } from "@ultimate/types";
+import { categoryColorForTag } from "@/features/magazine/categories";
 
+/** Chip tag kiểu Mạch: tint màu category (tag không khớp category → accent). */
 export function TagBadge({ tag }: { tag: Tag }) {
+  const color = categoryColorForTag(tag);
   return (
     <Link
       href={`/tags/${tag.slug}`}
-      className="inline-flex items-center rounded-full border border-border bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      className="inline-flex items-center rounded-full px-3 py-1 text-[12px] font-semibold no-underline transition-opacity hover:opacity-75"
+      style={{
+        color,
+        background: `color-mix(in srgb, ${color} var(--tint-strength), transparent)`,
+      }}
     >
       {tag.name}
     </Link>
