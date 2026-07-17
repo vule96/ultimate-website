@@ -4,11 +4,12 @@ package blurhash
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"image"
 	_ "image/gif"  // đăng ký decoder
 	_ "image/jpeg" // đăng ký decoder
-	_ "image/png"  // đăng ký decoder
+	"image/png"
 
 	bh "github.com/buckket/go-blurhash"
 	"golang.org/x/image/draw"
@@ -24,6 +25,62 @@ const (
 	maxDimension = 10000
 	maxPixels    = 25_000_000 // ~25MP
 )
+
+// Meta là kết quả phân tích 1 ảnh content: kích thước thật + blurhash +
+// placeholder PNG data URI render sẵn (nhúng thẳng vào style background của <img>).
+type Meta struct {
+	W              int
+	H              int
+	Blurhash       string
+	PlaceholderPNG string
+}
+
+// EncodeMeta decode 1 lần: dimension (đã qua guard bomb) + blurhash +
+// placeholder PNG 32px data URI.
+func EncodeMeta(data []byte) (Meta, error) {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return Meta{}, fmt.Errorf("blurhash: read image header: %w", err)
+	}
+	if cfg.Width <= 0 || cfg.Height <= 0 ||
+		cfg.Width > maxDimension || cfg.Height > maxDimension ||
+		cfg.Width*cfg.Height > maxPixels {
+		return Meta{}, fmt.Errorf("blurhash: image dimensions %dx%d exceed limit", cfg.Width, cfg.Height)
+	}
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return Meta{}, fmt.Errorf("blurhash: decode image: %w", err)
+	}
+	hash, err := bh.Encode(4, 3, downscale(img))
+	if err != nil {
+		return Meta{}, err
+	}
+	ph, err := renderPlaceholderPNG(hash, cfg.Width, cfg.Height)
+	if err != nil {
+		return Meta{}, err
+	}
+	return Meta{W: cfg.Width, H: cfg.Height, Blurhash: hash, PlaceholderPNG: ph}, nil
+}
+
+// renderPlaceholderPNG decode blurhash ra ảnh nhỏ (cạnh dài 32px, giữ tỉ lệ)
+// rồi encode PNG base64 data URI (~1–2KB).
+func renderPlaceholderPNG(hash string, w, h int) (string, error) {
+	pw, ph := 32, 32
+	if w >= h && h > 0 {
+		ph = max(1, int(float64(32)*float64(h)/float64(w)))
+	} else if w > 0 {
+		pw = max(1, int(float64(32)*float64(w)/float64(h)))
+	}
+	img, err := bh.Decode(hash, pw, ph, 1)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return "", err
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes()), nil
+}
 
 // Encode decode ảnh (jpeg/png/gif/webp) → downscale ≤64px → blurhash 4x3.
 func Encode(data []byte) (string, error) {
