@@ -50,23 +50,20 @@ func main() {
 		log.Error("query posts failed", "err", err)
 		os.Exit(1)
 	}
-	if len(rows) == 0 {
-		log.Info("backfill: không có bài nào cần tính blurhash")
-		return
-	}
-	log.Info("backfill: bắt đầu", "posts", len(rows))
+	// KHÔNG return sớm khi pass 1 rỗng — pass 2 (content) vẫn phải chạy.
+	log.Info("backfill cover: bắt đầu", "posts", len(rows))
 
 	fetcher := blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes, cfg.BlurhashFetchAllowlist())
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
-	g, ctx := errgroup.WithContext(ctx)
+	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(4) // bounded concurrency — tối đa 4 job song song
 
 	var okCount, failCount atomic.Int64
 	for _, r := range rows {
 		g.Go(func() error {
-			data, err := fetcher.Fetch(ctx, r.CoverImage)
+			data, err := fetcher.Fetch(gctx, r.CoverImage)
 			if err != nil {
 				log.Warn("backfill: fetch failed", "id", r.ID, "err", err)
 				failCount.Add(1)
@@ -78,7 +75,7 @@ func main() {
 				failCount.Add(1)
 				return nil
 			}
-			if err := db.WithContext(ctx).Table("posts").Where("id = ?", r.ID).
+			if err := db.WithContext(gctx).Table("posts").Where("id = ?", r.ID).
 				UpdateColumn("cover_blurhash", hash).Error; err != nil {
 				log.Warn("backfill: store failed", "id", r.ID, "err", err)
 				failCount.Add(1)
