@@ -1,0 +1,65 @@
+package readers
+
+import (
+	"context"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+)
+
+func TestUpsertReader_CreateThenUpdate(t *testing.T) {
+	db := newTestDB(t) // helper dùng chung với các module (blog_test) — xem posts test
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	sub := "sub-" + uuid.NewString()
+
+	r1, err := repo.UpsertReader(ctx, sub, "a@example.com", "A")
+	require.NoError(t, err)
+	require.NotEqual(t, uuid.Nil, r1.ID)
+	require.Equal(t, "a@example.com", r1.Email)
+
+	// Upsert lại cùng google_sub → cập nhật email/name, giữ nguyên ID.
+	r2, err := repo.UpsertReader(ctx, sub, "a2@example.com", "A2")
+	require.NoError(t, err)
+	require.Equal(t, r1.ID, r2.ID)
+	require.Equal(t, "a2@example.com", r2.Email)
+	require.Equal(t, "A2", r2.Name)
+}
+
+func TestBookmarks_AddIdempotentListRemove(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	r, _ := repo.UpsertReader(ctx, "sub-"+uuid.NewString(), "b@example.com", "B")
+	post := seedPost(t, db) // helper tạo 1 post hợp lệ (FK) — xem posts test seed
+
+	require.NoError(t, repo.AddBookmark(ctx, r.ID, post))
+	require.NoError(t, repo.AddBookmark(ctx, r.ID, post)) // idempotent, không lỗi
+	ids, err := repo.ListBookmarks(ctx, r.ID)
+	require.NoError(t, err)
+	require.Equal(t, []uuid.UUID{post}, ids)
+
+	require.NoError(t, repo.RemoveBookmark(ctx, r.ID, post))
+	require.NoError(t, repo.RemoveBookmark(ctx, r.ID, post)) // idempotent
+	ids, _ = repo.ListBookmarks(ctx, r.ID)
+	require.Empty(t, ids)
+}
+
+func TestUpsertSubscriber_Idempotent(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	email := uuid.NewString() + "@example.com"
+
+	require.NoError(t, repo.UpsertSubscriber(ctx, email))
+	require.NoError(t, repo.UpsertSubscriber(ctx, email))      // trùng → no-op
+	require.NoError(t, repo.UpsertSubscriber(ctx, "UP"+email)) // citext: khác literal
+}
+
+func TestGetReader_NotFound(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	_, err := repo.GetReader(context.Background(), uuid.New())
+	require.ErrorIs(t, err, ErrReaderNotFound)
+}
