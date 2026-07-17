@@ -2,6 +2,7 @@ package readers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -53,8 +54,15 @@ func TestUpsertSubscriber_Idempotent(t *testing.T) {
 	email := uuid.NewString() + "@example.com"
 
 	require.NoError(t, repo.UpsertSubscriber(ctx, email))
-	require.NoError(t, repo.UpsertSubscriber(ctx, email))      // trùng → no-op
-	require.NoError(t, repo.UpsertSubscriber(ctx, "UP"+email)) // citext: khác literal
+	require.NoError(t, repo.UpsertSubscriber(ctx, email)) // trùng đúng literal → no-op
+
+	// citext case-insensitive dedup: cùng địa chỉ nhưng khác hoa/thường phải
+	// KHÔNG tạo thêm dòng mới — vẫn phải còn đúng 1 dòng cho địa chỉ này.
+	require.NoError(t, repo.UpsertSubscriber(ctx, strings.ToUpper(email)))
+
+	var count int64
+	require.NoError(t, db.Table("subscribers").Where("email = ?", email).Count(&count).Error)
+	require.Equal(t, int64(1), count)
 }
 
 func TestGetReader_NotFound(t *testing.T) {
