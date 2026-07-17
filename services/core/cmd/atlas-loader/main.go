@@ -10,6 +10,7 @@ import (
 	"ariga.io/atlas-provider-gorm/gormschema"
 
 	"github.com/vule96/ultimate-website/services/core/internal/modules/posts"
+	"github.com/vule96/ultimate-website/services/core/internal/modules/readers"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/outbox"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/session"
 )
@@ -19,6 +20,7 @@ func main() {
 	models = append(models, posts.Models()...)
 	models = append(models, session.Models()...)
 	models = append(models, outbox.Models()...)
+	models = append(models, readers.Models()...)
 
 	stmts, err := gormschema.New("postgres").Load(models...)
 	if err != nil {
