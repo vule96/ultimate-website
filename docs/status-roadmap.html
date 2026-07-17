@@ -231,13 +231,13 @@
   <section class="tiles" aria-label="Tình trạng hiện tại">
     <div class="tile">
       <span class="k">Slice hoàn tất</span>
-      <span class="v mono">15</span>
-      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–11</span>
+      <span class="v mono">16</span>
+      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–12</span>
     </div>
     <div class="tile">
       <span class="k">Test xanh</span>
-      <span class="v mono">125</span>
-      <span class="sub">web 83 · admin 39 · ui 3 · core ✓</span>
+      <span class="v mono">129</span>
+      <span class="sub">web 87 · admin 39 · ui 3 · core ✓</span>
     </div>
     <div class="tile">
       <span class="k">Trang chủ "Mạch"</span>
@@ -356,6 +356,15 @@
         </div>
       </div>
 
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 12 — Chrome toàn site + content images</span><span class="chip new">mới</span></div>
+          <p class="step-desc"><b>Masthead + SubNav mọi trang</b> (layout) — search từ trang con tự về trang chủ giữ query. <b>Ảnh trong content_html hết CLS</b>: worker Go parse content, đo kích thước + blurhash → <span class="mono">content_image_meta</span> jsonb (placeholder PNG data URI); web enrich <span class="mono">&lt;img&gt;</span> sau sanitize: <span class="mono">width/height</span> + background placeholder + lazy. Backfill 2 pass.</p>
+          <div class="tags"><span class="tag">chrome toàn site</span><span class="tag">content CLS 0</span><span class="tag">rehype plugin</span><span class="tag">jsonb meta</span></div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -432,11 +441,6 @@
       </div>
       <div class="fu">
         <span class="sev med">TB</span>
-        <span class="txt"><b>Masthead/subnav toàn site</b> <span class="why">— chrome Mạch trên detail/tags mới có footer (masthead nằm trong island trang chủ); cân nhắc nâng thành chrome chung khi làm backend consumer.</span></span>
-        <span class="area">apps/web</span>
-      </div>
-      <div class="fu">
-        <span class="sev med">TB</span>
         <span class="txt"><b>Fix checksum migration Atlas</b> <span class="why">— <span class="mono">20260711204848_add_post_version.sql</span> bị chỉnh tay → <span class="mono">atlas migrate hash</span>. Không cản chạy (schema đã áp), nhưng cản migrate máy mới.</span></span>
         <span class="area">services/core</span>
       </div>
@@ -449,7 +453,7 @@
   </section>
 
   <footer>
-    <span>Ultimate website · Phase 1 + Hardening + Slice 6–11 (UI Mạch · i18n · prod-readiness · images · detail/tags)</span>
+    <span>Ultimate website · Phase 1 + Hardening + Slice 6–12 (UI Mạch · i18n · prod-readiness · images · chrome toàn site)</span>
     <span class="mono">Cập nhật 2026-07-17</span>
   </footer>
 

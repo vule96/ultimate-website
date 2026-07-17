@@ -6,7 +6,9 @@
 >
 > **Slice 10 (web):** `CoverImage` (aspect reserve → CLS 0) + `BlurhashCanvas` placeholder; images AVIF/WebP + sizes/priority/quality; "Top xem nhiều" dùng `views` thật (`sort=views`); `ViewTracker` beacon (CSP `connect-src` qua `NEXT_PUBLIC_API_URL`).
 >
-> **Slice 11 (web):** detail/tags sang chrome Mạch — `/blog/[slug]` editorial (kicker màu category, title display, meta mono kèm views, `.article-body` token Mạch, tag chips tint qua `categoryColorForTag`), `RelatedPosts` (3 bài cùng tag đầu, `pickRelated` thuần), `/tags` chips màu, trang tag/pagination dùng `PostCard` row Mạch (thumbnail blurhash). Đã xoá `.article-kicker/.article-title`. Masthead vẫn chỉ ở trang chủ (island) — nâng toàn site để slice backend consumer.
+> **Slice 11 (web):** detail/tags sang chrome Mạch — `/blog/[slug]` editorial (kicker màu category, title display, meta mono kèm views, `.article-body` token Mạch, tag chips tint qua `categoryColorForTag`), `RelatedPosts` (3 bài cùng tag đầu, `pickRelated` thuần), `/tags` chips màu, trang tag/pagination dùng `PostCard` row Mạch (thumbnail blurhash). Đã xoá `.article-kicker/.article-title`.
+>
+> **Slice 12:** **Masthead + SubNav vào `app/[locale]/layout.tsx`** (chrome mọi trang; SearchBar từ trang con điều hướng về `/` giữ query). **Content images CLS 0**: cột `posts.content_image_meta JSONB` (`{src:{w,h,ph}}`) — worker blurhash nhận thêm `ContentJob` (`ExtractImgSrcs` parse x/net/html + `EncodeMeta` dims/blurhash/placeholder PNG data URI, fetch qua SSRF guard), enqueue khi content đổi + bump cache version; web `rehypeEnrichImages` chạy SAU sanitize trong `sanitizeHtml(html, meta)` — img nhận width/height + background placeholder + lazy/async. Backfill 2 pass (cover + content).
 > Bản xem đẹp (Artifact, sáng/tối, sơ đồ): `https://claude.ai/code/artifact/52ff8b32-c745-43be-a23e-d3b1717fa57d`
 > Tài liệu định hướng/đánh giá gốc: `docs/personal-blog-ai-analysis.md`. Tiến độ + issue tracker: `CLAUDE.md`, `docs/reviews/2026-07-11-senior-code-review.md`.
 > Phần **AI (Phase 2)** là **kế hoạch — CHƯA xây**, được đánh dấu rõ ở §9.
