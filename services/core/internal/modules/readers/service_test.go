@@ -17,7 +17,14 @@ type fakeProvider struct {
 	err     error
 }
 
-func (f fakeProvider) AuthCodeURL(state, verifier string) string { return f.authURL }
+// AuthCodeURL nhúng state vào query để test callback lấy lại được (giống fixture package auth).
+func (f fakeProvider) AuthCodeURL(state, verifier string) string {
+	base := f.authURL
+	if base == "" {
+		base = "https://accounts.google.com/o/oauth2/auth"
+	}
+	return base + "?state=" + state
+}
 func (f fakeProvider) Exchange(ctx context.Context, code, verifier string) (auth.Identity, error) {
 	return f.id, f.err
 }
