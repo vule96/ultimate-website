@@ -195,6 +195,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@types/hast':
+        specifier: ^3.0.5
+        version: 3.0.5
       '@ultimate/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -237,6 +240,9 @@ importers:
       unified:
         specifier: ^11.0.5
         version: 11.0.5
+      unist-util-visit:
+        specifier: ^5.1.0
+        version: 5.1.0
       zustand:
         specifier: ^5.0.14
         version: 5.0.14(@types/react@18.3.31)(react@18.3.1)(use-sync-external-store@1.6.0(react@18.3.1))
