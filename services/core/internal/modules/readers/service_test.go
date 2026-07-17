@@ -1,0 +1,91 @@
+package readers
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
+	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
+)
+
+type fakeProvider struct {
+	id      auth.Identity
+	authURL string
+	err     error
+}
+
+func (f fakeProvider) AuthCodeURL(state, verifier string) string { return f.authURL }
+func (f fakeProvider) Exchange(ctx context.Context, code, verifier string) (auth.Identity, error) {
+	return f.id, f.err
+}
+
+type fakeRepo struct {
+	readers map[string]Reader // key google_sub
+	subs    map[string]bool
+}
+
+func newFakeRepo() *fakeRepo { return &fakeRepo{readers: map[string]Reader{}, subs: map[string]bool{}} }
+func (r *fakeRepo) UpsertReader(_ context.Context, sub, email, name string) (Reader, error) {
+	rd, ok := r.readers[sub]
+	if !ok {
+		rd = Reader{ID: uuid.New(), GoogleSub: sub}
+	}
+	rd.Email, rd.Name = email, name
+	r.readers[sub] = rd
+	return rd, nil
+}
+func (r *fakeRepo) GetReader(_ context.Context, id uuid.UUID) (Reader, error) {
+	for _, rd := range r.readers {
+		if rd.ID == id {
+			return rd, nil
+		}
+	}
+	return Reader{}, ErrReaderNotFound
+}
+func (r *fakeRepo) AddBookmark(context.Context, uuid.UUID, uuid.UUID) error    { return nil }
+func (r *fakeRepo) RemoveBookmark(context.Context, uuid.UUID, uuid.UUID) error { return nil }
+func (r *fakeRepo) ListBookmarks(context.Context, uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+func (r *fakeRepo) UpsertSubscriber(_ context.Context, email string) error {
+	r.subs[email] = true
+	return nil
+}
+
+func TestCompleteLogin_NoAllowlist_UpsertsReader(t *testing.T) {
+	repo := newFakeRepo()
+	svc := NewService(repo, fakeProvider{id: auth.Identity{Email: "x@y.com", EmailVerified: true, Sub: "s1", Name: "X"}})
+	rd, err := svc.CompleteLogin(context.Background(), "code", "st", "st", "vf")
+	require.NoError(t, err)
+	require.Equal(t, "x@y.com", rd.Email)
+	require.Len(t, repo.readers, 1) // ai cũng vào — không allowlist
+}
+
+func TestCompleteLogin_StateMismatch(t *testing.T) {
+	svc := NewService(newFakeRepo(), fakeProvider{})
+	_, err := svc.CompleteLogin(context.Background(), "c", "bad", "want", "vf")
+	require.ErrorIs(t, err, auth.ErrStateMismatch)
+}
+
+func TestCompleteLogin_EmailNotVerified(t *testing.T) {
+	svc := NewService(newFakeRepo(), fakeProvider{id: auth.Identity{Email: "x@y.com", EmailVerified: false, Sub: "s"}})
+	_, err := svc.CompleteLogin(context.Background(), "c", "st", "st", "vf")
+	require.ErrorIs(t, err, auth.ErrEmailNotVerified)
+}
+
+func TestSubscribe_InvalidEmail(t *testing.T) {
+	svc := NewService(newFakeRepo(), fakeProvider{})
+	require.ErrorIs(t, svc.Subscribe(context.Background(), "not-an-email"), ErrInvalidEmail)
+}
+
+func TestSubscribe_Valid(t *testing.T) {
+	repo := newFakeRepo()
+	svc := NewService(repo, fakeProvider{})
+	require.NoError(t, svc.Subscribe(context.Background(), "ok@example.com"))
+	require.True(t, repo.subs["ok@example.com"])
+}
+
+var _ = errors.Is // giữ import errors nếu cần
