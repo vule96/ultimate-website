@@ -44,6 +44,14 @@ const LOOKUP: Record<string, CategoryKey> = CATEGORIES.reduce(
   {} as Record<string, CategoryKey>,
 );
 
+// Màu cho chip 1 tag: khớp category → màu category; không khớp → accent
+// (khác categoryFromTags vốn fallback "news" cho ngữ cảnh phân loại bài).
+export function categoryColorForTag(tag: { name: string; slug: string }): string {
+  const hit = LOOKUP[tag.slug?.toLowerCase()] ?? LOOKUP[tag.name?.toLowerCase()];
+  if (hit && hit !== "all") return CATEGORY_BY_KEY[hit].color;
+  return ACCENT;
+}
+
 export function categoryFromTags(
   tags: ReadonlyArray<{ name: string; slug: string }>,
 ): CategoryKey {

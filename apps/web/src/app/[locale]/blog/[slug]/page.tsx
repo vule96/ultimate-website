@@ -8,7 +8,10 @@ import { CoverImage } from "@/features/posts/components/cover-image";
 import { PostContent } from "@/features/posts/components/post-content";
 import { ViewTracker } from "@/features/posts/components/view-tracker";
 import { TagBadge } from "@/features/posts/components/tag-badge";
+import { RelatedPosts } from "@/features/posts/components/related-posts";
 import { ReadingProgress } from "@/features/posts/components/reading-progress";
+import { categoryFromTags, CATEGORY_BY_KEY } from "@/features/magazine/categories";
+import { formatViews } from "@/features/magazine/lib/format";
 import { formatDate, readingTime } from "@/lib/format";
 import { SITE_URL, SITE_NAME } from "@/lib/config";
 
@@ -59,6 +62,7 @@ export default async function BlogPostPage({
   const date = formatDate(post.published_at);
   const mins = readingTime(post.content_html);
   const primaryTag = post.tags[0];
+  const cat = CATEGORY_BY_KEY[categoryFromTags(post.tags)];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -82,7 +86,7 @@ export default async function BlogPostPage({
       <main className="mx-auto max-w-prose px-5 py-12 sm:py-16">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1.5 font-mono text-[12px] text-muted no-underline transition-colors hover:text-fg"
         >
           <span aria-hidden>←</span> {t("back")}
         </Link>
@@ -90,17 +94,29 @@ export default async function BlogPostPage({
         <article>
           <header className="mt-8">
             {primaryTag ? (
-              <Link href={`/tags/${primaryTag.slug}`} className="article-kicker transition-opacity hover:opacity-75">
+              <Link
+                href={`/tags/${primaryTag.slug}`}
+                className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] no-underline transition-opacity hover:opacity-75"
+                style={{ color: cat.color }}
+              >
                 {primaryTag.name}
               </Link>
             ) : null}
-            <h1 className="article-title mt-3 text-[2.1rem] sm:text-[2.55rem]">{post.title}</h1>
-            <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground">
+            <h1 className="mt-3 font-display text-[2rem] font-black leading-[1.15] tracking-[-0.01em] text-fg [text-wrap:balance] sm:text-[2.6rem]">
+              {post.title}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[11px] text-muted">
               {date ? (
                 <time dateTime={post.published_at ?? undefined}>{date}</time>
               ) : null}
-              {date ? <span aria-hidden className="text-border">•</span> : null}
+              {date ? <span aria-hidden>·</span> : null}
               <span>{t("readMinutes", { minutes: mins })}</span>
+              {post.views > 0 ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{t("views", { count: formatViews(post.views) })}</span>
+                </>
+              ) : null}
             </div>
           </header>
 
@@ -126,10 +142,10 @@ export default async function BlogPostPage({
           </div>
         </article>
 
-        <footer className="mt-14 border-t pt-8">
+        <footer className="mt-14 border-t border-line pt-8">
           {post.tags.length > 0 ? (
             <>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
                 {t("topics")}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -139,10 +155,11 @@ export default async function BlogPostPage({
               </div>
             </>
           ) : null}
+          <RelatedPosts post={post} />
           <div className="mt-8">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-opacity hover:opacity-75"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent no-underline transition-opacity hover:opacity-75"
             >
               <span aria-hidden>←</span> {t("viewAll")}
             </Link>

@@ -231,13 +231,13 @@
   <section class="tiles" aria-label="Tình trạng hiện tại">
     <div class="tile">
       <span class="k">Slice hoàn tất</span>
-      <span class="v mono">14</span>
-      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–10</span>
+      <span class="v mono">15</span>
+      <span class="sub">Phase 1 (1–4) · 5a–5e · 6–11</span>
     </div>
     <div class="tile">
       <span class="k">Test xanh</span>
-      <span class="v mono">119</span>
-      <span class="sub">web 77 · admin 39 · ui 3 · core ✓</span>
+      <span class="v mono">125</span>
+      <span class="sub">web 83 · admin 39 · ui 3 · core ✓</span>
     </div>
     <div class="tile">
       <span class="k">Trang chủ "Mạch"</span>
@@ -347,6 +347,15 @@
         </div>
       </div>
 
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 11 — Redesign detail/tags theo chrome Mạch</span><span class="chip new">mới</span></div>
+          <p class="step-desc"><span class="mono">/blog/[slug]</span> editorial Mạch: kicker màu category, title Roboto 900, meta mono (ngày · phút đọc · <b>lượt xem thật</b>), prose token Mạch, tag chips tint, <b>Bài liên quan</b> (3 bài cùng tag, blurhash). <span class="mono">/tags</span> chips màu category; trang tag: header <span class="mono">#tag</span> màu + đếm bài, <b>PostCard row Mạch</b> (thumbnail blurhash chống CLS). Xoá class theme cũ.</p>
+          <div class="tags"><span class="tag">editorial</span><span class="tag">RelatedPosts</span><span class="tag">category colors</span><span class="tag">row Mạch</span></div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -423,7 +432,7 @@
       </div>
       <div class="fu">
         <span class="sev med">TB</span>
-        <span class="txt"><b>Redesign <span class="mono">/blog/[slug]</span> &amp; <span class="mono">/tags</span> theo chrome Mạch</b> <span class="why">— trang chi tiết + tag chưa mang masthead/typography Mạch (Slice 6 mới làm trang chủ).</span></span>
+        <span class="txt"><b>Masthead/subnav toàn site</b> <span class="why">— chrome Mạch trên detail/tags mới có footer (masthead nằm trong island trang chủ); cân nhắc nâng thành chrome chung khi làm backend consumer.</span></span>
         <span class="area">apps/web</span>
       </div>
       <div class="fu">
@@ -440,8 +449,8 @@
   </section>
 
   <footer>
-    <span>Ultimate website · Phase 1 + Hardening + Slice 6–10 (UI Mạch · i18n · prod-readiness · images)</span>
-    <span class="mono">Cập nhật 2026-07-16</span>
+    <span>Ultimate website · Phase 1 + Hardening + Slice 6–11 (UI Mạch · i18n · prod-readiness · images · detail/tags)</span>
+    <span class="mono">Cập nhật 2026-07-17</span>
   </footer>
 
 </div>

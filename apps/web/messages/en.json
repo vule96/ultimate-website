@@ -69,14 +69,17 @@
     "back": "Articles",
     "readMinutes": "{minutes} min read",
     "topics": "Topics",
-    "viewAll": "View all articles"
+    "viewAll": "View all articles",
+    "related": "Related articles",
+    "views": "{count} views"
   },
   "tagsPage": {
     "kicker": "Topics",
     "title": "Tags",
     "empty": "No tags yet.",
     "metaTitle": "Topics",
-    "metaDesc": "All topics on the blog."
+    "metaDesc": "All topics on the blog.",
+    "count": "{count} articles"
   },
   "footer": {
     "desc": "A knowledge magazine for young people who dare to think — technology, finance, architecture, culture and what's worth reading every day.",

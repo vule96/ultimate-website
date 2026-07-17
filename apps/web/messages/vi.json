@@ -12,8 +12,12 @@
     "explore": "Khám phá",
     "meta": "SỐ 128 · 12.07.2026 · CẬP NHẬT MỖI NGÀY"
   },
-  "search": { "placeholder": "Tìm bài viết, chủ đề, tác giả…" },
-  "rail": { "heading": "Lĩnh vực" },
+  "search": {
+    "placeholder": "Tìm bài viết, chủ đề, tác giả…"
+  },
+  "rail": {
+    "heading": "Lĩnh vực"
+  },
   "sidebar": {
     "trending": "Thịnh hành",
     "topViewed": "Top xem nhiều",
@@ -65,14 +69,17 @@
     "back": "Bài viết",
     "readMinutes": "{minutes} phút đọc",
     "topics": "Chủ đề",
-    "viewAll": "Xem tất cả bài viết"
+    "viewAll": "Xem tất cả bài viết",
+    "related": "Bài liên quan",
+    "views": "{count} lượt xem"
   },
   "tagsPage": {
     "kicker": "Chủ đề",
     "title": "Tags",
     "empty": "Chưa có tag nào.",
     "metaTitle": "Chủ đề",
-    "metaDesc": "Tất cả chủ đề trên blog."
+    "metaDesc": "Tất cả chủ đề trên blog.",
+    "count": "{count} bài viết"
   },
   "footer": {
     "desc": "Tạp chí tri thức cho người trẻ dám nghĩ — công nghệ, tài chính, kiến trúc, văn hoá và những gì đáng đọc mỗi ngày.",
@@ -108,5 +115,7 @@
     "retry": "Thử lại",
     "backHome": "Về trang chủ"
   },
-  "meta": { "description": "Mạch — tạp chí tri thức cho người trẻ." }
+  "meta": {
+    "description": "Mạch — tạp chí tri thức cho người trẻ."
+  }
 }
