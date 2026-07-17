@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithIntl } from "@/test/render-intl";
 import { PostCard } from "./post-card";
 import type { Post } from "@ultimate/types";
 
@@ -25,20 +26,20 @@ const fixture: Post = {
 
 describe("PostCard (row Mạch)", () => {
   it("render title + kicker tag đầu + excerpt", () => {
-    render(<PostCard post={fixture} />);
+    renderWithIntl(<PostCard post={fixture} />);
     expect(screen.getByRole("heading")).toHaveTextContent("Bài mẫu row Mạch");
     expect(screen.getByText("AI")).toBeInTheDocument();
     expect(screen.getByText("Mô tả ngắn cho row")).toBeInTheDocument();
   });
 
   it("có cover → khung thumbnail cố định (chống CLS) + blurhash canvas", () => {
-    const { container } = render(<PostCard post={fixture} />);
+    const { container } = renderWithIntl(<PostCard post={fixture} />);
     expect(container.querySelector("[data-thumb]")).not.toBeNull();
     expect(container.querySelector("canvas")).not.toBeNull();
   });
 
   it("không cover → không có khung thumbnail", () => {
-    const { container } = render(<PostCard post={{ ...fixture, cover_image: null }} />);
+    const { container } = renderWithIntl(<PostCard post={{ ...fixture, cover_image: null }} />);
     expect(container.querySelector("[data-thumb]")).toBeNull();
   });
 });
