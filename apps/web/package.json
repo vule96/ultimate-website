@@ -12,6 +12,7 @@
     "i18n:gen": "tsx scripts/i18n-gen.ts"
   },
   "dependencies": {
+    "@types/hast": "^3.0.5",
     "@ultimate/types": "workspace:*",
     "@ultimate/ui": "workspace:*",
     "blurhash": "^2.0.5",
@@ -26,6 +27,7 @@
     "rehype-stringify": "^10.0.1",
     "type-fest": "^5.8.0",
     "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

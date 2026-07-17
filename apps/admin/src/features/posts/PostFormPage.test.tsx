@@ -58,6 +58,7 @@ const basePost = {
   published_at: null,
   version: 1,
   cover_blurhash: null,
+  content_image_meta: null,
   views: 0,
   tags: [],
   created_at: "2026-07-01T00:00:00Z",

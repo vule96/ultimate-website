@@ -21,6 +21,14 @@ export const TagSchema = z.object({
 });
 export type Tag = z.infer<typeof TagSchema>;
 
+/** Kích thước + placeholder của 1 ảnh trong content_html. */
+export const ImageMetaSchema = z.object({
+  w: z.number().int(),
+  h: z.number().int(),
+  ph: z.string(),
+});
+export type ImageMeta = z.infer<typeof ImageMetaSchema>;
+
 export const PostSchema = z.object({
   id: PostIdSchema,
   title: z.string(),
@@ -31,6 +39,8 @@ export const PostSchema = z.object({
   cover_image: z.string().nullable(),
   /** Blurhash của cover — worker nền core tính (Slice 9); null khi chưa có. */
   cover_blurhash: z.string().nullable(),
+  /** Meta ảnh trong content (Slice 12): src → {w,h,ph} — ph = placeholder PNG data URI. */
+  content_image_meta: z.record(ImageMetaSchema).nullable(),
   status: PostStatusSchema,
   meta_title: z.string().nullable(),
   meta_desc: z.string().nullable(),

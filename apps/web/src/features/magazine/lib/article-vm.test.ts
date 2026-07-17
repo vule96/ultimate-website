@@ -22,6 +22,7 @@ const base: Post = {
   published_at: "2026-07-12T10:00:00Z",
   version: 1,
   cover_blurhash: null,
+  content_image_meta: null,
   views: 0,
   tags: [{ id: "t" as never, name: "AI", slug: "ai" }],
   created_at: "2026-07-01T00:00:00Z",
