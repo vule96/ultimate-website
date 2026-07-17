@@ -48,16 +48,26 @@ type Post struct {
 	CoverImage  *string
 	// CoverBlurhash do worker nền tính từ CoverImage (Slice 9) — nil khi chưa có.
 	CoverBlurhash *string
-	Status        PostStatus
-	MetaTitle     *string
-	MetaDesc      *string
-	PublishedAt   *time.Time
-	Version       int64
+	// ContentImageMeta: map src → {w,h,ph} cho ảnh trong ContentHTML (Slice 12,
+	// worker nền tính) — nil khi chưa có. ph = placeholder PNG data URI.
+	ContentImageMeta map[string]ImageMeta
+	Status           PostStatus
+	MetaTitle        *string
+	MetaDesc         *string
+	PublishedAt      *time.Time
+	Version          int64
 	// Views cộng dồn bởi ViewCounter batch (Slice 9).
 	Views     int64
 	Tags      []Tag
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// ImageMeta là kích thước + placeholder của 1 ảnh trong content.
+type ImageMeta struct {
+	W  int    `json:"w"`
+	H  int    `json:"h"`
+	Ph string `json:"ph"` // placeholder PNG data URI
 }
 
 // Các lỗi domain (tầng ngoài dùng errors.Is để map sang HTTP).

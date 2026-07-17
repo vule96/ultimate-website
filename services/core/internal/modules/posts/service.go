@@ -85,6 +85,8 @@ type Service struct {
 	// enqueueBlurhash đẩy job tính blurhash cho cover (worker nền, Slice 9).
 	// nil = tính năng tắt. KHÔNG blocking — impl là channel send non-blocking.
 	enqueueBlurhash func(id uuid.UUID, coverURL string)
+	// enqueueContentMeta đẩy job tính meta ảnh trong content (Slice 12).
+	enqueueContentMeta func(id uuid.UUID, contentHTML string)
 }
 
 // NewService tạo Service với đồng hồ mặc định time.Now.
@@ -96,6 +98,21 @@ func NewService(repo Repository) *Service {
 func (s *Service) WithBlurhashEnqueuer(fn func(id uuid.UUID, coverURL string)) *Service {
 	s.enqueueBlurhash = fn
 	return s
+}
+
+// WithContentMetaEnqueuer gắn hook enqueue meta ảnh content (chainable, optional).
+func (s *Service) WithContentMetaEnqueuer(fn func(id uuid.UUID, contentHTML string)) *Service {
+	s.enqueueContentMeta = fn
+	return s
+}
+
+// maybeEnqueueContentMeta đẩy job khi content đổi và không rỗng — worker tự
+// bỏ qua nếu không có ảnh (parse rẻ).
+func (s *Service) maybeEnqueueContentMeta(p *Post, oldContent string) {
+	if s.enqueueContentMeta == nil || p.ContentHTML == "" || p.ContentHTML == oldContent {
+		return
+	}
+	s.enqueueContentMeta(p.ID, p.ContentHTML)
 }
 
 // maybeEnqueueBlurhash đẩy job khi cover mới non-empty và khác cover cũ.
@@ -150,6 +167,7 @@ func (s *Service) Create(ctx context.Context, in CreateInput) (*Post, error) {
 		return nil, err
 	}
 	s.maybeEnqueueBlurhash(p, nil)
+	s.maybeEnqueueContentMeta(p, "")
 	return p, nil
 }
 
@@ -159,8 +177,9 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 	if err != nil {
 		return nil, err
 	}
-	// Giữ cover cũ trước khi ghi đè — quyết định có cần tính lại blurhash không.
+	// Giữ cover + content cũ trước khi ghi đè — quyết định có cần tính lại meta không.
 	existingCoverBeforeUpdate := existing.CoverImage
+	existingContentBeforeUpdate := existing.ContentHTML
 
 	title := strings.TrimSpace(in.Title)
 	if title == "" {
@@ -206,6 +225,7 @@ func (s *Service) Update(ctx context.Context, id uuid.UUID, in UpdateInput) (*Po
 		return nil, err
 	}
 	s.maybeEnqueueBlurhash(existing, oldCover)
+	s.maybeEnqueueContentMeta(existing, existingContentBeforeUpdate)
 	return existing, nil
 }
 

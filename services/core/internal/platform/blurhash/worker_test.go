@@ -177,3 +177,58 @@ func TestFetcherAllowsAllowlistedHost(t *testing.T) {
 		t.Errorf("data = %q", data)
 	}
 }
+
+type fakeContentStore struct {
+	mu   sync.Mutex
+	got  map[uuid.UUID]map[string]blurhash.Meta
+	done chan struct{}
+}
+
+func newFakeContentStore() *fakeContentStore {
+	return &fakeContentStore{got: map[uuid.UUID]map[string]blurhash.Meta{}, done: make(chan struct{}, 4)}
+}
+
+func (s *fakeContentStore) SetContentImageMeta(_ context.Context, id uuid.UUID, meta map[string]blurhash.Meta) error {
+	s.mu.Lock()
+	s.got[id] = meta
+	s.mu.Unlock()
+	s.done <- struct{}{}
+	return nil
+}
+
+func TestWorkerProcessesContentJob(t *testing.T) {
+	store := newFakeStore()
+	cs := newFakeContentStore()
+	bumped := make(chan struct{}, 1)
+	w := blurhash.NewWorker(store, fakeFetcher{png4x4(t)}, metrics.New(), slog.Default(), 1, 4).
+		WithContentStore(cs, func(context.Context) { bumped <- struct{}{} })
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	w.Start(ctx)
+
+	id := uuid.New()
+	html := `<img src="https://a/1.png"><img src="https://a/2.png">`
+	if !w.Enqueue(blurhash.Job{PostID: id, ContentHTML: html}) {
+		t.Fatal("enqueue content job phải OK")
+	}
+	select {
+	case <-cs.done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout chờ content meta")
+	}
+	cs.mu.Lock()
+	meta := cs.got[id]
+	cs.mu.Unlock()
+	if len(meta) != 2 {
+		t.Fatalf("meta có %d entry, want 2", len(meta))
+	}
+	m := meta["https://a/1.png"]
+	if m.W != 4 || m.H != 4 || m.PlaceholderPNG == "" {
+		t.Errorf("meta sai: %+v", m)
+	}
+	select {
+	case <-bumped:
+	case <-time.After(time.Second):
+		t.Error("afterContentSet (bump cache) phải được gọi")
+	}
+}

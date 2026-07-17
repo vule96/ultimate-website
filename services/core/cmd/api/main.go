@@ -37,6 +37,18 @@ import (
 // version được inject lúc build: -ldflags "-X main.version=<git sha>".
 var version = "dev"
 
+// contentMetaStore adapter blurhash.Meta → posts.ImageMeta (blurhash không
+// import posts để tránh cycle).
+type contentMetaStore struct{ repo *posts.GormRepository }
+
+func (s contentMetaStore) SetContentImageMeta(ctx context.Context, id uuid.UUID, meta map[string]blurhash.Meta) error {
+	out := make(map[string]posts.ImageMeta, len(meta))
+	for src, v := range meta {
+		out[src] = posts.ImageMeta{W: v.W, H: v.H, Ph: v.PlaceholderPNG}
+	}
+	return s.repo.SetContentImageMeta(ctx, id, out)
+}
+
 func main() {
 	// Nạp .env nếu có (dev). Bỏ qua lỗi khi file không tồn tại (prod dùng env thật).
 	_ = godotenv.Load()
@@ -105,10 +117,18 @@ func main() {
 		gormRepo,
 		blurhash.NewHTTPFetcher(cfg.BlurhashFetchTimeout, cfg.BlurhashMaxBytes, cfg.BlurhashFetchAllowlist()),
 		m, log, cfg.BlurhashWorkers, 256,
+	).WithContentStore(
+		contentMetaStore{repo: gormRepo},
+		// Meta ghi nền xong → bump version để detail cache (TTL 5m) thấy sớm.
+		func(ctx context.Context) { cch.BumpVersion(ctx, "posts") },
 	)
-	postsSvc := posts.NewService(postsRepo).WithBlurhashEnqueuer(func(id uuid.UUID, coverURL string) {
-		bhWorker.Enqueue(blurhash.Job{PostID: id, URL: coverURL})
-	})
+	postsSvc := posts.NewService(postsRepo).
+		WithBlurhashEnqueuer(func(id uuid.UUID, coverURL string) {
+			bhWorker.Enqueue(blurhash.Job{PostID: id, URL: coverURL})
+		}).
+		WithContentMetaEnqueuer(func(id uuid.UUID, contentHTML string) {
+			bhWorker.Enqueue(blurhash.Job{PostID: id, ContentHTML: contentHTML})
+		})
 	// View counter batch (Slice 9 — goroutine): gom view trong channel,
 	// flush xuống DB theo chu kỳ/ngưỡng; shutdown flush nốt.
 	viewCounter := posts.NewViewCounter(gormRepo, m, log, cfg.ViewBufferSize, cfg.ViewFlushInterval)

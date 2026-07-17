@@ -18,15 +18,24 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/platform/metrics"
 )
 
-// Job là một yêu cầu tính blurhash cho cover của 1 post.
+// Job là một yêu cầu xử lý nền cho 1 post:
+//   - URL != ""         → tính blurhash cover.
+//   - ContentHTML != "" → tính meta (dims + placeholder) cho ảnh trong content.
 type Job struct {
-	PostID uuid.UUID
-	URL    string
+	PostID      uuid.UUID
+	URL         string
+	ContentHTML string
 }
 
 // Store lưu kết quả — impl bởi posts.GormRepository.SetBlurhash.
 type Store interface {
 	SetBlurhash(ctx context.Context, id uuid.UUID, hash string) error
+}
+
+// ContentStore lưu meta ảnh content (map src → Meta). Impl là adapter quanh
+// posts.GormRepository (main wire) — blurhash không import posts (tránh cycle).
+type ContentStore interface {
+	SetContentImageMeta(ctx context.Context, id uuid.UUID, meta map[string]Meta) error
 }
 
 // Fetcher tải bytes ảnh — interface để test không cần mạng.
@@ -174,6 +183,17 @@ type Worker struct {
 	workers int
 	wg      sync.WaitGroup
 	once    sync.Once
+
+	contentStore    ContentStore // optional — job content bị bỏ qua khi nil
+	afterContentSet func(ctx context.Context)
+}
+
+// WithContentStore bật xử lý job content: cs lưu meta, after (optional) chạy
+// sau khi lưu OK — main dùng để bump cache version. Chainable.
+func (w *Worker) WithContentStore(cs ContentStore, after func(ctx context.Context)) *Worker {
+	w.contentStore = cs
+	w.afterContentSet = after
+	return w
 }
 
 // NewWorker tạo worker pool (chưa chạy — gọi Start).
@@ -237,6 +257,10 @@ func (w *Worker) Close(timeout time.Duration) {
 }
 
 func (w *Worker) process(ctx context.Context, j Job) {
+	if j.ContentHTML != "" {
+		w.processContent(ctx, j)
+		return
+	}
 	data, err := w.fetcher.Fetch(ctx, j.URL)
 	if err != nil {
 		w.m.BlurhashJob("fetch_error")
@@ -256,4 +280,45 @@ func (w *Worker) process(ctx context.Context, j Job) {
 	}
 	w.m.BlurhashJob("ok")
 	w.log.Debug("blurhash: done", "post_id", j.PostID, "hash", hash)
+}
+
+// processContent tính meta cho từng ảnh trong content: ảnh lỗi bị bỏ qua
+// (map thiếu entry — web render graceful), có ít nhất 1 entry mới ghi DB.
+func (w *Worker) processContent(ctx context.Context, j Job) {
+	if w.contentStore == nil {
+		return
+	}
+	srcs := ExtractImgSrcs(j.ContentHTML)
+	if len(srcs) == 0 {
+		return
+	}
+	meta := make(map[string]Meta, len(srcs))
+	for _, src := range srcs {
+		data, err := w.fetcher.Fetch(ctx, src)
+		if err != nil {
+			w.m.BlurhashJob("content_fetch_error")
+			w.log.Warn("blurhash: content fetch failed", "post_id", j.PostID, "src", src, "err", err)
+			continue
+		}
+		m, err := EncodeMeta(data)
+		if err != nil {
+			w.m.BlurhashJob("content_encode_error")
+			w.log.Warn("blurhash: content encode failed", "post_id", j.PostID, "src", src, "err", err)
+			continue
+		}
+		meta[src] = m
+	}
+	if len(meta) == 0 {
+		return
+	}
+	if err := w.contentStore.SetContentImageMeta(ctx, j.PostID, meta); err != nil {
+		w.m.BlurhashJob("content_store_error")
+		w.log.Warn("blurhash: content store failed", "post_id", j.PostID, "err", err)
+		return
+	}
+	w.m.BlurhashJob("content_ok")
+	if w.afterContentSet != nil {
+		w.afterContentSet(ctx)
+	}
+	w.log.Debug("blurhash: content meta done", "post_id", j.PostID, "images", len(meta))
 }
