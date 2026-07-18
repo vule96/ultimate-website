@@ -21,5 +21,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/api /api
 COPY --from=build /out/blurhash-backfill /blurhash-backfill
+# Base :nonroot đã chạy uid 65532; khai báo tường minh để thoả DS-0002 (Trivy).
+USER nonroot:nonroot
 EXPOSE 8080 9091
 ENTRYPOINT ["/api"]
