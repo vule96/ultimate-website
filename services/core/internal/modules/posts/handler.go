@@ -2,6 +2,8 @@ package posts
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -20,14 +22,30 @@ import (
 
 // Handler expose module posts qua HTTP (Gin).
 type Handler struct {
-	svc    *Service
-	authed func(ctx context.Context) bool // request hiện tại đã đăng nhập admin chưa
-	views  *ViewCounter                   // optional — đếm view batch (Slice 9)
+	svc      *Service
+	authed   func(ctx context.Context) bool   // request hiện tại đã đăng nhập admin chưa
+	views    *ViewCounter                     // optional — đếm view batch (Slice 9)
+	deduper  *ViewDeduper                     // optional — dedupe view 1 người/bài/ngày (Slice 13)
+	viewSalt string                           // salt hash IP ẩn danh khi dedupe
+	readerID func(ctx context.Context) string // optional — lấy reader id từ session (rỗng nếu chưa login)
 }
 
 // WithViewCounter gắn view counter (chainable, optional).
 func (h *Handler) WithViewCounter(vc *ViewCounter) *Handler {
 	h.views = vc
+	return h
+}
+
+// WithDeduper gắn dedupe view (chainable, optional). salt dùng để hash IP ẩn danh.
+func (h *Handler) WithDeduper(d *ViewDeduper, salt string) *Handler {
+	h.deduper = d
+	h.viewSalt = salt
+	return h
+}
+
+// WithReaderIdentity gắn hàm lấy reader id từ session (rỗng nếu chưa login).
+func (h *Handler) WithReaderIdentity(fn func(ctx context.Context) string) *Handler {
+	h.readerID = fn
 	return h
 }
 
@@ -311,10 +329,34 @@ func (h *Handler) view(c *gin.Context) {
 		httperr.Write(c, http.StatusBadRequest, "INVALID_ID", "post id must be a valid uuid")
 		return
 	}
+	// Dedupe: 1 người/1 view/bài/ngày. Reader ưu tiên; ẩn danh dùng hash IP.
+	identity := "a:" + hashIP(c.ClientIP(), h.viewSalt)
+	if rid := h.readerIdentity(c); rid != "" {
+		identity = "r:" + rid
+	}
+	if h.deduper != nil && !h.deduper.FirstToday(c.Request.Context(), id.String(), identity) {
+		c.Status(http.StatusAccepted) // đã xem hôm nay — không đếm, không lộ dedupe cho client
+		return
+	}
 	if h.views != nil {
 		h.views.Add(id)
 	}
 	c.Status(http.StatusAccepted)
+}
+
+// readerIdentity trả reader id từ session nếu có checker được gắn qua
+// WithReaderIdentity, rỗng nếu chưa login hoặc không có checker.
+func (h *Handler) readerIdentity(c *gin.Context) string {
+	if h.readerID != nil {
+		return h.readerID(c.Request.Context())
+	}
+	return ""
+}
+
+// hashIP băm IP + salt để dùng làm identity ẩn danh khi dedupe view (không lưu IP thật).
+func hashIP(ip, salt string) string {
+	sum := sha256.Sum256([]byte(ip + salt))
+	return hex.EncodeToString(sum[:])
 }
 
 func toResponse(p Post) postResponse {
