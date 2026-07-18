@@ -10,6 +10,7 @@ import { routing, isLocale } from "@/i18n/routing";
 import { Masthead } from "@/features/magazine/components/masthead";
 import { SubNav } from "@/features/magazine/components/sub-nav";
 import { MagazineFooter } from "@/features/magazine/components/magazine-footer";
+import { ReaderHydrator } from "@/features/magazine/components/reader-hydrator";
 import { THEME_SCRIPT } from "@/features/magazine/hooks/use-theme";
 
 const display = Roboto({
@@ -76,6 +77,7 @@ export default async function RootLayout({
       <body className="flex min-h-screen flex-col bg-bg text-fg">
         <NextIntlClientProvider messages={messages}>
           {/* Chrome Mạch toàn site (Slice 12): masthead + subnav mọi trang. */}
+          <ReaderHydrator />
           <Masthead />
           <SubNav />
           <div className="flex-1">{children}</div>

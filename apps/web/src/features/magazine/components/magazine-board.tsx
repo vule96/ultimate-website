@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
@@ -36,10 +36,6 @@ export function MagazineBoard({
   const authOpen = useMagazineStore((s) => s.authOpen);
   const setCat = useMagazineStore((s) => s.setCat);
   const openArticle = useCallback((slug: string) => router.push(`/blog/${slug}`), [router]);
-
-  useEffect(() => {
-    void useMagazineStore.getState().hydrate();
-  }, []);
 
   return (
     <MotionConfig reducedMotion="user">

@@ -2,16 +2,20 @@
 import { m } from "framer-motion";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePathname } from "@/i18n/navigation";
 import { useMagazineStore } from "../store/magazine-store";
 import { PUBLIC_API_URL } from "@/lib/config";
 
 // Auth thật qua Go core BFF: redirect full-page sang Google OAuth, quay lại `returnTo` sau login.
+// AuthModal chỉ render client-side (dynamic ssr:false ở MagazineBoard) nên window luôn có sẵn.
+// Dùng window.location thay vì usePathname() của @/i18n/navigation vì hook đó trả path đã bị
+// strip locale (vd "/blog/x" cho cả /blog/x lẫn /en/blog/x) — reader ở /en/... sẽ bị đưa về
+// route vi sau khi login nếu dùng path thiếu locale.
 export function AuthModal() {
   const t = useTranslations("auth");
   const close = useMagazineStore((s) => s.closeAuth);
-  const pathname = usePathname();
-  const returnTo = encodeURIComponent(pathname || "/");
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
+  const returnTo = encodeURIComponent(currentPath || "/");
   const href = `${PUBLIC_API_URL}/auth/reader/google/login?returnTo=${returnTo}`;
 
   return (
