@@ -399,6 +399,30 @@ image: ghcr.io/vule96/…/&lt;svc&gt;:${TAG:-latest}</code></pre>
     <div class="callout warn">
       <b>Nợ kỹ thuật đã note:</b> web thiếu <code>NEXT_PUBLIC_API_URL</code> build-arg (beacon ViewTracker) · image FE phải rebuild mỗi env (Next static — public URL baked) · downtime ngắn khi <code>up -d</code> recreate (chưa zero-downtime) · CD chưa verify live (chờ VPS).
     </div>
+
+    <div class="callout info" style="margin-top:14px">
+      <b>Còn thiếu trước CD live (chưa có trong compose):</b> reverse proxy + TLS (Caddy auto Let's Encrypt) + domain + firewall chỉ mở 80/443 + backup <code>pg_dump→R2</code> cron → gom vào <b>Slice 16 (Production edge)</b>.
+    </div>
+
+    <h3 style="margin-top:22px">VPS — cấu hình khuyến nghị (0.1% expert)</h3>
+    <p style="font-size:13.5px; color:var(--muted); margin-top:6px">
+      Footprint idle đo thật: app (core+web+admin+postgres+redis) ~<b>130MB</b>, +observability ~<b>170MB</b>.
+      <b>RAM là ràng buộc chính, không phải CPU</b> — build image chạy ở CI/GHCR, VPS chỉ pull + run. Headroom cho Postgres buffers, Next SSR burst, AI worker Python tương lai.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Phương án</th><th>Cấu hình</th><th>Giá/tháng</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td class="mono"><b>Hetzner CPX31</b> <span class="tag t-done">khuyên</span></td><td class="mono">4 vCPU · 8GB · 160GB NVMe</td><td class="mono">~$15</td><td>sweet spot — dư cho AI + observability</td></tr>
+          <tr><td class="mono">Hetzner CX22</td><td class="mono">2 vCPU · 4GB · 40GB</td><td class="mono">~$4.5</td><td>viable nếu bỏ observability + swap 2–4GB</td></tr>
+          <tr><td class="mono">Vultr/DO Singapore</td><td class="mono">2 vCPU · 4GB · 80GB</td><td class="mono">~$24</td><td>đắt hơn, latency gần VN hơn</td></tr>
+          <tr><td class="mono">Contabo</td><td class="mono">4 vCPU · 8GB · 200GB</td><td class="mono">~$8</td><td>rẻ nhưng oversubscribed — không khuyên prod</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13.5px; color:var(--muted); margin-top:12px">
+      <b>Chốt:</b> Hetzner <b>CPX31 ~$15/mo</b> (8GB) — trong ngân sách 15–40. Blog SSG/ISR + R2 → đặt <b>Cloudflare proxy</b> trước origin (cache edge) → chọn VPS theo giá thay vì vị trí. DB self-host + backup <code>pg_dump→R2</code>.
+    </p>
   </section>
 
   <footer>

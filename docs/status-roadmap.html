@@ -221,7 +221,7 @@
       <p class="lede">Blog cá nhân — Frontend · Backend · AI. Modular monolith (Go) + blog công khai (Next.js) + admin SPA, dùng chung packages trong monorepo.</p>
     </div>
     <div class="header-meta">
-      <span class="phase-badge"><span class="dot"></span>Phase 1 + Hardening + UI Mạch</span>
+      <span class="phase-badge"><span class="dot"></span>Phase 1 done · Backend thật · CI/CD · Next 16/React 19</span>
       <button class="toggle" id="themeToggle" aria-label="Đổi giao diện sáng/tối" title="Sáng / Tối">◐</button>
     </div>
   </header>
@@ -365,6 +365,33 @@
         </div>
       </div>
 
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 13 — Backend consumer thật (auth người đọc · bookmark · newsletter)</span><span class="chip new">mới</span></div>
+          <p class="step-desc">Thay toàn bộ mock localStorage bằng backend thật (15 task TDD). Module Go <span class="mono">readers</span>: reader auth <b>Google OAuth BFF</b> (session <span class="mono">reader_id</span> tách admin, KHÔNG allowlist), bookmark Postgres, subscriber citext. <b>Rate limit</b> Redis fixed-window per-IP (fail-open) + <b>view dedupe</b> (SET+TTL 1 view/người/bài/ngày). FE flip service seam sang API (<span class="mono">credentials:include</span>), store hydrate + optimistic rollback.</p>
+          <div class="tags"><span class="tag">reader OAuth</span><span class="tag">bookmark</span><span class="tag">rate limit</span><span class="tag">view dedupe</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 14 — CI/CD (GitHub Actions + GHCR)</span><span class="chip new">mới</span></div>
+          <p class="step-desc">3 workflow: <b>ci.yml</b> (paths-filter → core Go+Postgres+gofmt/vet/test/<b>govulncheck</b>, web/admin turbo lint/test/build, <b>Trivy fs scan</b>), <b>release.yml</b> (push main → 3 image GHCR latest+sha, buildx cache), <b>deploy.yml DORMANT</b> (SSH + Atlas migrate + compose up + healthcheck). CI thật bắt 25+ vuln → vá Go deps + toolchain 1.25.12 + Dockerfile non-root. Branch protection main. Chi tiết: <span class="mono">docs/cicd.html</span>.</p>
+          <div class="tags"><span class="tag">GitHub Actions</span><span class="tag">GHCR</span><span class="tag">Trivy</span><span class="tag">govulncheck</span><span class="tag">CD dormant</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="rail"><span class="mark"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.3L9.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+        <div class="step-body">
+          <div class="step-head"><span class="slice">Slice 15 — Next 16 + React 19 + next-intl v4</span><span class="chip new">mới</span></div>
+          <p class="step-desc">Full FE modernization: web <b>Next 14→16</b> + <b>React 18→19</b> + <b>next-intl v3→v4</b>, admin + ui lên React 19 → vá 5 CVE Next 14, <b>gỡ hẳn .trivyignore</b>. Async request APIs (codemod), Turbopack build mặc định (55 trang SSG giữ), ESLint 9 flat, pnpm overrides dedupe React 19. E2E live lộ + fix 2 bug admin (radix Select value React 19, stale cache reopen). CI PR xanh + E2E OAuth thật.</p>
+          <div class="tags"><span class="tag">Next 16</span><span class="tag">React 19</span><span class="tag">next-intl v4</span><span class="tag">Turbopack</span><span class="tag">ESLint flat</span></div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -382,12 +409,13 @@
         <div class="row"><span class="label">Robustness</span><span class="val">Optimistic lock · outbox · healthz</span></div>
         <div class="row"><span class="label">Cache</span><span class="val">Redis · key-versioning · fallback DB</span></div>
         <div class="row"><span class="label">Observability</span><span class="val">Prometheus · Grafana · Loki</span></div>
+        <div class="row"><span class="label">CI/CD</span><span class="val">GitHub Actions · GHCR · Trivy + govulncheck</span></div>
       </div>
       <div class="card">
         <span class="card-k">Frontend & monorepo</span>
-        <div class="row"><span class="label">Blog "Mạch"</span><span class="val">Next.js 14 · RSC + client island</span></div>
-        <div class="row"><span class="label">State trang chủ</span><span class="val">Zustand (selector)</span></div>
-        <div class="row"><span class="label">Admin</span><span class="val">Vite + React 18 + TanStack</span></div>
+        <div class="row"><span class="label">Blog "Mạch"</span><span class="val">Next.js 16 · React 19 · RSC + island</span></div>
+        <div class="row"><span class="label">i18n</span><span class="val">next-intl v4 (vi/en · hreflang)</span></div>
+        <div class="row"><span class="label">Admin</span><span class="val">Vite + React 19 + TanStack</span></div>
         <div class="row"><span class="label">UI / Types chung</span><span class="val">@ultimate/ui · @ultimate/types (Zod)</span></div>
         <div class="row"><span class="label">Monorepo</span><span class="val">pnpm workspaces + Turborepo</span></div>
       </div>
@@ -397,36 +425,85 @@
   <hr class="rule" />
 
   <section>
-    <div class="sec-head"><span class="num">03</span><span class="sec-title">Bước kế tiếp — hai hướng</span></div>
+    <div class="sec-head"><span class="num">03</span><span class="sec-title">Bước kế tiếp — lên production rồi AI</span></div>
     <div class="grid2">
       <div class="track track-a">
         <div class="track-top">
-          <span class="track-tag">Hướng A</span>
+          <span class="track-tag">Slice 16 → 17</span>
           <div class="track-title">Đưa lên production</div>
-          <p class="track-note">Biến sản phẩm chạy local thành online thật.</p>
+          <p class="track-note">CI/CD xong (image ở GHCR). Còn thiếu edge + server để CD chạy thật.</p>
         </div>
         <ul>
-          <li><span class="b"></span><span><b>web</b> → Vercel hoặc Cloudflare Pages <span class="d">(SSR/ISR sẵn)</span></span></li>
-          <li><span class="b"></span><span><b>core</b> → VPS / Coolify <span class="d">(Docker + env thật)</span></span></li>
-          <li><span class="b"></span><span><b>Postgres</b> managed hoặc VPS <span class="d">(backup)</span></span></li>
+          <li><span class="b"></span><span><b>Slice 16 — Production edge</b> <span class="d">Caddy (auto TLS Let's Encrypt) + domain + DNS Cloudflare; firewall chỉ mở 80/443; backup pg_dump→R2 cron</span></span></li>
+          <li><span class="b"></span><span><b>Slice 17 — CD live</b> <span class="d">dựng VPS → điền secrets VPS_* + vars public URL → bỏ comment auto-trigger deploy.yml → verify /healthz</span></span></li>
           <li><span class="b"></span><span><b>R2 Custom Domain</b> <span class="d">→ CDN cache/WAF thật thay r2.dev</span></span></li>
+          <li><span class="b"></span><span><b>Cloudflare proxy</b> <span class="d">trước origin → cache SSG/ISR ở edge, che IP, WAF</span></span></li>
         </ul>
       </div>
       <div class="track track-b">
         <div class="track-top">
-          <span class="track-tag">Hướng B</span>
-          <div class="track-title">Phase 2 — AI</div>
+          <span class="track-tag">Phase 2</span>
+          <div class="track-title">AI — differentiator</div>
           <p class="track-note">Tận dụng pgvector + outbox đã sẵn trong stack.</p>
         </div>
         <ul>
-          <li><span class="b"></span><span><b>Chatbot RAG</b> <span class="d">hỏi đáp nội dung blog (embedding + pgvector)</span></span></li>
+          <li><span class="b"></span><span><b>Chatbot RAG</b> <span class="d">hỏi đáp nội dung blog (embedding + pgvector + Claude API)</span></span></li>
           <li><span class="b"></span><span><b>AI worker</b> <span class="d">Python + LangGraph, consume outbox</span></span></li>
           <li><span class="b"></span><span><b>Research tự viết bài</b> <span class="d">duyệt qua Telegram (human-in-the-loop)</span></span></li>
           <li><span class="b"></span><span><b>Trợ lý viết</b> <span class="d">gợi ý ngay trong editor</span></span></li>
         </ul>
       </div>
     </div>
-    <p style="font-size:13px;color:var(--muted);margin-top:14px">Chưa chốt hướng — bàn sau. Cả hai độc lập; có thể deploy trước rồi mới AI.</p>
+
+    <div class="card" style="margin-top:18px">
+      <span class="card-k">VPS — khuyến nghị (góc nhìn 0.1% chuyên gia)</span>
+      <p style="font-size:13.5px;color:var(--muted);margin:8px 0 12px">
+        Stack idle rất nhẹ (đo thật): app (core+web+admin+postgres+redis) ~<b>130MB</b>, +observability ~<b>170MB</b>.
+        <b>RAM là ràng buộc chính, không phải CPU</b> — build image chạy ở CI/GHCR, VPS chỉ pull + run. Cần headroom cho
+        Postgres buffers, Next SSR burst, migrate lúc deploy, và <b>AI worker Python tương lai</b> (~300–500MB).
+      </p>
+      <div class="scroll">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:650;text-transform:uppercase;font-size:11px">Phương án</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:650;text-transform:uppercase;font-size:11px">Cấu hình</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:650;text-transform:uppercase;font-size:11px">Giá/tháng</th>
+            <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--faint);font-weight:650;text-transform:uppercase;font-size:11px">Ghi chú</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)"><b>Hetzner CPX31</b> <span class="chip new" style="font-size:10px">khuyên</span></td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">4 vCPU AMD · 8GB · 160GB NVMe · 20TB</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">~$15</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">sweet spot — dư cho AI + observability + burst</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">Hetzner CX22</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">2 vCPU · 4GB · 40GB</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">~$4.5</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">viable nếu tạm bỏ observability + swap 2–4GB</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">Vultr / DO (Singapore)</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">2 vCPU · 4GB · 80GB</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">~$24</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">đắt hơn nhưng latency gần VN hơn</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">Contabo</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">4 vCPU · 8GB · 200GB</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)" class="mono">~$8</td>
+              <td style="padding:8px 10px;border-bottom:1px solid var(--border)">rẻ nhưng oversubscribed — không khuyên prod</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:12px">
+        <b>Chốt:</b> Hetzner <b>CPX31 ~$15/mo</b> (8GB) — trong ngân sách 15–40, an toàn cho toàn stack + AI về sau.
+        Blog là SSG/ISR + R2 → đặt <b>Cloudflare proxy</b> trước origin thì cache ở edge, latency origin ít quan trọng →
+        chọn theo giá (Hetzner EU/US) thay vì theo vị trí. DB self-host trên VPS (đủ ở quy mô này) + backup <code style="font-family:var(--mono)">pg_dump→R2</code> cron.
+      </p>
+    </div>
   </section>
 
   <hr class="rule" />
@@ -436,13 +513,23 @@
     <div class="followups">
       <div class="fu">
         <span class="sev high">Cao</span>
-        <span class="txt"><b>Backend consumer cho tương tác Mạch</b> <span class="why">— auth người đọc + bookmark + newsletter hiện chạy cục bộ (mock/localStorage). Cần API thật (Go core / Firebase) cắm vào interface service đã có seam.</span></span>
-        <span class="area">core · apps/web</span>
+        <span class="txt"><b>Chưa có TLS / reverse proxy</b> <span class="why">— compose publish port trần (3000/5173/8080). Production cần Caddy/Traefik (auto HTTPS) + domain + firewall chỉ mở 80/443. BLOCKER cho CD live → Slice 16.</span></span>
+        <span class="area">infra · deploy</span>
+      </div>
+      <div class="fu">
+        <span class="sev high">Cao</span>
+        <span class="txt"><b>Chưa có backup DB</b> <span class="why">— cần <span class="mono">pg_dump→R2</span> cron (hoặc snapshot VPS). Không có backup = mất data khi VPS hỏng.</span></span>
+        <span class="area">infra · db</span>
       </div>
       <div class="fu">
         <span class="sev med">TB</span>
-        <span class="txt"><b>Fix checksum migration Atlas</b> <span class="why">— <span class="mono">20260711204848_add_post_version.sql</span> bị chỉnh tay → <span class="mono">atlas migrate hash</span>. Không cản chạy (schema đã áp), nhưng cản migrate máy mới.</span></span>
-        <span class="area">services/core</span>
+        <span class="txt"><b>Admin UI cho subscribers / readers</b> <span class="why">— bảng đã có ở backend (Slice 13) nhưng chưa có trang quản trị; unsubscribe flow + reader profile/GDPR delete (Phase 2).</span></span>
+        <span class="area">apps/admin · core</span>
+      </div>
+      <div class="fu">
+        <span class="sev med">TB</span>
+        <span class="txt"><b>web thiếu <span class="mono">NEXT_PUBLIC_API_URL</span> build-arg</b> <span class="why">— beacon ViewTracker client-side; thêm khi cấu hình domain. Zero-downtime deploy chưa làm (hiện <span class="mono">up -d</span> recreate = downtime ngắn).</span></span>
+        <span class="area">apps/web · deploy</span>
       </div>
       <div class="fu">
         <span class="sev low">Thấp</span>
@@ -453,8 +540,8 @@
   </section>
 
   <footer>
-    <span>Ultimate website · Phase 1 + Hardening + Slice 6–12 (UI Mạch · i18n · prod-readiness · images · chrome toàn site)</span>
-    <span class="mono">Cập nhật 2026-07-17</span>
+    <span>Ultimate website · Phase 1 done · Slice 6–15 (UI Mạch · i18n · prod-readiness · backend thật · CI/CD · Next 16/React 19)</span>
+    <span class="mono">Cập nhật 2026-07-19</span>
   </footer>
 
 </div>
