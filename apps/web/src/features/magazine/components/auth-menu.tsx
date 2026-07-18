@@ -13,16 +13,10 @@ export function AuthMenu() {
     return (
       <div className="flex items-center gap-[9px]">
         <button
-          onClick={() => openAuth("login")}
-          className="rounded-lg border border-chrome-line bg-soft px-[14px] py-[9px] text-[12.5px] font-semibold text-chrome-fg"
-        >
-          {t("login")}
-        </button>
-        <button
-          onClick={() => openAuth("register")}
+          onClick={() => openAuth()}
           className="rounded-lg bg-accent px-[14px] py-[9px] text-[12.5px] font-bold text-white"
         >
-          {t("register")}
+          {t("login")}
         </button>
       </div>
     );

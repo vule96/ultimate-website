@@ -1,9 +1,7 @@
 import { create } from "zustand";
-import type { CategoryKey, MockUser, Reader } from "../types";
+import type { CategoryKey, Reader } from "../types";
 import { apiBookmarkService } from "../services/bookmark-service";
 import { PUBLIC_API_URL } from "@/lib/config";
-
-type AuthMode = "login" | "register";
 
 // Toast lưu key (+ params) thay vì chuỗi — component Toast dịch qua next-intl.
 export type ToastKey =
@@ -24,19 +22,13 @@ interface MagazineState {
   saved: Record<string, true>;
   user: Reader | null;
   authOpen: boolean;
-  authMode: AuthMode;
   toast: ToastMsg | null;
   setQuery(q: string): void;
   setCat(c: CategoryKey): void;
   toggleSave(id: string): Promise<void>;
   hydrate(): Promise<void>;
-  /**
-   * @deprecated Shim tạm cho AuthModal (Task 14 sẽ thay bằng Google OAuth thật qua
-   * `/auth/reader/*`). Chỉ set user cục bộ — không gọi backend, không có `id` thật.
-   */
-  login(user: MockUser): void;
   logout(): Promise<void>;
-  openAuth(mode: AuthMode): void;
+  openAuth(): void;
   closeAuth(): void;
   setToast(msg: ToastMsg): void;
   clearToast(): void;
@@ -51,7 +43,6 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
   saved: {},
   user: null,
   authOpen: false,
-  authMode: "login",
   toast: null,
 
   setQuery: (query) => set({ query }),
@@ -74,7 +65,7 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
   toggleSave: async (id) => {
     const { user, saved } = get();
     if (!user) {
-      set({ authOpen: true, authMode: "login", toast: { key: "authRequired" } });
+      set({ authOpen: true, toast: { key: "authRequired" } });
       return;
     }
     const wasSaved = !!saved[id];
@@ -91,13 +82,6 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
     }
   },
 
-  login: (user) =>
-    set({
-      user: { id: user.email, email: user.email, name: user.name },
-      authOpen: false,
-      toast: { key: "hello", params: { name: user.name } },
-    }),
-
   logout: async () => {
     try {
       await fetch(`${PUBLIC_API_URL}/auth/reader/logout`, {
@@ -111,7 +95,7 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
     set({ user: null, saved: {}, toast: { key: "loggedOut" } });
   },
 
-  openAuth: (authMode) => set({ authOpen: true, authMode }),
+  openAuth: () => set({ authOpen: true }),
   closeAuth: () => set({ authOpen: false }),
   setToast: (toast) => set({ toast }),
   clearToast: () => set({ toast: null }),

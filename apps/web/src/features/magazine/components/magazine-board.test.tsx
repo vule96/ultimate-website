@@ -43,7 +43,6 @@ beforeEach(() => {
     saved: {},
     user: null,
     authOpen: false,
-    authMode: "login",
     toast: null,
   });
 });

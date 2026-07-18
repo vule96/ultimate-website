@@ -1,31 +1,18 @@
 "use client";
-import { useState } from "react";
 import { m } from "framer-motion";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { usePathname } from "@/i18n/navigation";
 import { useMagazineStore } from "../store/magazine-store";
+import { PUBLIC_API_URL } from "@/lib/config";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// MOCK auth: chỉ validate + set user cục bộ. TODO: nối Firebase/Go core BFF.
+// Auth thật qua Go core BFF: redirect full-page sang Google OAuth, quay lại `returnTo` sau login.
 export function AuthModal() {
   const t = useTranslations("auth");
-  const mode = useMagazineStore((s) => s.authMode);
   const close = useMagazineStore((s) => s.closeAuth);
-  const openAuth = useMagazineStore((s) => s.openAuth);
-  const login = useMagazineStore((s) => s.login);
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [name, setName] = useState("");
-  const [msg, setMsg] = useState("");
-  const isRegister = mode === "register";
-
-  const submit = () => {
-    if (!EMAIL_RE.test(email)) return setMsg(t("errInvalidEmail"));
-    if (!pass) return setMsg(t("errNoPassword"));
-    const displayName = isRegister ? name.trim() || email.split("@")[0] : email.split("@")[0];
-    login({ name: displayName, email });
-  };
+  const pathname = usePathname();
+  const returnTo = encodeURIComponent(pathname || "/");
+  const href = `${PUBLIC_API_URL}/auth/reader/google/login?returnTo=${returnTo}`;
 
   return (
     <m.div
@@ -44,7 +31,7 @@ export function AuthModal() {
       >
         <div className="mb-[6px] flex items-start justify-between">
           <h3 className="m-0 font-display text-[24px] font-extrabold tracking-[-0.02em]">
-            {isRegister ? t("register") : t("login")}
+            {t("login")}
           </h3>
           <button
             onClick={close}
@@ -54,49 +41,13 @@ export function AuthModal() {
             <X size={17} />
           </button>
         </div>
-        <p className="mb-5 text-[13px] leading-[1.5] text-muted">
-          {isRegister ? t("subtitleRegister") : t("subtitleLogin")}
-        </p>
-        {isRegister && (
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("namePlaceholder")}
-            className="mb-[11px] w-full rounded-[9px] border border-line bg-bg px-[14px] py-3 text-[13.5px] text-fg outline-none"
-          />
-        )}
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("emailPlaceholder")}
-          className="mb-[11px] w-full rounded-[9px] border border-line bg-bg px-[14px] py-3 text-[13.5px] text-fg outline-none"
-        />
-        <input
-          value={pass}
-          onChange={(e) => setPass(e.target.value)}
-          type="password"
-          placeholder={t("passwordPlaceholder")}
-          className="mb-[11px] w-full rounded-[9px] border border-line bg-bg px-[14px] py-3 text-[13.5px] text-fg outline-none"
-        />
-        {msg && <p className="mb-3 text-[12.5px] font-semibold text-accent">{msg}</p>}
-        <button
-          onClick={submit}
-          className="mb-[15px] w-full rounded-[9px] bg-accent py-[13px] text-[14px] font-bold text-white"
+        <p className="mb-5 text-[13px] leading-[1.5] text-muted">{t("intro")}</p>
+        <a
+          href={href}
+          className="flex w-full items-center justify-center gap-2 rounded-[9px] bg-accent py-[13px] text-[14px] font-bold text-white"
         >
-          {isRegister ? t("register") : t("login")}
-        </button>
-        <div className="text-center text-[13px] text-muted">
-          {isRegister ? t("haveAccount") : t("noAccount")}{" "}
-          <button
-            onClick={() => {
-              setMsg("");
-              openAuth(isRegister ? "login" : "register");
-            }}
-            className="font-bold text-accent"
-          >
-            {isRegister ? t("login") : t("register")}
-          </button>
-        </div>
+          {t("googleCta")}
+        </a>
       </m.div>
     </m.div>
   );

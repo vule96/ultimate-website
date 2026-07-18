@@ -38,18 +38,9 @@ export interface ArticleVM {
   comments: number | null;
 }
 
-/** Reader thật (auth BFF, backend) — thay MockUser trong Task 13 (store rewrite). */
+/** Reader thật (auth BFF, backend). */
 export interface Reader {
   id: string;
   email: string;
   name: string;
-}
-
-/**
- * @deprecated Giữ tạm cho store/auth-modal (mock login, chưa có `id` thật) — Task 13 sẽ
- * chuyển store sang `Reader` (hydrate từ session BFF) và xoá type này.
- */
-export interface MockUser {
-  name: string;
-  email: string;
 }

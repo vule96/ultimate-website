@@ -44,19 +44,12 @@
   },
   "auth": {
     "login": "Đăng nhập",
-    "register": "Đăng ký",
     "logout": "Thoát",
     "savedCount": "Đã lưu {count}",
     "subtitleLogin": "Đăng nhập để lưu bài viết yêu thích.",
-    "subtitleRegister": "Tạo tài khoản để lưu bài và nhận bản tin.",
-    "namePlaceholder": "Tên hiển thị",
-    "emailPlaceholder": "Email",
-    "passwordPlaceholder": "Mật khẩu",
     "closeAria": "Đóng",
-    "haveAccount": "Đã có tài khoản?",
-    "noAccount": "Chưa có tài khoản?",
-    "errInvalidEmail": "Email không hợp lệ.",
-    "errNoPassword": "Vui lòng nhập mật khẩu."
+    "googleCta": "Tiếp tục với Google",
+    "intro": "Đăng nhập bằng Google để lưu bài viết yêu thích và nhận bản tin."
   },
   "toast": {
     "authRequired": "Đăng nhập để lưu bài viết yêu thích.",

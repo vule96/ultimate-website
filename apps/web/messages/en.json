@@ -44,19 +44,12 @@
   },
   "auth": {
     "login": "Log in",
-    "register": "Sign up",
     "logout": "Log out",
     "savedCount": "Saved {count}",
     "subtitleLogin": "Log in to save your favorite articles.",
-    "subtitleRegister": "Create an account to save articles and get the newsletter.",
-    "namePlaceholder": "Display name",
-    "emailPlaceholder": "Email",
-    "passwordPlaceholder": "Password",
     "closeAria": "Close",
-    "haveAccount": "Already have an account?",
-    "noAccount": "No account yet?",
-    "errInvalidEmail": "Invalid email address.",
-    "errNoPassword": "Please enter a password."
+    "googleCta": "Continue with Google",
+    "intro": "Sign in with Google to save your favorite articles and get the newsletter."
   },
   "toast": {
     "authRequired": "Log in to save your favorite articles.",
