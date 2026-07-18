@@ -20,13 +20,13 @@ export function MagazineFooter() {
           </p>
           <div className="flex gap-[9px]">
             {SOCIAL.map((s) => (
-              <a
+              <Link
                 key={s}
                 href="/"
                 className="flex h-[34px] w-[34px] items-center justify-center rounded-lg bg-ink-fg/10 text-[13px] font-bold text-ink-fg no-underline"
               >
                 {s}
-              </a>
+              </Link>
             ))}
           </div>
         </div>

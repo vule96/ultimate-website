@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { LazyMotion, MotionConfig } from "framer-motion";
 
 // Nạp animation features async — giữ bundle đầu nhẹ (LazyMotion chỉ cần m. lúc hydrate).
@@ -53,12 +53,12 @@ export function MagazineBoard({
               {t("topViewed")}
             </div>
             <TopViewedList items={topViewed} onOpen={openArticle} />
-            <a
+            <Link
               href="/"
               className="mt-[26px] block rounded-[9px] bg-accent py-3 text-center text-[13px] font-bold text-white no-underline"
             >
               {t("fbCta")}
-            </a>
+            </Link>
           </aside>
         </div>
         <NewsletterBox variant="band" />
