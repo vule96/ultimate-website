@@ -18,7 +18,8 @@ export async function generateStaticParams() {
   }
 }
 
-export default function HomePaged({ params }: { params: { locale: string; n: string } }) {
+export default async function HomePaged(props: { params: Promise<{ locale: string; n: string }> }) {
+  const params = await props.params;
   setRequestLocale(params.locale);
   const page = Number(params.n);
   if (!Number.isInteger(page) || page < 2) notFound();

@@ -6,7 +6,8 @@ import { MagazineBoard } from "@/features/magazine/components/magazine-board";
 
 export const revalidate = 60;
 
-export default async function HomePage({ params }: { params: { locale: string } }) {
+export default async function HomePage(props: { params: Promise<{ locale: string }> }) {
+  const params = await props.params;
   setRequestLocale(params.locale);
   const [posts, top, t] = await Promise.all([
     buildSafe(() => listAllPublished(), []),

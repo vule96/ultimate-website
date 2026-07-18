@@ -9,5 +9,8 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
+    // next-intl v4 (ESM) import bare "next/navigation"; pnpm cô lập nên vitest
+    // không resolve được từ thư mục next-intl. Inline để vite resolve qua web.
+    server: { deps: { inline: ["next-intl"] } },
   },
 });

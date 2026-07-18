@@ -27,6 +27,7 @@ const mk = (id: string, title: string, cat: ArticleVM["category"]): ArticleVM =>
   date: "",
   dateLabel: "01/01/2026",
   readTime: "1 phút",
+  blurhash: null,
   coverImage: null,
   author: null,
   views: null,

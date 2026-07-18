@@ -13,6 +13,7 @@ const mk = (p: Partial<ArticleVM>): ArticleVM => ({
   date: "",
   dateLabel: "",
   readTime: "",
+  blurhash: null,
   coverImage: null,
   author: null,
   views: null,

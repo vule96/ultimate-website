@@ -6,7 +6,8 @@ import { SITE_URL } from "@/lib/config";
 
 export const revalidate = 60;
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   return {
     title: `#${params.slug}`,
     description: `Các bài viết về chủ đề #${params.slug}.`,
@@ -30,7 +31,8 @@ export async function generateStaticParams() {
   }
 }
 
-export default function TagPage({ params }: { params: { locale: string; slug: string } }) {
+export default async function TagPage(props: { params: Promise<{ locale: string; slug: string }> }) {
+  const params = await props.params;
   setRequestLocale(params.locale);
   return <PostsPage page={1} tag={params.slug} basePath={`/tags/${params.slug}`} />;
 }
