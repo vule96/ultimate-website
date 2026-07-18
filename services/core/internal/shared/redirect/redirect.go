@@ -12,5 +12,10 @@ func SafePath(raw string) (string, bool) {
 	if strings.HasPrefix(raw, "//") || strings.HasPrefix(raw, "/\\") {
 		return "", false
 	}
+	for i := 0; i < len(raw); i++ {
+		if raw[i] < 0x20 {
+			return "", false
+		}
+	}
 	return raw, true
 }

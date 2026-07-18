@@ -146,7 +146,7 @@ func main() {
 	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm)).
 		WithViewCounter(viewCounter).
 		WithDeduper(viewDeduper, cfg.ViewDedupSalt).
-		WithReaderIdentity(func(ctx context.Context) string { return sm.GetString(ctx, "reader_id") }).
+		WithReaderIdentity(func(ctx context.Context) string { return sm.GetString(ctx, readers.SessionKeyReaderID) }).
 		WithViewRateLimit(ratelimit.PerIP(rdb, log, "view", 60, time.Minute))
 
 	// Wiring module readers (auth người đọc — OAuth riêng, KHÔNG allowlist admin).
@@ -174,6 +174,14 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.New()
+	// c.ClientIP() (dùng bởi ratelimit + view dedupe + reqlog) chỉ tin
+	// X-Forwarded-For từ proxy liệt kê trong TRUSTED_PROXIES (CSV IP/CIDR).
+	// Rỗng (mặc định dev/local) → SetTrustedProxies(nil) = không tin proxy
+	// nào, ClientIP() dùng thẳng RemoteAddr (an toàn, hết bị giả mạo XFF).
+	// PROD: set TRUSTED_PROXIES = IP/CIDR của Nginx/Cloudflare trước core.
+	if err := r.SetTrustedProxies(cfg.TrustedProxies); err != nil {
+		log.Warn("SetTrustedProxies failed, ClientIP() sẽ không tin proxy nào", "err", err)
+	}
 	// Panic → log structured qua slog (kèm stack) + trả JSON envelope thay vì
 	// writer mặc định của Gin (in thẳng stdout không cấu trúc).
 	r.Use(gin.CustomRecoveryWithWriter(io.Discard, func(c *gin.Context, err any) {
@@ -197,10 +205,6 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// DEPLOY: c.ClientIP() (dùng bởi ratelimit + view dedupe + reqlog) chỉ đáng tin khi
-	// gin.Engine.SetTrustedProxies được cấu hình đúng reverse proxy production (Nginx/
-	// Cloudflare trên VPS) — mặc định Gin tin X-Forwarded-For từ MỌI peer, IP có thể bị giả
-	// mạo. Chưa set ở đây (chưa biết topology VPS) — PHẢI cấu hình lúc deploy.
 	authHandler.RegisterRoutes(r)
 
 	// Reader auth (Slice 13) — top-level như authHandler, login rate-limit theo IP.

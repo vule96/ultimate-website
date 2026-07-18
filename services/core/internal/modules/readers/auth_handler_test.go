@@ -104,6 +104,7 @@ func TestReaderAuth_FullLoginFlow_MeAndLogout(t *testing.T) {
 	require.Equal(t, http.StatusOK, meResp.StatusCode)
 
 	logoutReq, _ := http.NewRequest(http.MethodPost, srv.URL+"/auth/reader/logout", nil)
+	logoutReq.Header.Set("Content-Type", "application/json")
 	logoutResp, err := c.Do(logoutReq)
 	require.NoError(t, err)
 	logoutResp.Body.Close()

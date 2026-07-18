@@ -17,7 +17,8 @@ func TestSafePath(t *testing.T) {
 		{"http://evil.com", "", false},
 		{"https://evil.com", "", false},
 		{"javascript:alert(1)", "", false},
-		{"evil.com", "", false}, // không bắt đầu bằng /
+		{"evil.com", "", false},    // không bắt đầu bằng /
+		{"/foo\r\nBar", "", false}, // control char (CRLF injection)
 	}
 	for _, c := range cases {
 		got, ok := SafePath(c.in)

@@ -62,6 +62,11 @@ type Config struct {
 	// BlurhashAllowedHosts: host được phép tải ảnh ngoài host storage
 	// (SSRF guard — host lạ phải resolve ra IP công khai). CSV.
 	BlurhashAllowedHosts []string
+
+	// TrustedProxies: IP/CIDR reverse proxy tin cậy để Gin dùng X-Forwarded-For
+	// khi tính ClientIP() (rate-limit + view dedupe key). Rỗng = không proxy nào
+	// được tin, ClientIP() dùng thẳng RemoteAddr (an toàn cho local/dev).
+	TrustedProxies []string
 }
 
 // Load đọc cấu hình từ env. DatabaseURL là bắt buộc; các giá trị khác có mặc định.
@@ -163,6 +168,7 @@ func Load() (Config, error) {
 		BlurhashMaxBytes:     blurhashMaxBytes,
 		BlurhashFetchTimeout: blurhashFetchTimeout,
 		BlurhashAllowedHosts: splitCSV(os.Getenv("BLURHASH_ALLOWED_HOSTS")),
+		TrustedProxies:       splitCSV(os.Getenv("TRUSTED_PROXIES")),
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("config: DATABASE_URL is required")

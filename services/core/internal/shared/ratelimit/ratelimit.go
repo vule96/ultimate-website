@@ -26,7 +26,9 @@ func PerIP(rdb redis.Cmdable, log *slog.Logger, scope string, limit int, window 
 		ctx, cancel := context.WithTimeout(c.Request.Context(), opTimeout)
 		defer cancel()
 
-		bucket := time.Now().Unix() / int64(window.Seconds())
+		windowSecs := int64(window.Seconds())
+		now := time.Now().Unix()
+		bucket := now / windowSecs
 		key := "rl:" + scope + ":" + c.ClientIP() + ":" + strconv.FormatInt(bucket, 10)
 
 		n, err := rdb.Incr(ctx, key).Result()
@@ -39,7 +41,13 @@ func PerIP(rdb redis.Cmdable, log *slog.Logger, scope string, limit int, window 
 			rdb.Expire(ctx, key, window)
 		}
 		if n > int64(limit) {
-			c.Header("Retry-After", strconv.Itoa(int(window.Seconds())))
+			// Retry-After = số giây còn lại tới hết fixed window hiện tại (không phải
+			// cả window) — client biết chính xác khi nào bucket kế tiếp mở ra.
+			retryAfter := windowSecs - (now % windowSecs)
+			if retryAfter < 1 {
+				retryAfter = 1
+			}
+			c.Header("Retry-After", strconv.FormatInt(retryAfter, 10))
 			httperr.Write(c, http.StatusTooManyRequests, "RATE_LIMITED", "too many requests")
 			c.Abort()
 			return

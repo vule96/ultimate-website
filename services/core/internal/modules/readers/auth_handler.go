@@ -11,11 +11,14 @@ import (
 
 	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/httperr"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/redirect"
 )
 
 const (
-	sessionKeyReaderID       = "reader_id"
+	// SessionKeyReaderID là key session lưu reader id — export để dùng ở
+	// nơi wiring khác (vd main.go WithReaderIdentity) thay vì hardcode string.
+	SessionKeyReaderID       = "reader_id"
 	sessionKeyReaderState    = "reader_oauth_state"
 	sessionKeyReaderVerifier = "reader_oauth_verifier"
 	sessionKeyReaderReturnTo = "reader_return_to"
@@ -38,7 +41,10 @@ func (h *AuthHandler) RegisterRoutes(rg gin.IRouter, loginMW ...gin.HandlerFunc)
 	login := rg.Group("", loginMW...)
 	login.GET("/auth/reader/google/login", h.login)
 	rg.GET("/auth/reader/google/callback", h.callback)
-	rg.POST("/auth/reader/logout", h.logout)
+	// RequireJSON chặn CSRF simple-request (form cross-site POST không set
+	// Content-Type: application/json được) — logout đăng ký top-level nên
+	// không đi qua writeMW của /api/v1, phải tự bọc ở đây.
+	rg.POST("/auth/reader/logout", jsonmw.RequireJSON(), h.logout)
 	rg.GET("/auth/reader/me", h.me)
 }
 
@@ -75,7 +81,7 @@ func (h *AuthHandler) callback(c *gin.Context) {
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "could not create session")
 		return
 	}
-	h.sm.Put(ctx, sessionKeyReaderID, rd.ID.String())
+	h.sm.Put(ctx, SessionKeyReaderID, rd.ID.String())
 
 	// SECURITY: dest luôn bắt đầu bằng webBaseURL (scheme+host cố định) rồi mới nối path đã
 	// qua SafePath — không bao giờ redirect thẳng tới `p` một mình, vì SafePath chỉ đảm bảo
@@ -91,7 +97,7 @@ func (h *AuthHandler) callback(c *gin.Context) {
 // logout chỉ gỡ phần reader — KHÔNG destroy toàn session (giữ admin nếu cùng browser).
 func (h *AuthHandler) logout(c *gin.Context) {
 	ctx := c.Request.Context()
-	h.sm.Remove(ctx, sessionKeyReaderID)
+	h.sm.Remove(ctx, SessionKeyReaderID)
 	if err := h.sm.RenewToken(ctx); err != nil {
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "could not log out")
 		return
@@ -109,7 +115,7 @@ func (h *AuthHandler) me(c *gin.Context) {
 	rd, err := h.svc.GetReader(ctx, id)
 	if err != nil {
 		// Reader bị xoá khỏi DB → gỡ session, trả 401.
-		h.sm.Remove(ctx, sessionKeyReaderID)
+		h.sm.Remove(ctx, SessionKeyReaderID)
 		httperr.Write(c, http.StatusUnauthorized, "UNAUTHORIZED", "not authenticated")
 		return
 	}
@@ -129,7 +135,7 @@ func respondAuthError(c *gin.Context, err error) {
 
 // readerIDFrom đọc reader id từ session (parse uuid).
 func readerIDFrom(ctx context.Context, sm *scs.SessionManager) (uuid.UUID, bool) {
-	s := sm.GetString(ctx, sessionKeyReaderID)
+	s := sm.GetString(ctx, SessionKeyReaderID)
 	if s == "" {
 		return uuid.Nil, false
 	}
