@@ -80,11 +80,33 @@ Mỗi module trong `internal/modules/<name>`:
 | PUT | `/api/v1/posts/:id` | **✔** | sửa bài (yêu cầu đăng nhập) |
 | DELETE | `/api/v1/posts/:id` | **✔** | xoá bài (yêu cầu đăng nhập) |
 | GET | `/api/v1/tags` | – | list tags |
+| POST | `/api/v1/posts/:slug/view` | – | đếm view (dedupe Redis, rate limit 60/min) |
+| GET | `/auth/reader/google/login` | – | 302 tới Google (reader BFF, rate limit 10/min) |
+| GET | `/auth/reader/google/callback` | – | đổi code → session `reader_id` |
+| POST | `/auth/reader/logout` | reader | gỡ session reader (giữ admin) |
+| GET | `/auth/reader/me` | reader | `{id,email,name}` hoặc 401 |
+| GET | `/api/v1/readers/me/bookmarks` | reader | list post id đã lưu |
+| PUT/DELETE | `/api/v1/readers/me/bookmarks/:postId` | reader | lưu/bỏ lưu (idempotent, 204) |
+| POST | `/api/v1/subscribers` | – | đăng ký newsletter (rate limit 5/min, always-201) |
 
-**Auth (Slice 2):** Google OAuth theo BFF — session server-side (Postgres qua scs),
+**Auth admin (Slice 2):** Google OAuth theo BFF — session server-side (Postgres qua scs),
 cookie httpOnly, allowlist email qua env. Xem `.env.example` (`GOOGLE_*`, `ADMIN_ALLOWLIST`,
 `SESSION_COOKIE_*`) và spec `docs/superpowers/specs/2026-07-05-slice2-auth-oauth-design.md`
 (kèm hướng dẫn tạo Google OAuth client).
+
+**Auth người đọc (Slice 13):** Google OAuth BFF **riêng** cho reader — session key `reader_id`
+tách khỏi admin, **KHÔNG allowlist** (ai có Google verified đều đăng nhập), dùng cho bookmark.
+Cần thêm **reader redirect URI** vào Google Console (ngoài URI admin):
+- dev: `http://localhost:8080/auth/reader/google/callback`
+- prod: `https://<api-domain>/auth/reader/google/callback`
+
+Env liên quan (xem `.env.example`): `READER_REDIRECT_URL`, `WEB_BASE_URL` (redirect reader về web
+sau login), `VIEW_DEDUP_SALT` (**bắt buộc khi bật `REDIS_URL`** — salt hash IP cho view dedupe),
+`TRUSTED_PROXIES` (CSV IP/CIDR reverse proxy prod để `ClientIP()` không bị spoof qua `X-Forwarded-For`;
+rỗng = dùng IP kết nối trực tiếp), và `CORS_ALLOWED_ORIGINS` **phải gồm origin web** (`http://localhost:3000`
+dev) vì reader gọi API kèm cookie (`credentials:include`). Rate limit + view dedupe cần Redis
+(`REDIS_URL`); Redis chết → **fail-open** (không chặn / đếm bình thường).
+Spec: `docs/superpowers/specs/2026-07-17-slice13-backend-consumer-design.md`.
 
 ## Object storage (ảnh) — MinIO (dev) / Cloudflare R2 (prod)
 
