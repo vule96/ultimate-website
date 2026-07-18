@@ -82,6 +82,9 @@ describe("PostFormPage — hydrate & data-loss (A1, A4)", () => {
     mocks.usePostQuery.mockReturnValue({ data: basePost, isPending: false, isError: false });
     renderPage();
     expect(screen.getByPlaceholderText("Tiêu đề bài viết")).toHaveValue("Bài gốc");
+    // Radix Select (status) phải hiện label của giá trị đã load. Regression React 19:
+    // Select không cập nhật label khi value đổi sau mount → fix bằng key={field.value}.
+    expect(screen.getByRole("combobox")).toHaveTextContent("Nháp");
   });
 
   it("background refetch (object mới) KHÔNG ghi đè nội dung user đang sửa", () => {

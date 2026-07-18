@@ -236,7 +236,14 @@ export function PostFormPage({ slug }: { slug?: string }) {
                   control={control}
                   name="status"
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    // key={field.value}: radix Select (React 19) không cập nhật label
+                    // hiển thị khi `value` đổi sau mount (initial undefined → reset()).
+                    // Remount theo value ép Select khởi tạo lại với value đúng.
+                    <Select
+                      key={field.value}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
