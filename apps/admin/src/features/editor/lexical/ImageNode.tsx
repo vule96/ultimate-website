@@ -1,3 +1,4 @@
+import type { JSX } from "react"; // React 19 bỏ global JSX namespace → import từ react
 import { DecoratorNode } from "lexical";
 import type {
   DOMConversionMap,
