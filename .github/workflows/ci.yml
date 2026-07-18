@@ -110,9 +110,7 @@ jobs:
           node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # web chưa setup ESLint (next lint hỏi cấu hình → kẹt CI). next build đã
-      # typecheck; lint để backlog (setup eslint-config-next riêng). → Slice 15/backlog.
-      - run: pnpm turbo run test build --filter=@ultimate/web...
+      - run: pnpm turbo run lint test build --filter=@ultimate/web...
 
   admin:
     needs: changes

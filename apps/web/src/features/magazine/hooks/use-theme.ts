@@ -10,6 +10,10 @@ export function useTheme(): { dark: boolean; toggle: () => void } {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
+    // Đọc trạng thái theme do THEME_SCRIPT set trước hydration (external DOM state).
+    // Phải set sau mount, không lazy-init: server render `false`, lazy-init `true`
+    // sẽ gây hydration mismatch. Đây là ca "read from external system" hợp lệ.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(document.documentElement.classList.contains("dark"));
   }, []);
 

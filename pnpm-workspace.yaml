@@ -6,6 +6,7 @@ allowBuilds:
   '@swc/core': true
   esbuild: true
   sharp: true
+  unrs-resolver: true
 # Ép 1 bản @types/react/dom toàn workspace — 2 bản (18+19) gây lỗi
 # "MemoExoticComponent không phải JSX hợp lệ" + ReactNode xung đột. Slice 15 → React 19.
 overrides:
