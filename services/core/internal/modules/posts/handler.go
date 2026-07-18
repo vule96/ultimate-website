@@ -330,13 +330,16 @@ func (h *Handler) view(c *gin.Context) {
 		return
 	}
 	// Dedupe: 1 người/1 view/bài/ngày. Reader ưu tiên; ẩn danh dùng hash IP.
-	identity := "a:" + hashIP(c.ClientIP(), h.viewSalt)
-	if rid := h.readerIdentity(c); rid != "" {
-		identity = "r:" + rid
-	}
-	if h.deduper != nil && !h.deduper.FirstToday(c.Request.Context(), id.String(), identity) {
-		c.Status(http.StatusAccepted) // đã xem hôm nay — không đếm, không lộ dedupe cho client
-		return
+	// Chỉ tính identity khi có deduper — tránh SHA-256 vô ích khi dedupe tắt.
+	if h.deduper != nil {
+		identity := "a:" + hashIP(c.ClientIP(), h.viewSalt)
+		if rid := h.readerIdentity(c); rid != "" {
+			identity = "r:" + rid
+		}
+		if !h.deduper.FirstToday(c.Request.Context(), id.String(), identity) {
+			c.Status(http.StatusAccepted) // đã xem hôm nay — không đếm, không lộ dedupe cho client
+			return
+		}
 	}
 	if h.views != nil {
 		h.views.Add(id)
