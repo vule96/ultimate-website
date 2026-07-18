@@ -16,10 +16,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/vule96/ultimate-website/services/core/internal/modules/auth"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/media"
 	"github.com/vule96/ultimate-website/services/core/internal/modules/posts"
+	"github.com/vule96/ultimate-website/services/core/internal/modules/readers"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/blurhash"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/cache"
 	"github.com/vule96/ultimate-website/services/core/internal/platform/config"
@@ -31,6 +33,7 @@ import (
 	"github.com/vule96/ultimate-website/services/core/internal/shared/bodylimit"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/corsmw"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/jsonmw"
+	"github.com/vule96/ultimate-website/services/core/internal/shared/ratelimit"
 	"github.com/vule96/ultimate-website/services/core/internal/shared/reqlog"
 )
 
@@ -105,6 +108,12 @@ func main() {
 			log.Info("cache: redis enabled")
 		}
 	}
+	// Raw redis client dùng chung cho rate limit + view dedupe (nil nếu Redis tắt —
+	// cả ratelimit.PerIP và posts.NewViewDeduper tự no-op/fail-open khi rdb nil).
+	var rdb redis.Cmdable
+	if rc, ok := cch.(*cache.Redis); ok {
+		rdb = rc.Client()
+	}
 
 	// Wiring module posts. auth.IsAuthenticated cho handler biết request đã đăng nhập
 	// chưa (anonymous chỉ thấy bài PUBLISHED). Repo bọc cache decorator.
@@ -132,7 +141,21 @@ func main() {
 	// View counter batch (Slice 9 — goroutine): gom view trong channel,
 	// flush xuống DB theo chu kỳ/ngưỡng; shutdown flush nốt.
 	viewCounter := posts.NewViewCounter(gormRepo, m, log, cfg.ViewBufferSize, cfg.ViewFlushInterval)
-	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm)).WithViewCounter(viewCounter)
+	// Dedupe view (Slice 13): 1 người/1 view/bài/ngày, state sống trong Redis (rdb nil → tắt).
+	viewDeduper := posts.NewViewDeduper(rdb, cfg.ViewDedupSalt)
+	postsHandler := posts.NewHandler(postsSvc, auth.IsAuthenticated(sm)).
+		WithViewCounter(viewCounter).
+		WithDeduper(viewDeduper, cfg.ViewDedupSalt).
+		WithReaderIdentity(func(ctx context.Context) string { return sm.GetString(ctx, "reader_id") }).
+		WithViewRateLimit(ratelimit.PerIP(rdb, log, "view", 60, time.Minute))
+
+	// Wiring module readers (auth người đọc — OAuth riêng, KHÔNG allowlist admin).
+	readerProvider := auth.NewGoogleProvider(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.ReaderRedirectURL)
+	readersRepo := readers.NewGormRepository(db)
+	readersSvc := readers.NewService(readersRepo, readerProvider)
+	readerAuthHandler := readers.NewAuthHandler(readersSvc, sm, cfg.WebBaseURL)
+	bookmarkHandler := readers.NewBookmarkHandler(readersSvc)
+	subscriberHandler := readers.NewSubscriberHandler(readersSvc)
 
 	// Wiring module media (presigned upload S3-compatible).
 	mediaStorage := media.NewS3Storage(media.S3Config{
@@ -174,13 +197,31 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// DEPLOY: c.ClientIP() (dùng bởi ratelimit + view dedupe + reqlog) chỉ đáng tin khi
+	// gin.Engine.SetTrustedProxies được cấu hình đúng reverse proxy production (Nginx/
+	// Cloudflare trên VPS) — mặc định Gin tin X-Forwarded-For từ MỌI peer, IP có thể bị giả
+	// mạo. Chưa set ở đây (chưa biết topology VPS) — PHẢI cấu hình lúc deploy.
 	authHandler.RegisterRoutes(r)
+
+	// Reader auth (Slice 13) — top-level như authHandler, login rate-limit theo IP.
+	readerAuthHandler.RegisterRoutes(r, ratelimit.PerIP(rdb, log, "auth", 10, time.Minute))
 
 	api := r.Group("/api/v1")
 	// Endpoint ghi: ép Content-Type JSON (chống CSRF simple-request) rồi mới check auth.
 	writeMW := []gin.HandlerFunc{jsonmw.RequireJSON(), auth.RequireAuth(sm, allowlist)}
 	postsHandler.RegisterRoutes(api, writeMW...)
 	mediaHandler.RegisterRoutes(api, writeMW...)
+
+	// Bookmark (Slice 13): cần reader session cho GET/PUT/DELETE. RequireJSON không bọc
+	// GET/DELETE (không cần body) — FE luôn gửi Content-Type: application/json cho PUT/DELETE
+	// vẫn giữ được CSRF guard hiệu lực vì đây là simple-request guard tổng quát ở writeMW cho
+	// admin; bookmark là reader-only nên guard chính là RequireReader (session cookie SameSite).
+	bookmarkHandler.RegisterRoutes(api, readers.RequireReader(sm))
+
+	// Newsletter (Slice 13): public, rate limit theo IP + ép JSON.
+	subscriberHandler.RegisterRoutes(api,
+		ratelimit.PerIP(rdb, log, "subscribe", 5, time.Minute),
+		jsonmw.RequireJSON())
 
 	if cfg.GoogleClientID == "" || cfg.AdminAllowlist == "" {
 		log.Warn("auth not fully configured — set GOOGLE_CLIENT_ID/SECRET and ADMIN_ALLOWLIST to enable login")

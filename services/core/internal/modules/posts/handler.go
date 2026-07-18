@@ -28,6 +28,7 @@ type Handler struct {
 	deduper  *ViewDeduper                     // optional — dedupe view 1 người/bài/ngày (Slice 13)
 	viewSalt string                           // salt hash IP ẩn danh khi dedupe
 	readerID func(ctx context.Context) string // optional — lấy reader id từ session (rỗng nếu chưa login)
+	viewMW   []gin.HandlerFunc                // optional — rate limit riêng route POST view (Slice 13)
 }
 
 // WithViewCounter gắn view counter (chainable, optional).
@@ -49,6 +50,13 @@ func (h *Handler) WithReaderIdentity(fn func(ctx context.Context) string) *Handl
 	return h
 }
 
+// WithViewRateLimit gắn middleware rate limit CHỈ cho route POST /posts/:slug/view
+// (không ảnh hưởng list/detail/tags — vẫn public không giới hạn).
+func (h *Handler) WithViewRateLimit(mw ...gin.HandlerFunc) *Handler {
+	h.viewMW = mw
+	return h
+}
+
 // NewHandler tạo Handler từ Service và checker đăng nhập (vd auth.IsAuthenticated(sm)).
 func NewHandler(svc *Service, authed func(ctx context.Context) bool) *Handler {
 	return &Handler{svc: svc, authed: authed}
@@ -63,7 +71,10 @@ func (h *Handler) RegisterRoutes(rg gin.IRouter, protectedMW ...gin.HandlerFunc)
 	rg.GET("/tags", h.listTags)
 	// Đếm view: public, không body — handler chỉ đẩy id vào channel rồi trả 202
 	// ngay (KHÔNG chạm DB trong request path; flush batch ở ViewCounter).
-	rg.POST("/posts/:slug/view", h.view)
+	// viewMW (optional, vd rate limit theo IP) chỉ bọc route này — không ảnh hưởng
+	// list/detail/tags.
+	viewGroup := rg.Group("", h.viewMW...)
+	viewGroup.POST("/posts/:slug/view", h.view)
 
 	protected := rg.Group("", protectedMW...)
 	// Aggregate endpoints tách namespace /stats — tránh route tĩnh che slug bài viết (M3).
