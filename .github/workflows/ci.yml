@@ -94,6 +94,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BUILD_WITHOUT_API: "1"
+      # Placeholder chỉ để build/lint verify (next.config yêu cầu ở prod build);
+      # image thật lấy giá trị từ repo Variables trong release.yml.
+      NEXT_PUBLIC_MEDIA_HOST: "example.com"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

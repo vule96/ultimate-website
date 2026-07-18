@@ -1,0 +1,4 @@
+# Go source phải LF — gofmt (CI) coi CRLF là chưa format.
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf

@@ -22,4 +22,6 @@ RUN pnpm --filter @ultimate/admin build
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/apps/admin/dist /usr/share/nginx/html
+# uid 101 = nginx trong base unprivileged; khai báo tường minh để thoả DS-0002.
+USER 101
 EXPOSE 8080
