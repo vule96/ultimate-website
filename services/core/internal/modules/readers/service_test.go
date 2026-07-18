@@ -95,4 +95,15 @@ func TestSubscribe_Valid(t *testing.T) {
 	require.True(t, repo.subs["ok@example.com"])
 }
 
+// TestSubscribe_NormalizesDisplayName: input dạng "Name <A@B.com>" phải lưu địa chỉ
+// trần đã chuẩn hoá (a@b.com), KHÔNG lưu raw display-name (parser differential).
+func TestSubscribe_NormalizesDisplayName(t *testing.T) {
+	repo := newFakeRepo()
+	svc := NewService(repo, fakeProvider{})
+	require.NoError(t, svc.Subscribe(context.Background(), "Foo Bar <Normalize@Example.com>"))
+	require.True(t, repo.subs["normalize@example.com"], "phải lưu địa chỉ trần đã chuẩn hoá")
+	require.False(t, repo.subs["foo bar <normalize@example.com>"], "không được lưu dạng display-name")
+	require.Len(t, repo.subs, 1)
+}
+
 var _ = errors.Is // giữ import errors nếu cần

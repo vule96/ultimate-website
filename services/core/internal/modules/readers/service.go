@@ -69,12 +69,15 @@ func (s *Service) RemoveBookmark(ctx context.Context, readerID, postID uuid.UUID
 }
 
 // Subscribe validate email rồi upsert (idempotent). Email rác → ErrInvalidEmail.
+// mail.ParseAddress chấp nhận cả dạng "Name <a@b.com>" / "<a@b.com>" / "a@b.com (comment)",
+// nên LƯU addr.Address (địa chỉ trần đã chuẩn hoá) thay vì raw input — tránh parser
+// differential (lưu rác display-name/angle-bracket) và giữ dedup citext đúng.
 func (s *Service) Subscribe(ctx context.Context, email string) error {
-	email = strings.TrimSpace(strings.ToLower(email))
-	if _, err := mail.ParseAddress(email); err != nil {
+	addr, err := mail.ParseAddress(strings.TrimSpace(strings.ToLower(email)))
+	if err != nil {
 		return ErrInvalidEmail
 	}
-	return s.repo.UpsertSubscriber(ctx, email)
+	return s.repo.UpsertSubscriber(ctx, addr.Address)
 }
 
 func randomToken() (string, error) {
