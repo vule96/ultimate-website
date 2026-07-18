@@ -1,0 +1,74 @@
+name: Deploy to VPS (DORMANT)
+
+# ⚠️ CHƯA KÍCH HOẠT — chưa có VPS.
+# Bật khi sẵn sàng:
+#   1. Điền secrets repo: VPS_HOST, VPS_USER, VPS_SSH_KEY (private key).
+#      Nếu GHCR package để PRIVATE thì thêm GHCR_PAT (read:packages) — public thì bỏ.
+#   2. Trên VPS: clone repo (hoặc copy docker-compose.prod.yml + docker-compose.deploy.yml
+#      + services/core/migrations + .env.prod) vào ${VPS_APP_DIR}.
+#   3. (Tuỳ chọn) bỏ comment khối `push`/`workflow_run` dưới để deploy tự động sau release.
+#
+# Hiện chỉ chạy THỦ CÔNG qua tab Actions → "Run workflow".
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag để deploy (latest hoặc sha-<short>)"
+        required: false
+        default: "latest"
+  # --- AUTO-DEPLOY (bỏ comment khi sẵn sàng) ---
+  # workflow_run:
+  #   workflows: ["Release (build & push images)"]
+  #   types: [completed]
+  #   branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Khi bật workflow_run: chỉ deploy nếu release thành công.
+    # if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1
+        env:
+          TAG: ${{ inputs.tag || 'latest' }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: TAG
+          script: |
+            set -euo pipefail
+            APP_DIR="${VPS_APP_DIR:-/opt/ultimate-website}"
+            cd "$APP_DIR"
+
+            # 1. Login GHCR (bỏ nếu package public)
+            # echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 2. Load env (.env.prod chứa POSTGRES_PASSWORD, DATABASE_URL... KHÔNG commit)
+            set -a; . ./.env.prod; set +a
+
+            # 3. Migrate DB — one-shot container Atlas trước khi start core.
+            #    (Postgres phải đang chạy: docker compose -f docker-compose.prod.yml up -d postgres)
+            docker compose -f docker-compose.prod.yml up -d postgres
+            docker run --rm --network ultimate_net \
+              -v "$APP_DIR/services/core/migrations:/migrations:ro" \
+              arigaio/atlas:latest migrate apply \
+              --dir "file:///migrations" \
+              --url "postgres://${POSTGRES_USER:-blog}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-blog}?sslmode=disable"
+
+            # 4. Pull image mới + up
+            export TAG
+            docker compose -f docker-compose.prod.yml -f docker-compose.deploy.yml pull core web admin
+            docker compose -f docker-compose.prod.yml -f docker-compose.deploy.yml up -d
+
+            # 5. Healthcheck core
+            for i in $(seq 1 10); do
+              if curl -fsS http://localhost:8080/healthz; then echo "core healthy"; exit 0; fi
+              echo "waiting core... ($i)"; sleep 3
+            done
+            echo "core healthcheck FAILED"; exit 1
