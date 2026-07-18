@@ -14,4 +14,9 @@ export default [
     ],
   },
   ...next,
+  {
+    // Test mock next/image bằng <img> thuần — không phải render thật (không ship).
+    files: ["**/*.test.{ts,tsx}"],
+    rules: { "@next/next/no-img-element": "off" },
+  },
 ];
