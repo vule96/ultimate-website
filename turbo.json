@@ -2,7 +2,11 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "dev": { "cache": false, "persistent": true },
-    "build": { "dependsOn": ["^build"], "outputs": ["dist/**"] },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"],
+      "env": ["BUILD_WITHOUT_API", "NEXT_PUBLIC_MEDIA_HOST", "NEXT_PUBLIC_API_URL", "CORE_API_URL", "NEXT_OUTPUT_STANDALONE"]
+    },
     "lint": {},
     "test": {}
   }
