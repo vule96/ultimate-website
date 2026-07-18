@@ -133,15 +133,54 @@ func TestLoad_InvalidLogLevelFails(t *testing.T) {
 	}
 }
 
+func TestLoad_ViewDedupSaltRequiredWhenRedisSet(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("REDIS_URL", "redis://localhost:6379/0")
+	t.Setenv("VIEW_DEDUP_SALT", "")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("want error when REDIS_URL set and VIEW_DEDUP_SALT empty, got nil")
+	}
+	if !strings.Contains(err.Error(), "VIEW_DEDUP_SALT") {
+		t.Errorf("error should mention VIEW_DEDUP_SALT, got: %v", err)
+	}
+}
+
+func TestLoad_ViewDedupSaltNotRequiredWhenRedisUnset(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("REDIS_URL", "")
+	t.Setenv("VIEW_DEDUP_SALT", "")
+
+	if _, err := Load(); err != nil {
+		t.Fatalf("unexpected error when REDIS_URL unset: %v", err)
+	}
+}
+
+func TestLoad_ReaderAuthDefaults(t *testing.T) {
+	setRequiredEnv(t)
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.ReaderRedirectURL != "http://localhost:8080/auth/reader/google/callback" {
+		t.Errorf("ReaderRedirectURL = %q, want default", cfg.ReaderRedirectURL)
+	}
+	if cfg.WebBaseURL != "http://localhost:3000" {
+		t.Errorf("WebBaseURL = %q, want default", cfg.WebBaseURL)
+	}
+}
+
 func TestConfig_LogValueRedactsSecrets(t *testing.T) {
 	cfg := Config{
 		DatabaseURL:        "postgres://user:secretpw@host:5432/db",
 		RedisURL:           "redis://:redispw@rhost:6379/0",
 		GoogleClientSecret: "supersecret",
 		StorageSecretKey:   "storagesecret",
+		ViewDedupSalt:      "dedupsalt123",
 	}
 	s := cfg.LogValue().String()
-	for _, leak := range []string{"secretpw", "redispw", "supersecret", "storagesecret"} {
+	for _, leak := range []string{"secretpw", "redispw", "supersecret", "storagesecret", "dedupsalt123"} {
 		if strings.Contains(s, leak) {
 			t.Errorf("LogValue leaks %q: %s", leak, s)
 		}

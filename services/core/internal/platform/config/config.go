@@ -25,6 +25,11 @@ type Config struct {
 	AppBaseURL         string // redirect về sau khi login
 	CORSAllowedOrigins string // CSV origin được phép gọi API (admin SPA)
 
+	// Reader auth (Slice 13) — OAuth người đọc, tách khỏi admin
+	ReaderRedirectURL string // callback OAuth cho reader (khác admin)
+	WebBaseURL        string // base URL web công khai (redirect reader sau login)
+	ViewDedupSalt     string // salt hash IP cho view dedupe
+
 	// Session cookie
 	SessionSameSite string // lax | none | strict
 	SessionSecure   bool
@@ -129,6 +134,10 @@ func Load() (Config, error) {
 		AppBaseURL:         getEnv("APP_BASE_URL", "http://localhost:8080"),
 		CORSAllowedOrigins: os.Getenv("CORS_ALLOWED_ORIGINS"),
 
+		ReaderRedirectURL: getEnv("READER_REDIRECT_URL", "http://localhost:8080/auth/reader/google/callback"),
+		WebBaseURL:        getEnv("WEB_BASE_URL", "http://localhost:3000"),
+		ViewDedupSalt:     os.Getenv("VIEW_DEDUP_SALT"),
+
 		SessionSameSite: strings.ToLower(strings.TrimSpace(getEnv("SESSION_COOKIE_SAMESITE", "lax"))),
 		SessionSecure:   sessionSecure,
 
@@ -162,6 +171,10 @@ func Load() (Config, error) {
 	if cfg.SessionSameSite == "none" && !cfg.SessionSecure {
 		return Config{}, fmt.Errorf("config: SESSION_COOKIE_SAMESITE=none requires SESSION_COOKIE_SECURE=true")
 	}
+	// View dedupe hash IP bằng salt — bắt buộc khi Redis bật (nơi dedupe state sống).
+	if cfg.RedisURL != "" && cfg.ViewDedupSalt == "" {
+		return Config{}, fmt.Errorf("config: VIEW_DEDUP_SALT is required when REDIS_URL is set")
+	}
 	return cfg, nil
 }
 
@@ -181,6 +194,9 @@ func (c Config) LogValue() slog.Value {
 		slog.String("log_level", c.LogLevel),
 		slog.String("storage_bucket", c.StorageBucket),
 		slog.Bool("auth_configured", c.GoogleClientID != "" && c.AdminAllowlist != ""),
+		slog.String("reader_redirect_url", c.ReaderRedirectURL),
+		slog.String("web_base_url", c.WebBaseURL),
+		slog.Bool("view_dedup_salt_set", c.ViewDedupSalt != ""),
 	)
 }
 

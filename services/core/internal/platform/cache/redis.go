@@ -76,3 +76,7 @@ func (r *Redis) BumpVersion(ctx context.Context, name string) {
 		r.log.Warn("cache: bump version failed", "name", name, "err", err)
 	}
 }
+
+// Client trả *redis.Client thô để tính năng khác (rate limit, view dedupe) dùng chung
+// một kết nối Redis. Chỉ gọi khi Redis bật.
+func (r *Redis) Client() *redis.Client { return r.client }
