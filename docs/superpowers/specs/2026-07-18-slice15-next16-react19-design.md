@@ -84,5 +84,15 @@
 - React Compiler (`babel-plugin-react-compiler`) — để sau.
 - web `NEXT_PUBLIC_API_URL` build-arg (nợ Slice 14) — thêm nếu tiện khi chạm Docker/CI.
 
-## 6. Nhận xét chuyên gia
-Điền cuối slice sau verify.
+## 6. Nhận xét chuyên gia (0.1% FE)
+
+Kết quả: full workspace 8/8 turbo task xanh (ui/web/admin × lint/test/build), web 101 + admin 39 + ui 3 test xanh, tsc 0 lỗi cả 3 package, Docker web (Next 16 standalone) + admin (nginx-unprivileged) build xanh. Migration nhỏ hơn dự kiến vì codebase đã dùng API next-intl mới + peer deps đều hỗ trợ React 19.
+
+**Điểm cần biết / nợ:**
+- **pnpm overrides ép react/react-dom/@types 19 toàn workspace** — nền tảng cho single-instance. Bản react 18.3.1 vẫn còn trong tree (transitive lạc, không nằm trong build path). Nếu sau này thêm package cần react 18 sẽ vỡ — override là hàng rào cứng.
+- **Turbopack build mặc định (Next 16)** chạy tốt với rehype/unified SSR + CSP + standalone — KHÔNG cần fallback webpack. Nhưng chưa benchmark so webpack; nếu prod gặp khác biệt output, cờ `next build --webpack` là lối thoát.
+- **12 ESLint warning còn lại** (`<a href="/">` ở masthead-board/footer nên dùng `<Link>`; `<img>` trong test) — không chặn, để backlog polish. `<a>` cho home thực sự nên chuyển `Link` (mất client-side nav + prefetch).
+- **next-intl v4** chỉ cần thêm `locale` prop cho provider — vì codebase đã ở v3.26 API mới. Nếu về sau dùng thêm API v4 (vd `Locale` type, `hasLocale`) thì tận dụng.
+- **React 19 rule mới `react-hooks/set-state-in-effect`** bắt 1 ca hợp lệ (use-theme đọc DOM sau mount) — đã disable có justification. Đáng cân nhắc `useSyncExternalStore` cho theme ở slice polish.
+- **Chưa E2E live** trong lúc code (build+test tĩnh xanh). Verify live cuối cùng (stack thật core+redis) là bước còn lại — quan trọng nhất là kiểm next-intl SSG hreflang + bookmark/auth BFF + admin editor runtime dưới React 19.
+- Nợ Slice 14 chưa đụng: `NEXT_PUBLIC_API_URL` build-arg web.
