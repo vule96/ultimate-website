@@ -1,0 +1,22 @@
+# Override cho DEPLOY từ registry (GHCR) — chồng lên docker-compose.prod.yml.
+# Thay `build:` bằng image đã push từ release.yml. Postgres/redis/env/network giữ ở prod file.
+#
+# Dùng:
+#   TAG=latest docker compose -f docker-compose.prod.yml -f docker-compose.deploy.yml pull
+#   TAG=latest docker compose -f docker-compose.prod.yml -f docker-compose.deploy.yml up -d
+#
+# TAG mặc định latest; đặt sha-<short> để pin bản cụ thể (rollback).
+name: ultimate-prod
+
+services:
+  core:
+    build: !reset null
+    image: ghcr.io/vule96/ultimate-website/core:${TAG:-latest}
+
+  web:
+    build: !reset null
+    image: ghcr.io/vule96/ultimate-website/web:${TAG:-latest}
+
+  admin:
+    build: !reset null
+    image: ghcr.io/vule96/ultimate-website/admin:${TAG:-latest}
