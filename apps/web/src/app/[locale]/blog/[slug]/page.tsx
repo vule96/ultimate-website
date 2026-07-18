@@ -18,11 +18,12 @@ import { SITE_URL, SITE_NAME } from "@/lib/config";
 export const revalidate = 60;
 export const dynamicParams = true;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { locale: string; slug: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string; slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const post = await getPublishedBySlug(params.slug);
   if (!post) return {};
   const meta = buildPostMetadata(post);
@@ -49,11 +50,12 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function BlogPostPage({
-  params,
-}: {
-  params: { locale: string; slug: string };
-}) {
+export default async function BlogPostPage(
+  props: {
+    params: Promise<{ locale: string; slug: string }>;
+  }
+) {
+  const params = await props.params;
   setRequestLocale(params.locale);
   const post = await getPublishedBySlug(params.slug);
   if (!post) notFound();
@@ -125,14 +127,14 @@ export default async function BlogPostPage({
           {post.cover_image ? (
             // CoverImage: khung aspect reserve chỗ trước khi ảnh về (CLS = 0),
             // blurhash placeholder hiện tức thì, ảnh thật fade-in.
-            <CoverImage
+            (<CoverImage
               src={post.cover_image}
               alt={post.title}
               hash={post.cover_blurhash}
               priority
               sizes="(max-width: 42rem) 100vw, 42rem"
               className="mt-8 rounded-2xl border border-border shadow-[var(--shadow-card)]"
-            />
+            />)
           ) : null}
 
           <ViewTracker postId={post.id} />

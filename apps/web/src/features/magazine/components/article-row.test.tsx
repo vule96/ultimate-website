@@ -19,6 +19,7 @@ const vm: ArticleVM = {
   date: "2026-07-12T00:00:00Z",
   dateLabel: "12/07/2026",
   readTime: "5 phút",
+  blurhash: null,
   coverImage: null,
   author: null,
   views: null,

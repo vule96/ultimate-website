@@ -36,7 +36,8 @@ describe("buildPostMetadata", () => {
   });
   it("OG có type article, cover_image, publishedTime", () => {
     const m = buildPostMetadata(post);
-    expect(m.openGraph?.type).toBe("article");
+    // Next 16 kiểu OpenGraph là union — `type` chỉ có ở nhánh article; cast để đọc runtime.
+    expect((m.openGraph as { type?: string } | undefined)?.type).toBe("article");
     expect(JSON.stringify(m.openGraph?.images)).toContain("https://cdn.example/x.png");
   });
   it("canonical trỏ /blog/<slug>", () => {
@@ -45,11 +46,11 @@ describe("buildPostMetadata", () => {
   });
   it("có cover → twitter summary_large_image", () => {
     const m = buildPostMetadata(post);
-    expect(m.twitter?.card).toBe("summary_large_image");
+    expect((m.twitter as { card?: string } | undefined)?.card).toBe("summary_large_image");
   });
   it("không cover → og-default + twitter summary", () => {
     const m = buildPostMetadata({ ...post, cover_image: null });
     expect(JSON.stringify(m.openGraph?.images)).toContain("/og-default.png");
-    expect(m.twitter?.card).toBe("summary");
+    expect((m.twitter as { card?: string } | undefined)?.card).toBe("summary");
   });
 });

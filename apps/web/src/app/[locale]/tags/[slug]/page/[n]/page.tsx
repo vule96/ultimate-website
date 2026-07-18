@@ -8,7 +8,8 @@ import { PAGE_SIZE, SITE_URL } from "@/lib/config";
 
 export const revalidate = 60;
 
-export function generateMetadata({ params }: { params: { slug: string; n: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ slug: string; n: string }> }): Promise<Metadata> {
+  const params = await props.params;
   return {
     title: `#${params.slug} · Trang ${params.n}`,
     description: `Các bài viết về chủ đề #${params.slug} — trang ${params.n}.`,
@@ -32,11 +33,12 @@ export async function generateStaticParams() {
   }
 }
 
-export default function TagPaged({
-  params,
-}: {
-  params: { locale: string; slug: string; n: string };
-}) {
+export default async function TagPaged(
+  props: {
+    params: Promise<{ locale: string; slug: string; n: string }>;
+  }
+) {
+  const params = await props.params;
   setRequestLocale(params.locale);
   const page = Number(params.n);
   if (!Number.isInteger(page) || page < 2) notFound();

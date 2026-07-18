@@ -2,4 +2,17 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
   esbuild: true
+  sharp: true
+  unrs-resolver: true
+# Ép 1 bản @types/react/dom toàn workspace — 2 bản (18+19) gây lỗi
+# "MemoExoticComponent không phải JSX hợp lệ" + ReactNode xung đột. Slice 15 → React 19.
+overrides:
+  '@types/react': ^19.2.0
+  '@types/react-dom': ^19.2.0
+  # Ép 1 bản react/react-dom runtime toàn workspace — radix (qua @ultimate/ui) resolve
+  # bản react khác admin gây "Invalid hook call / useMemo of null". Slice 15 → React 19.
+  react: ^19.2.0
+  react-dom: ^19.2.0
