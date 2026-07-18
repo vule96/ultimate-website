@@ -30,8 +30,11 @@ jobs:
               - 'package.json'
               - 'turbo.json'
               - 'pnpm-workspace.yaml'
+              # đổi CI workflow → chạy lại mọi job để verify thật (đừng skip)
+              - '.github/workflows/ci.yml'
             core:
               - 'services/core/**'
+              - '.github/workflows/ci.yml'
             web:
               - *shared
               - 'apps/web/**'
@@ -98,7 +101,7 @@ jobs:
           version: "11.10.0"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run lint test build --filter=@ultimate/web...
@@ -114,7 +117,7 @@ jobs:
           version: "11.10.0"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run lint test build --filter=@ultimate/admin...
