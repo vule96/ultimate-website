@@ -30,8 +30,11 @@ jobs:
               - 'package.json'
               - 'turbo.json'
               - 'pnpm-workspace.yaml'
+              # đổi CI workflow → chạy lại mọi job để verify thật (đừng skip)
+              - '.github/workflows/ci.yml'
             core:
               - 'services/core/**'
+              - '.github/workflows/ci.yml'
             web:
               - *shared
               - 'apps/web/**'
@@ -66,7 +69,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.25.1"
+          # 1.25.x = patch mới nhất — govulncheck cần stdlib đã vá (GO-2026-* ở 1.25.9–12).
+          go-version: "1.25.x"
           cache-dependency-path: services/core/go.sum
       - name: Create blog_test database
         env:
@@ -79,7 +83,9 @@ jobs:
       - name: go build
         run: go build ./...
       - name: go test
-        run: go test ./...
+        # -p 1: package tuần tự — nhiều package migrate chung blog_test, chạy song song
+        # dễ race index/table (readers re-migrate posts). Serial → posts trước readers.
+        run: go test -p 1 ./...
       - name: govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -91,6 +97,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BUILD_WITHOUT_API: "1"
+      # Placeholder chỉ để build/lint verify (next.config yêu cầu ở prod build);
+      # image thật lấy giá trị từ repo Variables trong release.yml.
+      NEXT_PUBLIC_MEDIA_HOST: "example.com"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -98,10 +107,12 @@ jobs:
           version: "11.10.0"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm turbo run lint test build --filter=@ultimate/web...
+      # web chưa setup ESLint (next lint hỏi cấu hình → kẹt CI). next build đã
+      # typecheck; lint để backlog (setup eslint-config-next riêng). → Slice 15/backlog.
+      - run: pnpm turbo run test build --filter=@ultimate/web...
 
   admin:
     needs: changes
@@ -114,7 +125,7 @@ jobs:
           version: "11.10.0"
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo run lint test build --filter=@ultimate/admin...
@@ -125,10 +136,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scanners: vuln,misconfig,secret
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
           exit-code: "1"

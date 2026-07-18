@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/binary"
 	"hash/crc32"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"image"
 	"image/color"
 	"image/png"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -132,8 +132,8 @@ func bigPNGHeader(w, h uint32) []byte {
 	ihdr := make([]byte, 13)
 	binary.BigEndian.PutUint32(ihdr[0:4], w)
 	binary.BigEndian.PutUint32(ihdr[4:8], h)
-	ihdr[8] = 8  // bit depth
-	ihdr[9] = 6  // color type RGBA
+	ihdr[8] = 8 // bit depth
+	ihdr[9] = 6 // color type RGBA
 	var length [4]byte
 	binary.BigEndian.PutUint32(length[:], 13)
 	buf.Write(length[:])

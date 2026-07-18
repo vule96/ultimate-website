@@ -18,7 +18,10 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm --filter @ultimate/admin build
 
 # ── Stage 2: runtime (nginx serve static) ──────────────────────────
-FROM nginx:1.27-alpine
+# nginx-unprivileged: chạy uid 101 (non-root, thoả DS-0002), listen 8080.
+FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /repo/apps/admin/dist /usr/share/nginx/html
-EXPOSE 80
+# uid 101 = nginx trong base unprivileged; khai báo tường minh để thoả DS-0002.
+USER 101
+EXPOSE 8080

@@ -22,8 +22,18 @@ func TestMain(m *testing.M) {
 			fmt.Println("cannot connect TEST_DATABASE_URL:", err)
 			os.Exit(1)
 		}
-		// readers cần bảng posts thật (FK bookmarks.post_id) → AutoMigrate cả posts.Models().
-		models := append(posts.Models(), Models()...)
+		// subscribers.email dùng citext → cần extension (DB test sạch, vd CI, chưa có).
+		if err := db.Exec("CREATE EXTENSION IF NOT EXISTS citext").Error; err != nil {
+			fmt.Println("cannot create citext extension:", err)
+			os.Exit(1)
+		}
+		// readers cần bảng posts thật (FK bookmarks.post_id). Chỉ AutoMigrate posts.Models()
+		// khi chưa có — nếu package posts đã migrate vào blog_test dùng chung thì re-migrate
+		// many2many post_tags làm GORM báo "duplicated key not allowed" (DB test sạch, CI).
+		models := Models()
+		if !db.Migrator().HasTable("posts") {
+			models = append(posts.Models(), models...)
+		}
 		if err := db.AutoMigrate(models...); err != nil {
 			fmt.Println("automigrate failed:", err)
 			os.Exit(1)
