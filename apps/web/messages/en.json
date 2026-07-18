@@ -63,7 +63,8 @@
     "saved": "Article saved.",
     "unsaved": "Removed from saved.",
     "hello": "Hello, {name}!",
-    "loggedOut": "Logged out."
+    "loggedOut": "Logged out.",
+    "saveError": "Couldn't save, please try again."
   },
   "detail": {
     "back": "Articles",

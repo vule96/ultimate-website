@@ -63,7 +63,8 @@
     "saved": "Đã lưu bài viết.",
     "unsaved": "Đã bỏ lưu.",
     "hello": "Xin chào, {name}!",
-    "loggedOut": "Đã đăng xuất."
+    "loggedOut": "Đã đăng xuất.",
+    "saveError": "Không thể lưu, vui lòng thử lại."
   },
   "detail": {
     "back": "Bài viết",

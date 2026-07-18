@@ -1,4 +1,4 @@
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+import { PUBLIC_API_URL } from "@/lib/config";
 
 export interface NewsletterService {
   subscribe(email: string): Promise<void>;
@@ -6,7 +6,7 @@ export interface NewsletterService {
 
 export const apiNewsletterService: NewsletterService = {
   async subscribe(email) {
-    const res = await fetch(`${API}/api/v1/subscribers`, {
+    const res = await fetch(`${PUBLIC_API_URL}/api/v1/subscribers`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },

@@ -1,5 +1,6 @@
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-const BASE = `${API}/api/v1/readers/me/bookmarks`;
+import { PUBLIC_API_URL } from "@/lib/config";
+
+const BASE = `${PUBLIC_API_URL}/api/v1/readers/me/bookmarks`;
 
 /** Interface async — backend thật (Task 13 sẽ chuyển store sang dùng apiBookmarkService). */
 export interface BookmarkService {
