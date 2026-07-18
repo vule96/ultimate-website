@@ -68,7 +68,13 @@ export function useUpdatePost() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, input }: { id: PostId; input: UpsertPostInput }) => updatePost(id, input),
-    onSuccess: () => invalidatePostsAndTags(qc),
+    onSuccess: (post) => {
+      // Seed cache detail bằng bản mới nhất từ server. Không có bước này, loader
+      // `ensureQueryData` khi vô lại trang sửa trả cache CŨ (invalidate không ép
+      // refetch data đã có) → form hydrate giá trị cũ dù API đã lưu mới.
+      qc.setQueryData(postKeys.detail(post.slug), post);
+      invalidatePostsAndTags(qc);
+    },
   });
 }
 
