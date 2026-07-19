@@ -13,11 +13,11 @@ export function LoginPage() {
       <Card className="relative w-full max-w-sm border-border/80 shadow-xl">
         <CardContent className="flex flex-col items-center gap-7 p-9">
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_6px_16px_hsl(var(--primary)/0.35)]">
-              <span className="text-2xl font-bold">U</span>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[#1682bd] text-2xl font-extrabold text-primary-foreground shadow-[0_6px_16px_hsl(var(--primary)/0.35)]">
+              M
             </div>
             <div>
-              <h1 className="text-xl font-semibold tracking-tight">Ultimate Blog</h1>
+              <h1 className="text-xl font-bold tracking-tight">Mạch Admin</h1>
               <p className="mt-1.5 text-sm text-muted-foreground">
                 Đăng nhập để quản trị nội dung
               </p>
