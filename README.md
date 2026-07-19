@@ -95,3 +95,23 @@ pnpm --filter @ultimate/web test       # web (Vitest)
 pnpm --filter @ultimate/admin test     # admin (Vitest)
 cd services/core && go test ./...      # core (Go)
 ```
+
+## Production edge (Slice 16)
+
+Reverse-proxy **Caddy** đứng trước stack → HTTPS auto-TLS trên `80/443`, app không publish port trần. Backup DB `pg_dump → R2` theo cron.
+
+```bash
+# Cần .env.prod điền: WEB_DOMAIN/API_DOMAIN/ADMIN_DOMAIN, ACME_EMAIL,
+# TLS_MODE (internal=test | email@domain=ACME thật), CLOUDFLARE_API_TOKEN (DNS-01).
+docker compose --env-file .env.prod \
+  -f docker-compose.prod.yml -f docker-compose.edge.yml up -d
+```
+
+- **TLS**: mặc định `TLS_MODE=internal` (self-signed, test local). Prod sau Cloudflare proxy → bỏ comment `acme_dns cloudflare` trong `Caddyfile` + `TLS_MODE=email` + `CLOUDFLARE_API_TOKEN` (quyền Zone:DNS:Edit) → xin cert qua **DNS-01** (không cần inbound :80). Image Caddy có plugin cloudflare: `Dockerfile.caddy`.
+- **Backup**: `./scripts/backup-db.sh` (pg_dump → gzip → R2 `BACKUP_BUCKET`, giữ `BACKUP_KEEP` bản). Cron VPS:
+  ```
+  0 3 * * * cd /srv/app && ./scripts/backup-db.sh >> /var/log/mach-backup.log 2>&1
+  ```
+- **Bước VPS (chưa làm — cần server + domain)**: firewall `ufw` chỉ mở `80/443/22`; điền `NEXT_PUBLIC_API_URL=https://api.domain` khi build image web (client beacon/reader/subscribe gọi thẳng core); `GOOGLE_REDIRECT_URL`/`READER_REDIRECT_URL` = `https://api.domain/...` + đăng ký Google Console.
+
+Chi tiết: [`docs/superpowers/specs/2026-07-19-slice16-prod-edge-design.md`](docs/superpowers/specs/2026-07-19-slice16-prod-edge-design.md).

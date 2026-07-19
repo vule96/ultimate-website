@@ -1,0 +1,41 @@
+# Production EDGE override — chồng lên docker-compose.prod.yml.
+# Caddy nhận 80/443 (auto-TLS), app KHÔNG publish port trần nữa.
+#   docker compose --env-file .env.prod -f docker-compose.prod.yml -f docker-compose.edge.yml up -d
+# Local test (self-signed, domains *.localhost):
+#   TLS_MODE=internal (mặc định) — thêm 127.0.0.1 vào hosts hoặc curl --resolve.
+name: ultimate-prod
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+services:
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      WEB_DOMAIN: ${WEB_DOMAIN:-localhost}
+      API_DOMAIN: ${API_DOMAIN:-api.localhost}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN:-admin.localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
+      TLS_MODE: ${TLS_MODE:-internal}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [ultimate_net]
+    depends_on: [web, core, admin]
+
+  # App không còn publish port ra host — chỉ Caddy ra ngoài.
+  core:
+    ports: !reset []
+  web:
+    ports: !reset []
+  admin:
+    ports: !reset []

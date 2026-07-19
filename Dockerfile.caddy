@@ -1,0 +1,7 @@
+# Caddy 2 + plugin caddy-dns/cloudflare → cho phép TLS DNS-01 (xin cert không cần
+# inbound :80, hợp khi đứng sau Cloudflare proxy). Base image chuẩn cho phần còn lại.
+FROM caddy:2.10-builder AS builder
+RUN xcaddy build --with github.com/caddy-dns/cloudflare
+
+FROM caddy:2.10
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
