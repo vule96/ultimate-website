@@ -4,60 +4,89 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- Mạch design tokens (scope: apps/web) ---------- */
+/* ---------- Mạch Newsroom tokens (bản C — trắng lạnh, brand cam-đỏ) ---------- */
 :root {
-  --bg: #f6f3ec;
-  --surface: #fffdf8;
-  --fg: #1c1a16;
-  --muted: #726a5b;
-  --line: rgba(28, 26, 22, 0.11);
-  --soft: rgba(28, 26, 22, 0.045);
-  --accent: #0f6e63;
+  --bg: #fbfbfc;
+  --page: #fbfbfc;
+  --surface: #ffffff;
+  --surface-2: #f1f2f4;
+  --fg: #181a1d;
+  --muted: #5a5d64;
+  --faint: #8b8e96;
+  --line: #e6e7ea;
+  --line-strong: #d4d6da;
+  --soft: rgba(24, 26, 29, 0.045);
+  --accent: #e1442b;
+  --brand: #e1442b;
+  --brand-ink: #c0341f;
+  --brand-tint: #fce9e3;
   --accent-fg: #ffffff;
-  --highlight: #ffcf33;
   --tint-strength: 13%;
   --shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.45);
 
-  /* Chrome (masthead + subnav) */
-  --chrome-bg: #fffdf8;
-  --chrome-fg: #1c1a16;
-  --chrome-muted: #726a5b;
-  --chrome-line: rgba(28, 26, 22, 0.11);
-  /* Ink (footer + newsletter card) */
-  --ink: #232019;
-  --ink-fg: #f3efe6;
-  --ink-muted: rgba(243, 239, 230, 0.62);
-  /* Field (input) */
-  --field-bg: #ffffff;
-  --field-fg: #1c1a16;
-  --field-ring: color-mix(in srgb, var(--accent) 55%, transparent);
+  /* Section colors — color-code chuyên mục (một nguồn cho category) */
+  --sec-tech: #2565b0;
+  --sec-fin: #1f7a52;
+  --sec-life: #b06a1f;
+  --sec-cul: #a0452f;
+  --sec-dev: #6a4aa0;
+  --sec-book: #8a6a34;
 
-  --font-display: var(--font-display-next), Roboto, ui-sans-serif, sans-serif;
+  /* Chrome (masthead + section-nav) = surface trắng */
+  --chrome-bg: #ffffff;
+  --chrome-fg: #181a1d;
+  --chrome-muted: #5a5d64;
+  --chrome-line: #e6e7ea;
+  /* Ink block (footer + subscribe + ticker) = mực đậm */
+  --ink: #181a1d;
+  --ink-fg: #f3f4f6;
+  --ink-muted: rgba(243, 244, 246, 0.62);
+  /* Field (input) */
+  --field-bg: #f1f2f4;
+  --field-fg: #181a1d;
+  --field-ring: color-mix(in srgb, var(--brand) 45%, transparent);
+
+  /* Một họ chữ: Be Vietnam Pro (VN chuẩn) — personality bằng weight + scale */
+  --font-display: var(--font-sans-next), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-sans-next), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-serif-next), Georgia, "Times New Roman", serif;
-  --font-mono: var(--font-mono-next), "Space Mono", ui-monospace, monospace;
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
-  --shadow-lift: 0 2px 4px rgba(16, 24, 40, 0.05), 0 12px 32px rgba(16, 24, 40, 0.09);
+  --font-serif: var(--font-sans-next), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-sans-next), "Be Vietnam Pro", ui-monospace, monospace;
+  --shadow-card: 0 1px 2px rgba(20, 22, 28, 0.05), 0 10px 30px rgba(20, 22, 28, 0.07);
+  --shadow-lift: 0 2px 6px rgba(20, 22, 28, 0.06), 0 16px 40px rgba(20, 22, 28, 0.11);
 }
 .dark {
-  --bg: #151310;
-  --surface: #201d18;
-  --fg: #efe9df;
-  --muted: #a89d8b;
-  --line: rgba(239, 233, 223, 0.14);
-  --soft: rgba(239, 233, 223, 0.05);
-  --tint-strength: 24%;
-  --accent: #3aa99b; /* teal sáng hơn — teal gốc quá tối trên nền dark */
+  --bg: #111214;
+  --page: #111214;
+  --surface: #1a1c1f;
+  --surface-2: #232529;
+  --fg: #ecedef;
+  --muted: #a2a5ad;
+  --faint: #71747c;
+  --line: #2a2d31;
+  --line-strong: #3a3d42;
+  --soft: rgba(236, 237, 239, 0.05);
+  --accent: #ff6a4d;
+  --brand: #ff6a4d;
+  --brand-ink: #ff8368;
+  --brand-tint: #3a1a12;
+  --tint-strength: 22%;
 
-  --chrome-bg: #201d18;
-  --chrome-fg: #efe9df;
-  --chrome-muted: #a89d8b;
-  --chrome-line: rgba(239, 233, 223, 0.14);
-  --ink: #12100d;
-  --ink-fg: #e8e2d6;
-  --ink-muted: rgba(232, 226, 214, 0.55);
-  --field-bg: #2a2620;
-  --field-fg: #efe9df;
+  --sec-tech: #5b9bde;
+  --sec-fin: #4fae82;
+  --sec-life: #d79a4c;
+  --sec-cul: #d4785f;
+  --sec-dev: #a189d0;
+  --sec-book: #c2a468;
+
+  --chrome-bg: #1a1c1f;
+  --chrome-fg: #ecedef;
+  --chrome-muted: #a2a5ad;
+  --chrome-line: #2a2d31;
+  --ink: #0c0d0f;
+  --ink-fg: #ecedef;
+  --ink-muted: rgba(236, 237, 239, 0.6);
+  --field-bg: #232529;
+  --field-fg: #ecedef;
 }
 
 @layer base {
