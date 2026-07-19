@@ -112,6 +112,7 @@ docker compose --env-file .env.prod \
   ```
   0 3 * * * cd /srv/app && ./scripts/backup-db.sh >> /var/log/mach-backup.log 2>&1
   ```
+- **Restore**: `./scripts/restore-db.sh` (bản mới nhất R2) / `--file backup.sql.gz` (local). DROP + tạo lại DB đích → nạp dump; vào DB thật cần `RESTORE_CONFIRM=yes`. Drill an toàn: `RESTORE_DB=blog_restore_drill ./scripts/restore-db.sh --file ...` (roundtrip đã verify: 12 posts/10 tags khớp).
 - **Bước VPS (chưa làm — cần server + domain)**: firewall `ufw` chỉ mở `80/443/22`; điền `NEXT_PUBLIC_API_URL=https://api.domain` khi build image web (client beacon/reader/subscribe gọi thẳng core); `GOOGLE_REDIRECT_URL`/`READER_REDIRECT_URL` = `https://api.domain/...` + đăng ký Google Console.
 
 Chi tiết: [`docs/superpowers/specs/2026-07-19-slice16-prod-edge-design.md`](docs/superpowers/specs/2026-07-19-slice16-prod-edge-design.md).
