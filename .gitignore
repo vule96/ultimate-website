@@ -27,4 +27,9 @@ AGENTS.md
 .env.prod
 
 # file lạ ngoài dự án (Unicode NFC/NFD)
-m*.o bi*n b*o.txt
+* b*n b*o.txt
+*bi*n b*o*.txt
+
+# file lạ ngoài dự án (Unicode-safe)
+
+*bi*n*b*o*.txt
