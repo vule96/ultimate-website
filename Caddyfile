@@ -1,0 +1,42 @@
+# Reverse-proxy + auto-TLS cho stack Mạch (Slice 16).
+# Domains + TLS mode lấy từ env (docker-compose.edge.yml).
+#
+#   TLS_MODE=internal        → cert tự ký (mặc định, test local; domains = *.localhost)
+#   TLS_MODE=you@email.com   → ACME thật (HTTP/TLS-ALPN challenge; cần :80/:443 public)
+#   + DNS-01 (khuyên khi sau Cloudflare proxy): bỏ comment `acme_dns` global bên dưới
+#     và set CLOUDFLARE_API_TOKEN → xin cert qua DNS, không cần inbound.
+
+{
+	email {$ACME_EMAIL:admin@example.com}
+	# Prod sau Cloudflare proxy — bỏ comment để xin cert qua DNS-01:
+	# acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+}
+
+# Header bảo mật chung (bổ trợ, không đè CSP do app tự set).
+(secure) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	encode zstd gzip
+}
+
+{$WEB_DOMAIN:localhost} {
+	tls {$TLS_MODE:internal}
+	import secure
+	reverse_proxy web:3000
+}
+
+{$API_DOMAIN:api.localhost} {
+	tls {$TLS_MODE:internal}
+	import secure
+	reverse_proxy core:8080
+}
+
+{$ADMIN_DOMAIN:admin.localhost} {
+	tls {$TLS_MODE:internal}
+	import secure
+	reverse_proxy admin:8080
+}
