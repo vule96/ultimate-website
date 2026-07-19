@@ -75,9 +75,9 @@
 /* ---------- Editorial article (blog) ---------- */
 
 .article-body {
-  font-family: var(--font-sans);
-  font-size: 1.125rem;
-  line-height: 1.78;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  line-height: 1.75;
   color: var(--fg);
 }
 .article-body > :first-child { margin-top: 0; }

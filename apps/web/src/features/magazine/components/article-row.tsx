@@ -67,7 +67,7 @@ function ArticleRowBase({ article, index, saved, onToggleSave, onOpen }: Props) 
           {article.title}
         </h3>
         {article.excerpt && (
-          <p className="mb-2 truncate text-[13px] leading-[1.5] text-muted">{article.excerpt}</p>
+          <p className="mb-2 truncate font-serif text-[14px] leading-[1.5] text-muted">{article.excerpt}</p>
         )}
         <div className="flex items-center gap-3 text-[11.5px] text-muted">
           {article.author && <span className="font-bold text-fg">{article.author}</span>}

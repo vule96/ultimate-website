@@ -36,7 +36,7 @@ export function FeaturedLead({ articles }: { articles: ArticleVM[] }) {
           onClick={() => open(lead.slug)}
           className="group cursor-pointer"
         >
-          {lead.coverImage && (
+          {lead.coverImage ? (
             <div className="mb-4 overflow-hidden rounded-xl border border-line">
               <CoverImage
                 src={lead.coverImage}
@@ -47,13 +47,20 @@ export function FeaturedLead({ articles }: { articles: ArticleVM[] }) {
                 className="transition-transform duration-500 group-hover:scale-[1.02]"
               />
             </div>
+          ) : (
+            <TypographicCover
+              label={lead.categoryLabel}
+              color={lead.color}
+              className="mb-4 aspect-[16/9] p-6"
+              labelClass="text-[clamp(30px,5vw,56px)]"
+            />
           )}
           <Kicker color={lead.color} label={lead.categoryLabel} eyebrow={t("eyebrow")} />
           <h2 className="mt-3 font-display text-[30px] font-extrabold leading-[1.08] tracking-[-0.02em] text-fg sm:text-[38px]">
             {lead.title}
           </h2>
           {lead.excerpt && (
-            <p className="mt-3 line-clamp-2 max-w-[52ch] text-[15px] leading-relaxed text-muted">
+            <p className="mt-3 line-clamp-2 max-w-[54ch] font-serif text-[16px] leading-relaxed text-muted">
               {lead.excerpt}
             </p>
           )}
@@ -76,7 +83,7 @@ export function FeaturedLead({ articles }: { articles: ArticleVM[] }) {
                 onClick={() => open(a.slug)}
                 className={`group flex cursor-pointer gap-4 py-4 ${i > 0 ? "border-t border-line" : "lg:pt-0"}`}
               >
-                {a.coverImage && (
+                {a.coverImage ? (
                   <div className="w-[104px] flex-none overflow-hidden rounded-lg border border-line">
                     <CoverImage
                       src={a.coverImage}
@@ -86,6 +93,13 @@ export function FeaturedLead({ articles }: { articles: ArticleVM[] }) {
                       className="transition-transform duration-500 group-hover:scale-[1.03]"
                     />
                   </div>
+                ) : (
+                  <TypographicCover
+                    label={a.categoryLabel}
+                    color={a.color}
+                    className="aspect-[16/9] w-[104px] flex-none p-2.5"
+                    labelClass="text-[15px]"
+                  />
                 )}
                 <div className="min-w-0">
                   <Kicker color={a.color} label={a.categoryLabel} />
@@ -101,6 +115,39 @@ export function FeaturedLead({ articles }: { articles: ArticleVM[] }) {
       </div>
       <div className="mt-7 border-b border-line" />
     </section>
+  );
+}
+
+/** Bìa chữ khi bài không có ảnh cover — thay khối màu trơ bằng typography có chủ đích. */
+function TypographicCover({
+  label,
+  color,
+  className = "",
+  labelClass,
+}: {
+  label: string;
+  color: string;
+  className?: string;
+  labelClass: string;
+}) {
+  return (
+    <div
+      className={`flex flex-col justify-between overflow-hidden rounded-xl border ${className}`}
+      style={{
+        borderColor: `color-mix(in srgb, ${color} 40%, var(--line))`,
+        background: `color-mix(in srgb, ${color} 12%, var(--surface))`,
+      }}
+    >
+      <span className="font-mono text-[9px] uppercase tracking-[0.2em] opacity-70" style={{ color }}>
+        Mạch
+      </span>
+      <span
+        className={`font-display font-extrabold uppercase leading-[0.9] tracking-[-0.02em] ${labelClass}`}
+        style={{ color }}
+      >
+        {label}
+      </span>
+    </div>
   );
 }
 

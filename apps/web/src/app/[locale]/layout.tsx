@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Roboto, Be_Vietnam_Pro, Space_Mono } from "next/font/google";
+import { Roboto, Be_Vietnam_Pro, Space_Mono, Source_Serif_4 } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
@@ -29,6 +29,14 @@ const mono = Space_Mono({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-mono-next",
+  display: "swap",
+});
+// Serif đọc cho thân bài + deck/excerpt (Slice 16 đợt 2) — editorial thật.
+const serif = Source_Serif_4({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-serif-next",
   display: "swap",
 });
 
@@ -74,7 +82,7 @@ export default async function RootLayout(
   return (
     <html
       lang={locale}
-      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+      className={`${display.variable} ${sans.variable} ${mono.variable} ${serif.variable}`}
       suppressHydrationWarning
     >
       <head>
