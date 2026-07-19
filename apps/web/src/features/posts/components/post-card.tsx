@@ -2,18 +2,21 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import type { Post } from "@ultimate/types";
 import { formatDate, readingTime } from "@/lib/format";
-import { categoryColorForTag } from "@/features/magazine/categories";
+import { sectionColorForTag } from "@/features/magazine/sections";
 import { BlurhashCanvas } from "@/features/posts/components/blurhash-canvas";
 
-/** Row bài viết kiểu Mạch: thumbnail blurhash + kicker màu category + meta mono. */
+/** Row bài viết newsroom: thumbnail blurhash + kicker màu section (theme-aware) + meta sans. */
 export function PostCard({ post }: { post: Post }) {
   const date = formatDate(post.published_at);
   const mins = readingTime(post.content_html);
   const primaryTag = post.tags[0];
-  const color = primaryTag ? categoryColorForTag(primaryTag) : "var(--accent)";
+  const color = primaryTag ? sectionColorForTag(primaryTag) : "var(--brand)";
 
   return (
-    <article className="group border-b border-line py-6 last:border-0">
+    <article
+      className="group border-b border-line py-6 last:border-0"
+      style={{ ["--sc" as string]: color }}
+    >
       <Link href={`/blog/${post.slug}`} className="flex gap-[18px] no-underline">
         {post.cover_image ? (
           <div
@@ -34,7 +37,7 @@ export function PostCard({ post }: { post: Post }) {
         ) : null}
 
         <div className="min-w-0 flex-1">
-          <div className="mb-[6px] flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10.5px] text-muted">
+          <div className="mb-[6px] flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] tabular-nums text-faint">
             {primaryTag ? (
               <span className="font-bold uppercase tracking-wide" style={{ color }}>
                 {primaryTag.name}
@@ -46,7 +49,7 @@ export function PostCard({ post }: { post: Post }) {
             <span>{mins} phút đọc</span>
           </div>
 
-          <h2 className="font-display text-[20px] font-bold leading-[1.25] tracking-[-0.01em] text-fg transition-colors group-hover:text-accent">
+          <h2 className="font-display text-[20px] font-bold leading-[1.25] tracking-[-0.01em] text-fg transition-colors group-hover:text-[color:var(--sc)]">
             {post.title}
           </h2>
 

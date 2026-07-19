@@ -1,10 +1,10 @@
 import { Link } from "@/i18n/navigation";
 import type { Tag } from "@ultimate/types";
-import { categoryColorForTag } from "@/features/magazine/categories";
+import { sectionColorForTag } from "@/features/magazine/sections";
 
-/** Chip tag kiểu Mạch: tint màu category (tag không khớp category → accent). */
+/** Chip tag newsroom: tint màu section (theme-aware); tag lạ → brand. */
 export function TagBadge({ tag }: { tag: Tag }) {
-  const color = categoryColorForTag(tag);
+  const color = sectionColorForTag(tag);
   return (
     <Link
       href={`/tags/${tag.slug}`}

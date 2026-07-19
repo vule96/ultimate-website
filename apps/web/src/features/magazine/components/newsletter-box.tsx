@@ -3,14 +3,14 @@ import { useMemo } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useNewsletterForm } from "../hooks/use-newsletter-form";
-import { localNewsletterService } from "../services/newsletter-service";
+import { apiNewsletterService } from "../services/newsletter-service";
 
 type Variant = "band" | "footer";
 
 export function NewsletterBox({ variant }: { variant: Variant }) {
   const t = useTranslations("newsletter");
   const errors = useMemo(() => ({ invalid: t("errInvalid"), system: t("errSystem") }), [t]);
-  const { email, setEmail, status, submit } = useNewsletterForm(localNewsletterService, errors);
+  const { email, setEmail, status, submit } = useNewsletterForm(apiNewsletterService, errors);
   const invalid = status.kind === "error";
   const big = variant === "band";
 
