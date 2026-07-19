@@ -53,14 +53,17 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Command hint */}
-      <div className="mx-[14px] mb-3 flex items-center gap-2 rounded-[9px] border border-border bg-secondary px-2.5 py-2 text-[13px] text-muted-foreground">
+      {/* Command hint — mở command palette */}
+      <button
+        onClick={() => window.dispatchEvent(new Event("open-command"))}
+        className="mx-[14px] mb-3 flex items-center gap-2 rounded-[9px] border border-border bg-secondary px-2.5 py-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+      >
         <Search className="size-4" />
         <span>Tìm nhanh…</span>
         <kbd className="ml-auto rounded border border-border bg-card px-1.5 py-px font-mono text-[10.5px]">
           ⌘K
         </kbd>
-      </div>
+      </button>
 
       {/* Nav groups */}
       <nav className="flex-1 overflow-y-auto px-[10px] pb-3">

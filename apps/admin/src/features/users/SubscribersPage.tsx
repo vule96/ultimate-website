@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Download, Trash2 } from "lucide-react";
 import { Button } from "@ultimate/ui";
 import type { Subscriber } from "@ultimate/types";
 import { Route } from "@/routes/_authed.subscribers";
+import { DeleteDialog } from "@/features/posts/components/DeleteDialog";
 import { useSubscribersSuspense, useDeleteSubscriber } from "./queries";
 import { PAGE_SIZE, fmtDate, Pager, Panel } from "./shared";
 
@@ -19,6 +21,7 @@ export function SubscribersPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { data } = useSubscribersSuspense({ page, pageSize: PAGE_SIZE });
   const del = useDeleteSubscriber();
+  const [toDelete, setToDelete] = useState<Subscriber | null>(null);
 
   const exportCsv = () => {
     const blob = new Blob([toCsv(data.data)], { type: "text/csv;charset=utf-8" });
@@ -72,9 +75,7 @@ export function SubscribersPage() {
                 <td className="px-4 py-2.5 text-right">
                   <button
                     aria-label={`Xoá ${s.email}`}
-                    onClick={() => {
-                      if (confirm(`Xoá người đăng ký ${s.email}?`)) del.mutate(s.id);
-                    }}
+                    onClick={() => setToDelete(s)}
                     className="text-muted-foreground transition-colors hover:text-destructive"
                   >
                     <Trash2 className="size-4" />
@@ -94,6 +95,23 @@ export function SubscribersPage() {
       </Panel>
 
       <Pager page={page} total={data.total} pageSize={PAGE_SIZE} onPage={setPage} />
+
+      <DeleteDialog
+        open={toDelete !== null}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        heading="Xoá người đăng ký?"
+        title={toDelete?.email ?? ""}
+        description={
+          <>
+            Gỡ <span className="font-medium text-foreground">{toDelete?.email}</span> khỏi danh sách
+            nhận bản tin. Hành động này không thể hoàn tác.
+          </>
+        }
+        pending={del.isPending}
+        onConfirm={() =>
+          toDelete && del.mutate(toDelete.id, { onSuccess: () => setToDelete(null) })
+        }
+      />
     </div>
   );
 }
