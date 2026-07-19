@@ -92,7 +92,7 @@
     "count": "{count} bài viết"
   },
   "footer": {
-    "desc": "Tạp chí tri thức cho người trẻ dám nghĩ — công nghệ, tài chính, kiến trúc, văn hoá và những gì đáng đọc mỗi ngày.",
+    "desc": "Tin tức đa lĩnh vực cho người trẻ dám nghĩ — công nghệ, tài chính, kiến trúc, văn hoá và những gì đáng đọc mỗi ngày.",
     "colCategories": "Chuyên mục",
     "colAbout": "Về Mạch",
     "about": "Giới thiệu",
@@ -126,6 +126,6 @@
     "backHome": "Về trang chủ"
   },
   "meta": {
-    "description": "Mạch — tạp chí tri thức cho người trẻ."
+    "description": "Mạch — tin tức đa lĩnh vực cho người trẻ."
   }
 }

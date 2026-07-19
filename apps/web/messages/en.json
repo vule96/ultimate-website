@@ -92,7 +92,7 @@
     "count": "{count} articles"
   },
   "footer": {
-    "desc": "A knowledge magazine for young people who dare to think — technology, finance, architecture, culture and what's worth reading every day.",
+    "desc": "Multi-topic news for young people who dare to think — technology, finance, architecture, culture and what's worth reading every day.",
     "colCategories": "Categories",
     "colAbout": "About Mạch",
     "about": "About us",
@@ -126,6 +126,6 @@
     "backHome": "Back to home"
   },
   "meta": {
-    "description": "Mạch — a knowledge magazine for the young."
+    "description": "Mạch — multi-topic news for the young."
   }
 }
