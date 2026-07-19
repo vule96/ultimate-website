@@ -136,10 +136,11 @@ type listResponse struct {
 }
 
 type statsResponse struct {
-	Total     int64 `json:"total"`
-	Published int64 `json:"published"`
-	Draft     int64 `json:"draft"`
-	Tags      int64 `json:"tags"`
+	Total      int64 `json:"total"`
+	Published  int64 `json:"published"`
+	Draft      int64 `json:"draft"`
+	Tags       int64 `json:"tags"`
+	TotalViews int64 `json:"total_views"`
 }
 
 // --- Handlers ---
@@ -178,10 +179,11 @@ func (h *Handler) stats(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, statsResponse{
-		Total:     s.Total,
-		Published: s.Published,
-		Draft:     s.Draft,
-		Tags:      s.Tags,
+		Total:      s.Total,
+		Published:  s.Published,
+		Draft:      s.Draft,
+		Tags:       s.Tags,
+		TotalViews: s.TotalViews,
 	})
 }
 

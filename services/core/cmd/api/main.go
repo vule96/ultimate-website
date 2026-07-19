@@ -227,6 +227,9 @@ func main() {
 		ratelimit.PerIP(rdb, log, "subscribe", 5, time.Minute),
 		jsonmw.RequireJSON())
 
+	// Admin: list/quản lý subscribers + readers (sau RequireAuth allowlist).
+	readers.NewAdminHandler(readersSvc).RegisterRoutes(api, auth.RequireAuth(sm, allowlist))
+
 	if cfg.GoogleClientID == "" || cfg.AdminAllowlist == "" {
 		log.Warn("auth not fully configured — set GOOGLE_CLIENT_ID/SECRET and ADMIN_ALLOWLIST to enable login")
 	}

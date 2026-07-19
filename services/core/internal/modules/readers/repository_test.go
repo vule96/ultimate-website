@@ -71,3 +71,56 @@ func TestGetReader_NotFound(t *testing.T) {
 	_, err := repo.GetReader(context.Background(), uuid.New())
 	require.ErrorIs(t, err, ErrReaderNotFound)
 }
+
+func TestListSubscribers_Paging(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	for range 3 {
+		require.NoError(t, repo.UpsertSubscriber(ctx, uuid.NewString()+"@example.com"))
+	}
+
+	page1, total, err := repo.ListSubscribers(ctx, 0, 2)
+	require.NoError(t, err)
+	require.Equal(t, int64(3), total)
+	require.Len(t, page1, 2)
+
+	page2, _, err := repo.ListSubscribers(ctx, 2, 2)
+	require.NoError(t, err)
+	require.Len(t, page2, 1)
+}
+
+func TestDeleteSubscriber(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	require.NoError(t, repo.UpsertSubscriber(ctx, uuid.NewString()+"@example.com"))
+	subs, _, err := repo.ListSubscribers(ctx, 0, 10)
+	require.NoError(t, err)
+	require.Len(t, subs, 1)
+
+	require.NoError(t, repo.DeleteSubscriber(ctx, subs[0].ID))
+	require.ErrorIs(t, repo.DeleteSubscriber(ctx, subs[0].ID), ErrSubscriberNotFound)
+	require.ErrorIs(t, repo.DeleteSubscriber(ctx, uuid.New()), ErrSubscriberNotFound)
+}
+
+func TestListReaders_WithBookmarkCount(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	r, _ := repo.UpsertReader(ctx, "sub-"+uuid.NewString(), "reader@example.com", "Reader")
+	require.NoError(t, repo.AddBookmark(ctx, r.ID, seedPost(t, db)))
+	require.NoError(t, repo.AddBookmark(ctx, r.ID, seedPost(t, db)))
+	// reader thứ 2 không bookmark
+	repo.UpsertReader(ctx, "sub-"+uuid.NewString(), "reader2@example.com", "Reader2")
+
+	list, total, err := repo.ListReaders(ctx, 0, 10)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), total)
+	byEmail := map[string]int64{}
+	for _, x := range list {
+		byEmail[x.Email] = x.BookmarkCount
+	}
+	require.Equal(t, int64(2), byEmail["reader@example.com"])
+	require.Equal(t, int64(0), byEmail["reader2@example.com"])
+}

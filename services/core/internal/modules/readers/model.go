@@ -16,13 +16,30 @@ type Reader struct {
 	Name      string
 }
 
+// Subscriber là người đăng ký newsletter (domain — cho admin xem/quản lý).
+type Subscriber struct {
+	ID        uuid.UUID
+	Email     string
+	Status    string
+	CreatedAt time.Time
+}
+
+// ReaderWithCount là reader kèm số bookmark (admin list).
+type ReaderWithCount struct {
+	ID            uuid.UUID
+	Email         string
+	Name          string
+	CreatedAt     time.Time
+	BookmarkCount int64
+}
+
 // readerRow map bảng readers.
 type readerRow struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	GoogleSub string    `gorm:"column:google_sub;type:text;not null;uniqueIndex"`
 	Email     string    `gorm:"type:text;not null"`
 	Name      string    `gorm:"type:text"`
-	CreatedAt time.Time `gorm:"type:timestamptz;not null;default:now()"`
+	CreatedAt time.Time `gorm:"type:timestamptz;not null;default:now();index:idx_readers_created_at,sort:desc"`
 	UpdatedAt time.Time `gorm:"type:timestamptz;not null;default:now()"`
 }
 
@@ -42,7 +59,7 @@ type subscriberRow struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Email     string    `gorm:"type:citext;not null;uniqueIndex"`
 	Status    string    `gorm:"type:text;not null;default:'active'"`
-	CreatedAt time.Time `gorm:"type:timestamptz;not null;default:now()"`
+	CreatedAt time.Time `gorm:"type:timestamptz;not null;default:now();index:idx_subscribers_created_at,sort:desc"`
 }
 
 func (subscriberRow) TableName() string { return "subscribers" }

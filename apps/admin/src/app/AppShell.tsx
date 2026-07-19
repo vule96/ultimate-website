@@ -1,12 +1,15 @@
 import { Outlet, useRouterState } from "@tanstack/react-router";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+import { CommandPalette } from "./CommandPalette";
 
 const titles: Record<string, string> = {
-  "/": "Dashboard",
+  "/": "Tổng quan",
   "/posts": "Bài viết",
   "/tags": "Tags",
   "/media": "Media",
+  "/subscribers": "Người đăng ký",
+  "/readers": "Người đọc",
   "/settings": "Cài đặt",
 };
 
@@ -22,6 +25,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

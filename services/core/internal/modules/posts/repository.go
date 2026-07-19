@@ -316,6 +316,9 @@ func (r *GormRepository) Stats(ctx context.Context) (StatsResult, error) {
 	if err := db.Model(&gormTag{}).Count(&res.Tags).Error; err != nil {
 		return StatsResult{}, err
 	}
+	if err := db.Model(&gormPost{}).Select("COALESCE(SUM(views),0)").Scan(&res.TotalViews).Error; err != nil {
+		return StatsResult{}, err
+	}
 	return res, nil
 }
 

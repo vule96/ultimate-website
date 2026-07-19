@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,20 +17,28 @@ export function DeleteDialog({
   title,
   onConfirm,
   pending,
+  heading = "Xoá bài viết?",
+  description,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   onConfirm: () => void;
   pending: boolean;
+  heading?: string;
+  description?: ReactNode;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
-        <AlertDialogTitle>Xoá bài viết?</AlertDialogTitle>
+        <AlertDialogTitle>{heading}</AlertDialogTitle>
         <AlertDialogDescription>
-          Bạn sắp xoá <span className="font-medium text-foreground">“{title}”</span>. Hành động này
-          không thể hoàn tác.
+          {description ?? (
+            <>
+              Bạn sắp xoá <span className="font-medium text-foreground">“{title}”</span>. Hành động
+              này không thể hoàn tác.
+            </>
+          )}
         </AlertDialogDescription>
         <AlertDialogFooter>
           <AlertDialogCancel className={cn(buttonVariants({ variant: "outline" }))} disabled={pending}>

@@ -72,8 +72,44 @@ export const PostStatsSchema = z.object({
   published: z.number().int(),
   draft: z.number().int(),
   tags: z.number().int(),
+  total_views: z.number().int(),
 });
 export type PostStats = z.infer<typeof PostStatsSchema>;
+
+/** Người đăng ký newsletter (GET /subscribers — admin). */
+export const SubscriberSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string(),
+  status: z.string(),
+  created_at: z.string(),
+});
+export type Subscriber = z.infer<typeof SubscriberSchema>;
+
+export const SubscriberListResponseSchema = z.object({
+  data: z.array(SubscriberSchema),
+  total: z.number(),
+  page: z.number(),
+  page_size: z.number(),
+});
+export type SubscriberListResponse = z.infer<typeof SubscriberListResponseSchema>;
+
+/** Người đọc (GET /readers — admin) kèm số bookmark. */
+export const AdminReaderSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string(),
+  name: z.string(),
+  created_at: z.string(),
+  bookmark_count: z.number().int(),
+});
+export type AdminReader = z.infer<typeof AdminReaderSchema>;
+
+export const AdminReaderListResponseSchema = z.object({
+  data: z.array(AdminReaderSchema),
+  total: z.number(),
+  page: z.number(),
+  page_size: z.number(),
+});
+export type AdminReaderListResponse = z.infer<typeof AdminReaderListResponseSchema>;
 
 /** Một điểm dữ liệu chart theo tháng (GET /stats/posts/timeseries). */
 export const PostTimeseriesSchema = z.array(
@@ -82,7 +118,7 @@ export const PostTimeseriesSchema = z.array(
 export type PostTimeseries = z.infer<typeof PostTimeseriesSchema>;
 
 /** Cột được phép sắp xếp cho danh sách bài viết (khớp whitelist ở core). */
-export const PostSortFieldSchema = z.enum(["title", "status", "updated_at", "created_at"]);
+export const PostSortFieldSchema = z.enum(["title", "status", "updated_at", "created_at", "views"]);
 export type PostSortField = z.infer<typeof PostSortFieldSchema>;
 
 export const SortOrderSchema = z.enum(["asc", "desc"]);
