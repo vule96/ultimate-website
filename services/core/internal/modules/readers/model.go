@@ -16,6 +16,23 @@ type Reader struct {
 	Name      string
 }
 
+// Subscriber là người đăng ký newsletter (domain — cho admin xem/quản lý).
+type Subscriber struct {
+	ID        uuid.UUID
+	Email     string
+	Status    string
+	CreatedAt time.Time
+}
+
+// ReaderWithCount là reader kèm số bookmark (admin list).
+type ReaderWithCount struct {
+	ID            uuid.UUID
+	Email         string
+	Name          string
+	CreatedAt     time.Time
+	BookmarkCount int64
+}
+
 // readerRow map bảng readers.
 type readerRow struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`

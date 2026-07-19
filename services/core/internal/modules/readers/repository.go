@@ -9,7 +9,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-var ErrReaderNotFound = errors.New("reader not found")
+var (
+	ErrReaderNotFound     = errors.New("reader not found")
+	ErrSubscriberNotFound = errors.New("subscriber not found")
+)
 
 type Repository interface {
 	UpsertReader(ctx context.Context, googleSub, email, name string) (Reader, error)
@@ -18,6 +21,10 @@ type Repository interface {
 	RemoveBookmark(ctx context.Context, readerID, postID uuid.UUID) error
 	ListBookmarks(ctx context.Context, readerID uuid.UUID) ([]uuid.UUID, error)
 	UpsertSubscriber(ctx context.Context, email string) error
+	// Admin
+	ListSubscribers(ctx context.Context, offset, limit int) ([]Subscriber, int64, error)
+	DeleteSubscriber(ctx context.Context, id uuid.UUID) error
+	ListReaders(ctx context.Context, offset, limit int) ([]ReaderWithCount, int64, error)
 }
 
 type GormRepository struct{ db *gorm.DB }
@@ -85,4 +92,54 @@ func (r *GormRepository) UpsertSubscriber(ctx context.Context, email string) err
 	return r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{DoNothing: true}).
 		Create(&subscriberRow{Email: email}).Error
+}
+
+// ListSubscribers trả trang subscriber (mới nhất trước) + tổng số.
+func (r *GormRepository) ListSubscribers(ctx context.Context, offset, limit int) ([]Subscriber, int64, error) {
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&subscriberRow{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var rows []subscriberRow
+	if err := r.db.WithContext(ctx).
+		Order("created_at DESC").Offset(offset).Limit(limit).
+		Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	out := make([]Subscriber, len(rows))
+	for i, s := range rows {
+		out[i] = Subscriber{ID: s.ID, Email: s.Email, Status: s.Status, CreatedAt: s.CreatedAt}
+	}
+	return out, total, nil
+}
+
+// DeleteSubscriber xoá theo id; 0 row → ErrSubscriberNotFound.
+func (r *GormRepository) DeleteSubscriber(ctx context.Context, id uuid.UUID) error {
+	res := r.db.WithContext(ctx).Where("id = ?", id).Delete(&subscriberRow{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return ErrSubscriberNotFound
+	}
+	return nil
+}
+
+// ListReaders trả trang reader kèm số bookmark (LEFT JOIN) + tổng số.
+func (r *GormRepository) ListReaders(ctx context.Context, offset, limit int) ([]ReaderWithCount, int64, error) {
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&readerRow{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	var out []ReaderWithCount
+	if err := r.db.WithContext(ctx).
+		Model(&readerRow{}).
+		Select("readers.id, readers.email, readers.name, readers.created_at, COUNT(bookmarks.post_id) AS bookmark_count").
+		Joins("LEFT JOIN bookmarks ON bookmarks.reader_id = readers.id").
+		Group("readers.id").
+		Order("readers.created_at DESC").Offset(offset).Limit(limit).
+		Scan(&out).Error; err != nil {
+		return nil, 0, err
+	}
+	return out, total, nil
 }

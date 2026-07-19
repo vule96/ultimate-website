@@ -80,6 +80,35 @@ func (s *Service) Subscribe(ctx context.Context, email string) error {
 	return s.repo.UpsertSubscriber(ctx, addr.Address)
 }
 
+// --- Admin (list/quản lý — sau RequireAuth) ---
+
+func normPage(page, pageSize int) (offset, limit int) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
+	return (page - 1) * pageSize, pageSize
+}
+
+func (s *Service) ListSubscribers(ctx context.Context, page, pageSize int) ([]Subscriber, int64, error) {
+	offset, limit := normPage(page, pageSize)
+	return s.repo.ListSubscribers(ctx, offset, limit)
+}
+
+func (s *Service) DeleteSubscriber(ctx context.Context, id uuid.UUID) error {
+	return s.repo.DeleteSubscriber(ctx, id)
+}
+
+func (s *Service) ListReaders(ctx context.Context, page, pageSize int) ([]ReaderWithCount, int64, error) {
+	offset, limit := normPage(page, pageSize)
+	return s.repo.ListReaders(ctx, offset, limit)
+}
+
 func randomToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {

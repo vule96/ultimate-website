@@ -37,10 +37,11 @@ type ListFilter struct {
 
 // StatsResult là số liệu tổng hợp về bài viết cho Dashboard.
 type StatsResult struct {
-	Total     int64 // tổng số bài (mọi trạng thái)
-	Published int64 // số bài PUBLISHED
-	Draft     int64 // số bài DRAFT
-	Tags      int64 // số tag phân biệt
+	Total      int64 // tổng số bài (mọi trạng thái)
+	Published  int64 // số bài PUBLISHED
+	Draft      int64 // số bài DRAFT
+	Tags       int64 // số tag phân biệt
+	TotalViews int64 // tổng lượt xem tất cả bài
 }
 
 // MonthCount là số bài viết trong một tháng ("YYYY-MM").

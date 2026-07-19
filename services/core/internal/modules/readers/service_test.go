@@ -30,8 +30,11 @@ func (f fakeProvider) Exchange(ctx context.Context, code, verifier string) (auth
 }
 
 type fakeRepo struct {
-	readers map[string]Reader // key google_sub
-	subs    map[string]bool
+	readers     map[string]Reader // key google_sub
+	subs        map[string]bool
+	subsList    []Subscriber      // cho admin handler test
+	readersList []ReaderWithCount // cho admin handler test
+	deleteErr   error             // cho admin handler test
 }
 
 func newFakeRepo() *fakeRepo { return &fakeRepo{readers: map[string]Reader{}, subs: map[string]bool{}} }
@@ -60,6 +63,13 @@ func (r *fakeRepo) ListBookmarks(context.Context, uuid.UUID) ([]uuid.UUID, error
 func (r *fakeRepo) UpsertSubscriber(_ context.Context, email string) error {
 	r.subs[email] = true
 	return nil
+}
+func (r *fakeRepo) ListSubscribers(context.Context, int, int) ([]Subscriber, int64, error) {
+	return r.subsList, int64(len(r.subsList)), nil
+}
+func (r *fakeRepo) DeleteSubscriber(context.Context, uuid.UUID) error { return r.deleteErr }
+func (r *fakeRepo) ListReaders(context.Context, int, int) ([]ReaderWithCount, int64, error) {
+	return r.readersList, int64(len(r.readersList)), nil
 }
 
 func TestCompleteLogin_NoAllowlist_UpsertsReader(t *testing.T) {
