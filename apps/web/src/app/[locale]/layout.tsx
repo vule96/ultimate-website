@@ -8,10 +8,14 @@ import "../globals.css";
 import { SITE_URL, SITE_NAME } from "@/lib/config";
 import { routing, isLocale } from "@/i18n/routing";
 import { Masthead } from "@/features/magazine/components/masthead";
-import { SubNav } from "@/features/magazine/components/sub-nav";
+import { SectionNav } from "@/features/magazine/components/section-nav";
+import { Ticker } from "@/features/magazine/components/ticker";
 import { MagazineFooter } from "@/features/magazine/components/magazine-footer";
 import { ReaderHydrator } from "@/features/magazine/components/reader-hydrator";
 import { THEME_SCRIPT } from "@/features/magazine/hooks/use-theme";
+import { listLatest } from "@/features/posts/api";
+import { buildSafe } from "@/features/posts/build-safe";
+import { categoryFromTags, CATEGORY_BY_KEY } from "@/features/magazine/categories";
 
 // Newsroom (bản C): một họ chữ Be Vietnam Pro cho toàn site — personality bằng
 // weight (heading 800/900) + scale, không dùng serif/mono chrome.
@@ -61,6 +65,19 @@ export default async function RootLayout(
   if (!isLocale(locale)) notFound();
   setRequestLocale(locale);
   const messages = await getMessages();
+
+  // Ticker chrome: bài mới nhất (buildSafe → [] khi build không API).
+  const latest = await buildSafe(() => listLatest(8), []);
+  const tCat = await getTranslations({ locale });
+  const tickerItems = latest.map((p) => {
+    const cat = categoryFromTags(p.tags);
+    return {
+      slug: p.slug,
+      title: p.title,
+      label: tCat(`categories.${cat}`),
+      color: CATEGORY_BY_KEY[cat].color,
+    };
+  });
   return (
     <html
       lang={locale}
@@ -76,10 +93,11 @@ export default async function RootLayout(
       </head>
       <body className="flex min-h-screen flex-col bg-bg text-fg">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {/* Chrome Mạch toàn site (Slice 12): masthead + subnav mọi trang. */}
+          {/* Chrome newsroom toàn site: ticker + masthead + section-nav mọi trang. */}
           <ReaderHydrator />
+          <Ticker items={tickerItems} />
           <Masthead />
-          <SubNav />
+          <SectionNav />
           <div className="flex-1">{children}</div>
           <MagazineFooter />
         </NextIntlClientProvider>

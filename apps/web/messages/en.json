@@ -1,6 +1,6 @@
 {
   "masthead": {
-    "tagline": "The knowledge magazine",
+    "tagline": "Multi-topic news",
     "themeToggleAria": "Toggle light/dark theme",
     "themeDark": "Dark",
     "themeLight": "Light",
@@ -14,6 +14,18 @@
   },
   "search": {
     "placeholder": "Search articles, topics, authors…"
+  },
+  "ticker": {
+    "live": "Live"
+  },
+  "sections": {
+    "home": "Home",
+    "topics": "Topics",
+    "tech": "Technology",
+    "finance": "Finance",
+    "life": "Life & Culture",
+    "dev": "Growth",
+    "viewAll": "View all"
   },
   "rail": {
     "heading": "Fields"

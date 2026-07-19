@@ -101,6 +101,17 @@
   }
 }
 
+/* ---------- Ticker (newsroom) ---------- */
+@keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.ticker-track { animation: ticker-scroll 34s linear infinite; }
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes ticker-ping { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,.55); } 70% { box-shadow: 0 0 0 5px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.ticker-dot { animation: ticker-ping 1.8s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+  .ticker-dot { animation: none; }
+}
+
 /* ---------- Editorial article (blog) ---------- */
 
 .article-body {

@@ -1,6 +1,6 @@
 {
   "masthead": {
-    "tagline": "Tạp chí tri thức",
+    "tagline": "Tin tức đa lĩnh vực",
     "themeToggleAria": "Đổi giao diện sáng/tối",
     "themeDark": "Tối",
     "themeLight": "Sáng",
@@ -14,6 +14,18 @@
   },
   "search": {
     "placeholder": "Tìm bài viết, chủ đề, tác giả…"
+  },
+  "ticker": {
+    "live": "Trực tiếp"
+  },
+  "sections": {
+    "home": "Trang chủ",
+    "topics": "Chủ đề",
+    "tech": "Công nghệ",
+    "finance": "Tài chính",
+    "life": "Đời sống & Văn hoá",
+    "dev": "Phát triển",
+    "viewAll": "Xem tất cả"
   },
   "rail": {
     "heading": "Lĩnh vực"
