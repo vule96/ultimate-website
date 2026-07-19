@@ -12,6 +12,7 @@ import { useMagazineStore } from "../store/magazine-store";
 import { CategoryRail } from "./category-rail";
 import { MobileCategoryBar } from "./mobile-category-bar";
 import { NewsletterBox } from "./newsletter-box";
+import { FeaturedLead } from "./featured-lead";
 import { ArticleList } from "./article-list";
 import { TrendingChips } from "./trending-chips";
 import { TopViewedList } from "./top-viewed-list";
@@ -41,9 +42,10 @@ export function MagazineBoard({
     <MotionConfig reducedMotion="user">
       <LazyMotion features={loadMotionFeatures} strict>
         <MobileCategoryBar />
+        <FeaturedLead articles={articles} />
         <div className="mx-auto flex max-w-shell">
           <CategoryRail />
-          <ArticleList articles={articles} />
+          <ArticleList articles={articles} skipCount={3} />
           <aside className="hidden w-[250px] flex-none border-l border-line bg-surface px-[22px] py-6 xl:block">
             <div className="mb-[14px] font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
               {t("trending")}

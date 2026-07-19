@@ -12,7 +12,7 @@
   --muted: #726a5b;
   --line: rgba(28, 26, 22, 0.11);
   --soft: rgba(28, 26, 22, 0.045);
-  --accent: #1668e3;
+  --accent: #0f6e63;
   --accent-fg: #ffffff;
   --highlight: #ffcf33;
   --tint-strength: 13%;
@@ -47,6 +47,7 @@
   --line: rgba(239, 233, 223, 0.14);
   --soft: rgba(239, 233, 223, 0.05);
   --tint-strength: 24%;
+  --accent: #3aa99b; /* teal sáng hơn — teal gốc quá tối trên nền dark */
 
   --chrome-bg: #201d18;
   --chrome-fg: #efe9df;
@@ -74,9 +75,9 @@
 /* ---------- Editorial article (blog) ---------- */
 
 .article-body {
-  font-family: var(--font-sans);
-  font-size: 1.125rem;
-  line-height: 1.78;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  line-height: 1.75;
   color: var(--fg);
 }
 .article-body > :first-child { margin-top: 0; }

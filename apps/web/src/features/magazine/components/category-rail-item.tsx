@@ -10,20 +10,23 @@ interface Props {
 
 function CategoryRailItemBase({ category, active, onSelect }: Props) {
   const t = useTranslations("categories");
-  const Icon = category.icon;
+  const tint = `color-mix(in srgb, ${category.color} var(--tint-strength), transparent)`;
   return (
     <button
       type="button"
       onClick={() => onSelect(category.key)}
-      className="flex items-center gap-[11px] rounded-[9px] px-[13px] py-[12px] text-left text-[13.5px] font-semibold transition-colors"
-      style={
-        active
-          ? { background: category.color, color: "#fff", boxShadow: `0 6px 16px ${category.color}52` }
-          : undefined
-      }
+      className="relative rounded-[9px] py-[11px] pl-[15px] pr-[13px] text-left text-[14px] font-semibold text-fg transition-colors hover:bg-soft"
+      style={active ? { color: category.color, background: tint } : undefined}
     >
-      <Icon size={16} strokeWidth={2} style={{ color: active ? "#fff" : category.color }} />
-      <span className={active ? "text-white" : "text-fg"}>{t(category.key)}</span>
+      {/* Thanh màu category = tín hiệu phân loại (không phải trang trí như icon cũ). */}
+      {active && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 h-[16px] w-[3px] -translate-y-1/2 rounded-full"
+          style={{ background: category.color }}
+        />
+      )}
+      {t(category.key)}
     </button>
   );
 }

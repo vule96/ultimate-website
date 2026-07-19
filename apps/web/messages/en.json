@@ -23,6 +23,10 @@
     "topViewed": "Most viewed",
     "fbCta": "Join our Facebook group →"
   },
+  "featured": {
+    "eyebrow": "Featured",
+    "views": "{count} views"
+  },
   "list": {
     "latest": "Latest",
     "results": "{count} results",

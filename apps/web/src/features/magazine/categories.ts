@@ -13,20 +13,22 @@ import {
 } from "lucide-react";
 import type { Category, CategoryKey } from "./types";
 
-const ACCENT = "#1668e3";
+const ACCENT = "#0f6e63";
 
+// Bảng màu muối/trầm (Slice 16): giữ hue = giữ nhận diện, hạ saturation ~40%.
+// IT lệch khỏi blue chói (dấu hiệu "AI look"). Một hex chung cho light+dark.
 export const CATEGORIES = [
   { key: "all", label: "Tất cả", color: ACCENT, icon: Grid },
-  { key: "it", label: "IT", color: "#2f6df6", icon: Code },
-  { key: "ai", label: "AI", color: "#7048e8", icon: Sparkles },
-  { key: "finance", label: "Tài chính", color: "#0b8a6f", icon: CircleDollarSign },
-  { key: "stock", label: "Chứng khoán", color: "#e8590c", icon: BarChart3 },
+  { key: "it", label: "IT", color: "#4c6ea3", icon: Code },
+  { key: "ai", label: "AI", color: "#6a5aa0", icon: Sparkles },
+  { key: "finance", label: "Tài chính", color: "#2f7d6a", icon: CircleDollarSign },
+  { key: "stock", label: "Chứng khoán", color: "#b56033", icon: BarChart3 },
   { key: "arch", label: "Kiến trúc", color: "#5f6b7a", icon: Compass },
-  { key: "culture", label: "Văn hóa", color: "#e8843c", icon: Landmark },
-  { key: "ent", label: "Giải trí", color: "#e64980", icon: PlayCircle },
-  { key: "news", label: "Tin tức", color: "#0ca678", icon: Newspaper },
-  { key: "growth", label: "Phát triển bản thân", color: "#37b24d", icon: TrendingUp },
-  { key: "book", label: "Review sách", color: "#e8590c", icon: BookOpen },
+  { key: "culture", label: "Văn hóa", color: "#b8874a", icon: Landmark },
+  { key: "ent", label: "Giải trí", color: "#b25877", icon: PlayCircle },
+  { key: "news", label: "Tin tức", color: "#3f8770", icon: Newspaper },
+  { key: "growth", label: "Phát triển bản thân", color: "#5a8a55", icon: TrendingUp },
+  { key: "book", label: "Review sách", color: "#a5623f", icon: BookOpen },
 ] as const satisfies readonly Category[];
 
 export const CATEGORY_BY_KEY = Object.fromEntries(

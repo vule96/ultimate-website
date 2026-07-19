@@ -33,7 +33,7 @@ const config: Config = {
         display: ["var(--font-display)"],
         sans: ["var(--font-sans)"],
         mono: ["var(--font-mono)"],
-        serif: ["Lora", "Georgia", "serif"],
+        serif: ["var(--font-serif)"],
       },
       maxWidth: { prose: "42rem", shell: "1200px" },
       boxShadow: { modal: "var(--shadow-modal)" },
