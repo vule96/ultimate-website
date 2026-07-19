@@ -25,3 +25,6 @@ AGENTS.md
 # Build/test logs (scratch)
 *.log
 .env.prod
+
+# file lạ ngoài dự án (Unicode NFC/NFD)
+m*.o bi*n b*o.txt
