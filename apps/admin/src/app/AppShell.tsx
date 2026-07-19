@@ -3,10 +3,12 @@ import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
 const titles: Record<string, string> = {
-  "/": "Dashboard",
+  "/": "Tổng quan",
   "/posts": "Bài viết",
   "/tags": "Tags",
   "/media": "Media",
+  "/subscribers": "Người đăng ký",
+  "/readers": "Người đọc",
   "/settings": "Cài đặt",
 };
 

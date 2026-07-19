@@ -13,7 +13,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as AuthedIndexRouteImport } from './routes/_authed.index'
 import { Route as AuthedTagsRouteImport } from './routes/_authed.tags'
+import { Route as AuthedSubscribersRouteImport } from './routes/_authed.subscribers'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed.settings'
+import { Route as AuthedReadersRouteImport } from './routes/_authed.readers'
 import { Route as AuthedMediaRouteImport } from './routes/_authed.media'
 import { Route as AuthedPostsIndexRouteImport } from './routes/_authed.posts.index'
 import { Route as AuthedPostsNewRouteImport } from './routes/_authed.posts.new'
@@ -38,9 +40,19 @@ const AuthedTagsRoute = AuthedTagsRouteImport.update({
   path: '/tags',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSubscribersRoute = AuthedSubscribersRouteImport.update({
+  id: '/subscribers',
+  path: '/subscribers',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedReadersRoute = AuthedReadersRouteImport.update({
+  id: '/readers',
+  path: '/readers',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedMediaRoute = AuthedMediaRouteImport.update({
@@ -68,7 +80,9 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/media': typeof AuthedMediaRoute
+  '/readers': typeof AuthedReadersRoute
   '/settings': typeof AuthedSettingsRoute
+  '/subscribers': typeof AuthedSubscribersRoute
   '/tags': typeof AuthedTagsRoute
   '/posts/new': typeof AuthedPostsNewRoute
   '/posts/': typeof AuthedPostsIndexRoute
@@ -77,7 +91,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/media': typeof AuthedMediaRoute
+  '/readers': typeof AuthedReadersRoute
   '/settings': typeof AuthedSettingsRoute
+  '/subscribers': typeof AuthedSubscribersRoute
   '/tags': typeof AuthedTagsRoute
   '/': typeof AuthedIndexRoute
   '/posts/new': typeof AuthedPostsNewRoute
@@ -89,7 +105,9 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authed/media': typeof AuthedMediaRoute
+  '/_authed/readers': typeof AuthedReadersRoute
   '/_authed/settings': typeof AuthedSettingsRoute
+  '/_authed/subscribers': typeof AuthedSubscribersRoute
   '/_authed/tags': typeof AuthedTagsRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/posts/new': typeof AuthedPostsNewRoute
@@ -102,7 +120,9 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/media'
+    | '/readers'
     | '/settings'
+    | '/subscribers'
     | '/tags'
     | '/posts/new'
     | '/posts/'
@@ -111,7 +131,9 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/media'
+    | '/readers'
     | '/settings'
+    | '/subscribers'
     | '/tags'
     | '/'
     | '/posts/new'
@@ -122,7 +144,9 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/login'
     | '/_authed/media'
+    | '/_authed/readers'
     | '/_authed/settings'
+    | '/_authed/subscribers'
     | '/_authed/tags'
     | '/_authed/'
     | '/_authed/posts/new'
@@ -165,11 +189,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedTagsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/subscribers': {
+      id: '/_authed/subscribers'
+      path: '/subscribers'
+      fullPath: '/subscribers'
+      preLoaderRoute: typeof AuthedSubscribersRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/settings': {
       id: '/_authed/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/readers': {
+      id: '/_authed/readers'
+      path: '/readers'
+      fullPath: '/readers'
+      preLoaderRoute: typeof AuthedReadersRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/media': {
@@ -205,7 +243,9 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedMediaRoute: typeof AuthedMediaRoute
+  AuthedReadersRoute: typeof AuthedReadersRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
+  AuthedSubscribersRoute: typeof AuthedSubscribersRoute
   AuthedTagsRoute: typeof AuthedTagsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedPostsNewRoute: typeof AuthedPostsNewRoute
@@ -215,7 +255,9 @@ interface AuthedRouteChildren {
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedMediaRoute: AuthedMediaRoute,
+  AuthedReadersRoute: AuthedReadersRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedSubscribersRoute: AuthedSubscribersRoute,
   AuthedTagsRoute: AuthedTagsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedPostsNewRoute: AuthedPostsNewRoute,

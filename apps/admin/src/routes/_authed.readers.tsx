@@ -1,0 +1,20 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { ReadersPage } from "@/features/users/ReadersPage";
+import { readersQueryOptions } from "@/features/users/queries";
+import { PAGE_SIZE } from "@/features/users/shared";
+import { RouteError, RoutePending } from "@/app/route-states";
+
+const searchSchema = z.object({
+  page: z.number().int().min(1).default(1).catch(1),
+});
+
+export const Route = createFileRoute("/_authed/readers")({
+  validateSearch: searchSchema,
+  loaderDeps: ({ search }) => search,
+  loader: ({ context: { queryClient }, deps }) =>
+    queryClient.ensureQueryData(readersQueryOptions({ page: deps.page, pageSize: PAGE_SIZE })),
+  pendingComponent: RoutePending,
+  errorComponent: RouteError,
+  component: ReadersPage,
+});

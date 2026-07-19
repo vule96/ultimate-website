@@ -1,12 +1,52 @@
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/jetbrains-mono";
 @import "@ultimate/ui/styles/theme.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---- Admin identity: light + cerulean (override token HiveQ) ---------------
+   Scope: CHỈ admin. KHÔNG sửa packages/ui theme (web dùng chung). Admin không
+   bật class .dark → chỉ cần :root (light-only theo yêu cầu). ------------------ */
+:root {
+  --background: 48 14% 96%;
+  --foreground: 40 8% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 40 8% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 40 8% 12%;
+  --primary: 201 76% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 48 13% 93%;
+  --secondary-foreground: 40 8% 12%;
+  --muted: 48 13% 93%;
+  --muted-foreground: 40 6% 42%;
+  --accent: 201 76% 95%;
+  --accent-foreground: 201 76% 32%;
+  --border: 48 11% 90%;
+  --input: 48 11% 90%;
+  --ring: 201 76% 50%;
+  --radius: 0.625rem;
+  --destructive: 4 66% 54%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* KPI + status (hex, dùng trực tiếp trong component admin) */
+  --k-post: #1f9fe0;
+  --k-post-t: #dcf0fb;
+  --k-pub: #4a9d5b;
+  --k-pub-t: #e9f3ea;
+  --k-view: #c68a2e;
+  --k-view-t: #f6eeda;
+  --k-sub: #c25f6b;
+  --k-sub-t: #f7e7e9;
+  --k-read: #5a6b9c;
+  --k-read-t: #e9ebf4;
+  --st-pub: #3f9a55;
+  --st-pub-t: #e9f3ea;
+  --st-draft: #8a857a;
+  --st-draft-t: #efeee9;
+}
 
 @layer base {
   * {

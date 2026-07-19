@@ -66,6 +66,18 @@ const columns = [
       );
     },
   }),
+  helper.accessor("views", {
+    header: "Lượt xem",
+    enableSorting: true,
+    cell: (ctx) => {
+      const v = ctx.getValue();
+      return (
+        <span className="block text-right font-mono text-[13px] tabular-nums text-muted-foreground">
+          {v > 0 ? v.toLocaleString("vi-VN") : "—"}
+        </span>
+      );
+    },
+  }),
   helper.accessor("updated_at", {
     header: "Cập nhật",
     enableSorting: true,
