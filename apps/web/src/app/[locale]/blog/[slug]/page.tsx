@@ -10,7 +10,8 @@ import { ViewTracker } from "@/features/posts/components/view-tracker";
 import { TagBadge } from "@/features/posts/components/tag-badge";
 import { RelatedPosts } from "@/features/posts/components/related-posts";
 import { ReadingProgress } from "@/features/posts/components/reading-progress";
-import { categoryFromTags, CATEGORY_BY_KEY } from "@/features/magazine/categories";
+import { categoryFromTags } from "@/features/magazine/categories";
+import { sectionColorForCategory } from "@/features/magazine/sections";
 import { formatViews } from "@/features/magazine/lib/format";
 import { formatDate, readingTime } from "@/lib/format";
 import { SITE_URL, SITE_NAME } from "@/lib/config";
@@ -64,7 +65,7 @@ export default async function BlogPostPage(
   const date = formatDate(post.published_at);
   const mins = readingTime(post.content_html);
   const primaryTag = post.tags[0];
-  const cat = CATEGORY_BY_KEY[categoryFromTags(post.tags)];
+  const secColor = sectionColorForCategory(categoryFromTags(post.tags));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -88,7 +89,7 @@ export default async function BlogPostPage(
       <main className="mx-auto max-w-prose px-5 py-12 sm:py-16">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 font-mono text-[12px] text-muted no-underline transition-colors hover:text-fg"
+          className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-muted no-underline transition-colors hover:text-fg"
         >
           <span aria-hidden>←</span> {t("back")}
         </Link>
@@ -98,16 +99,16 @@ export default async function BlogPostPage(
             {primaryTag ? (
               <Link
                 href={`/tags/${primaryTag.slug}`}
-                className="font-mono text-[11px] font-bold uppercase tracking-[0.16em] no-underline transition-opacity hover:opacity-75"
-                style={{ color: cat.color }}
+                className="text-[11.5px] font-extrabold uppercase tracking-[0.08em] no-underline transition-opacity hover:opacity-75"
+                style={{ color: secColor }}
               >
                 {primaryTag.name}
               </Link>
             ) : null}
-            <h1 className="mt-3 font-display text-[2rem] font-black leading-[1.15] tracking-[-0.01em] text-fg [text-wrap:balance] sm:text-[2.6rem]">
+            <h1 className="mt-3 font-display text-[2rem] font-black leading-[1.12] tracking-[-0.02em] text-fg [text-wrap:balance] sm:text-[2.6rem]">
               {post.title}
             </h1>
-            <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[11px] text-muted">
+            <div className="mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[12px] tabular-nums text-faint">
               {date ? (
                 <time dateTime={post.published_at ?? undefined}>{date}</time>
               ) : null}
@@ -147,7 +148,7 @@ export default async function BlogPostPage(
         <footer className="mt-14 border-t border-line pt-8">
           {post.tags.length > 0 ? (
             <>
-              <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.16em] text-muted">
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
                 {t("topics")}
               </p>
               <div className="flex flex-wrap gap-2">

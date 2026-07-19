@@ -13,22 +13,22 @@ import {
 } from "lucide-react";
 import type { Category, CategoryKey } from "./types";
 
-const ACCENT = "#0f6e63";
+const ACCENT = "#e1442b"; // brand cam-đỏ (vermilion)
 
-// Bảng màu muối/trầm (Slice 16): giữ hue = giữ nhận diện, hạ saturation ~40%.
-// IT lệch khỏi blue chói (dấu hiệu "AI look"). Một hex chung cho light+dark.
+// Newsroom (bản C): màu category theo hệ section (color-code chuyên mục).
+// Cùng section → cùng hue. Đỏ dành riêng cho brand, không dùng cho category.
 export const CATEGORIES = [
   { key: "all", label: "Tất cả", color: ACCENT, icon: Grid },
-  { key: "it", label: "IT", color: "#4c6ea3", icon: Code },
-  { key: "ai", label: "AI", color: "#6a5aa0", icon: Sparkles },
-  { key: "finance", label: "Tài chính", color: "#2f7d6a", icon: CircleDollarSign },
-  { key: "stock", label: "Chứng khoán", color: "#b56033", icon: BarChart3 },
-  { key: "arch", label: "Kiến trúc", color: "#5f6b7a", icon: Compass },
-  { key: "culture", label: "Văn hóa", color: "#b8874a", icon: Landmark },
-  { key: "ent", label: "Giải trí", color: "#b25877", icon: PlayCircle },
-  { key: "news", label: "Tin tức", color: "#3f8770", icon: Newspaper },
-  { key: "growth", label: "Phát triển bản thân", color: "#5a8a55", icon: TrendingUp },
-  { key: "book", label: "Review sách", color: "#a5623f", icon: BookOpen },
+  { key: "it", label: "IT", color: "#2565b0", icon: Code },
+  { key: "ai", label: "AI", color: "#2565b0", icon: Sparkles },
+  { key: "finance", label: "Tài chính", color: "#1f7a52", icon: CircleDollarSign },
+  { key: "stock", label: "Chứng khoán", color: "#1f7a52", icon: BarChart3 },
+  { key: "arch", label: "Kiến trúc", color: "#b06a1f", icon: Compass },
+  { key: "culture", label: "Văn hóa", color: "#a0452f", icon: Landmark },
+  { key: "ent", label: "Giải trí", color: "#a0452f", icon: PlayCircle },
+  { key: "news", label: "Tin tức", color: "#64707d", icon: Newspaper },
+  { key: "growth", label: "Phát triển bản thân", color: "#6a4aa0", icon: TrendingUp },
+  { key: "book", label: "Review sách", color: "#8a6a34", icon: BookOpen },
 ] as const satisfies readonly Category[];
 
 export const CATEGORY_BY_KEY = Object.fromEntries(

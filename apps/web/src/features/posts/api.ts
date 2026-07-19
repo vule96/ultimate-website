@@ -58,6 +58,14 @@ export async function listAllPublished(): Promise<Post[]> {
   return all;
 }
 
+/** N bài mới nhất (mặc định core sort created_at desc) — cho ticker chrome. */
+export async function listLatest(limit = 8): Promise<Post[]> {
+  const sp = new URLSearchParams({ status: "PUBLISHED", page_size: String(limit) });
+  const res = await fetch(`${API_BASE}/posts?${sp.toString()}`, fetchOpts);
+  if (!res.ok) throw new Error(`listLatest failed: ${res.status}`);
+  return PostListResponseSchema.parse(await res.json()).data;
+}
+
 /** Top bài theo lượt xem (Slice 9: sort=views whitelist ở core). */
 export async function listTopViewed(limit = 5): Promise<Post[]> {
   const sp = new URLSearchParams({
