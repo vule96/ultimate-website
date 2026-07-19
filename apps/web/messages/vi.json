@@ -23,6 +23,10 @@
     "topViewed": "Top xem nhiều",
     "fbCta": "Tham gia nhóm Facebook →"
   },
+  "featured": {
+    "eyebrow": "Nổi bật",
+    "views": "{count} lượt xem"
+  },
   "list": {
     "latest": "Mới nhất",
     "results": "{count} kết quả",

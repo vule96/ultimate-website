@@ -33,7 +33,13 @@ const mk = (id: string, title: string, cat: ArticleVM["category"]): ArticleVM =>
   views: null,
   comments: null,
 });
-const articles = [mk("1", "Học Go", "it"), mk("2", "Mạng nơ-ron", "ai")];
+// ≥4 bài: FeaturedLead lấy 3 bài đầu, ArticleList (skipCount=3) còn ≥1 row (có nút Lưu).
+const articles = [
+  mk("1", "Học Go", "it"),
+  mk("2", "Mạng nơ-ron", "ai"),
+  mk("3", "Tài chính cá nhân", "finance"),
+  mk("4", "Kiến trúc phần mềm", "arch"),
+];
 
 beforeEach(() => {
   push.mockClear();
