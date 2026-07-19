@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { listAllPublished, listTopViewed } from "@/features/posts/api";
 import { buildSafe } from "@/features/posts/build-safe";
 import { postsToArticleVMs, type ArticleVMLabels } from "@/features/magazine/lib/article-vm";
-import { MagazineBoard } from "@/features/magazine/components/magazine-board";
+import { NewsroomBoard } from "@/features/magazine/components/newsroom-board";
 
 // force-dynamic: trang chủ fetch danh sách bài lúc render. Nếu để SSG/ISR thì
 // build Docker (BUILD_WITHOUT_API=1 → buildSafe trả []) bake bản RỖNG, ISR phục vụ
@@ -26,5 +26,5 @@ export default async function HomePage(props: { params: Promise<{ locale: string
   // Top xem nhiều: views thật từ core (sort=views) — fallback 5 bài mới nhất
   // khi chưa có dữ liệu (build không API / DB mới).
   const topViewed = top.length > 0 ? postsToArticleVMs(top, labels) : articles.slice(0, 5);
-  return <MagazineBoard articles={articles} topViewed={topViewed} />;
+  return <NewsroomBoard articles={articles} topViewed={topViewed} />;
 }

@@ -29,6 +29,12 @@ export const SECTION_BY_KEY: Record<SectionKey, Section> = Object.fromEntries(
   SECTIONS.map((s) => [s.key, s]),
 ) as Record<SectionKey, Section>;
 
+/** Màu (CSS var, theme-aware) cho category theo section; news/unknown → muted. */
+export function sectionColorForCategory(cat: CategoryKey): string {
+  const sec = sectionOfCategory(cat);
+  return sec ? SECTION_BY_KEY[sec].color : "var(--muted)";
+}
+
 /**
  * Gom bài theo section, giữ thứ tự bài đầu vào. Bài không thuộc section nào
  * (news) bị bỏ qua ở band (vẫn hiện ở ticker/hero). Thuần → test được.
