@@ -1,4 +1,5 @@
 import type { CategoryKey, ArticleVM } from "./types";
+import { categoryFromTags } from "./categories";
 
 /** Section trang chủ newsroom — nhóm nhiều category thành 1 chuyên mục. */
 export type SectionKey = "tech" | "finance" | "life" | "dev";
@@ -33,6 +34,12 @@ export const SECTION_BY_KEY: Record<SectionKey, Section> = Object.fromEntries(
 export function sectionColorForCategory(cat: CategoryKey): string {
   const sec = sectionOfCategory(cat);
   return sec ? SECTION_BY_KEY[sec].color : "var(--muted)";
+}
+
+/** Màu (CSS var, theme-aware) cho 1 tag; tag không thuộc section nào → brand. */
+export function sectionColorForTag(tag: { name: string; slug: string }): string {
+  const sec = sectionOfCategory(categoryFromTags([tag]));
+  return sec ? SECTION_BY_KEY[sec].color : "var(--brand)";
 }
 
 /**

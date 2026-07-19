@@ -35,13 +35,12 @@ export function NewsroomBoard({
     [articles, deferredQuery],
   );
 
-  const hero = visible.slice(0, 5);
-  const lead = hero[0];
-  const secondary = hero.slice(1, 5);
-  const grouped = useMemo(() => {
-    const heroIds = new Set(hero.map((a) => a.id));
-    return groupBySection(visible.filter((a) => !heroIds.has(a.id)));
-  }, [visible, hero]);
+  // Lead ưu tiên bài CÓ cover (hero mạnh hơn bìa chữ). Band chỉ loại đúng lead
+  // (không loại cả hero) → mọi section vẫn còn bài, không mất band Tài chính.
+  const lead = useMemo(() => visible.find((a) => a.coverImage) ?? visible[0], [visible]);
+  const rest = useMemo(() => visible.filter((a) => a.id !== lead?.id), [visible, lead]);
+  const secondary = rest.slice(0, 4);
+  const grouped = useMemo(() => groupBySection(rest), [rest]);
 
   return (
     <MotionConfig reducedMotion="user">
