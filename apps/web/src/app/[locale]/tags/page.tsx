@@ -4,7 +4,8 @@ import { Link } from "@/i18n/navigation";
 import { listTags } from "@/features/posts/api";
 import { categoryColorForTag } from "@/features/magazine/categories";
 
-export const revalidate = 60;
+// force-dynamic: cùng lý do như trang chủ — build không API bake danh sách tag RỖNG.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(
   props: {

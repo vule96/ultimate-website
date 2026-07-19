@@ -4,7 +4,11 @@ import { buildSafe } from "@/features/posts/build-safe";
 import { postsToArticleVMs, type ArticleVMLabels } from "@/features/magazine/lib/article-vm";
 import { MagazineBoard } from "@/features/magazine/components/magazine-board";
 
-export const revalidate = 60;
+// force-dynamic: trang chủ fetch danh sách bài lúc render. Nếu để SSG/ISR thì
+// build Docker (BUILD_WITHOUT_API=1 → buildSafe trả []) bake bản RỖNG, ISR phục vụ
+// stale rỗng ở lần vào đầu → "Không tìm thấy bài viết". Dynamic = luôn fetch thật,
+// SEO vẫn full SSR HTML (Cloudflare cache edge về sau).
+export const dynamic = "force-dynamic";
 
 export default async function HomePage(props: { params: Promise<{ locale: string }> }) {
   const params = await props.params;
