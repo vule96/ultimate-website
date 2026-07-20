@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 func TestUpsertReader_CreateThenUpdate(t *testing.T) {
@@ -80,28 +81,111 @@ func TestListSubscribers_Paging(t *testing.T) {
 		require.NoError(t, repo.UpsertSubscriber(ctx, uuid.NewString()+"@example.com"))
 	}
 
-	page1, total, err := repo.ListSubscribers(ctx, 0, 2)
+	page1, err := repo.ListSubscribers(ctx, "", 0, 2)
+	require.NoError(t, err)
+	total, err := repo.CountSubscribers(ctx, "")
 	require.NoError(t, err)
 	require.Equal(t, int64(3), total)
 	require.Len(t, page1, 2)
 
-	page2, _, err := repo.ListSubscribers(ctx, 2, 2)
+	page2, err := repo.ListSubscribers(ctx, "", 2, 2)
 	require.NoError(t, err)
 	require.Len(t, page2, 1)
 }
 
-func TestDeleteSubscriber(t *testing.T) {
+func TestDeleteSubscriber_SoftDelete(t *testing.T) {
 	db := newTestDB(t)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
 	require.NoError(t, repo.UpsertSubscriber(ctx, uuid.NewString()+"@example.com"))
-	subs, _, err := repo.ListSubscribers(ctx, 0, 10)
+	subs, err := repo.ListSubscribers(ctx, "", 0, 10)
 	require.NoError(t, err)
 	require.Len(t, subs, 1)
 
 	require.NoError(t, repo.DeleteSubscriber(ctx, subs[0].ID))
+	// Soft-delete: row còn nhưng biến khỏi list + count.
+	after, err := repo.ListSubscribers(ctx, "", 0, 10)
+	require.NoError(t, err)
+	require.Empty(t, after)
+	total, err := repo.CountSubscribers(ctx, "")
+	require.NoError(t, err)
+	require.Equal(t, int64(0), total)
+	// Xoá lại row đã soft-delete → NotFound.
 	require.ErrorIs(t, repo.DeleteSubscriber(ctx, subs[0].ID), ErrSubscriberNotFound)
 	require.ErrorIs(t, repo.DeleteSubscriber(ctx, uuid.New()), ErrSubscriberNotFound)
+}
+
+func TestUnsubscribeByToken(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	email := uuid.NewString() + "@example.com"
+	require.NoError(t, repo.UpsertSubscriber(ctx, email))
+
+	token := subscriberToken(t, db, email)
+	require.NotEqual(t, uuid.Nil, token)
+
+	require.NoError(t, repo.UnsubscribeByToken(ctx, token))
+	// status đổi sang unsubscribed nhưng row còn trong list (chưa soft-delete).
+	subs, err := repo.ListSubscribers(ctx, "", 0, 10)
+	require.NoError(t, err)
+	require.Len(t, subs, 1)
+	require.Equal(t, "unsubscribed", subs[0].Status)
+	// Filter status.
+	active, err := repo.ListSubscribers(ctx, "active", 0, 10)
+	require.NoError(t, err)
+	require.Empty(t, active)
+	unsub, err := repo.ListSubscribers(ctx, "unsubscribed", 0, 10)
+	require.NoError(t, err)
+	require.Len(t, unsub, 1)
+	// Token sai → NotFound.
+	require.ErrorIs(t, repo.UnsubscribeByToken(ctx, uuid.New()), ErrSubscriberNotFound)
+}
+
+func TestUpsertSubscriber_RevivesUnsubscribed(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	email := uuid.NewString() + "@example.com"
+	require.NoError(t, repo.UpsertSubscriber(ctx, email))
+	token := subscriberToken(t, db, email)
+	require.NoError(t, repo.UnsubscribeByToken(ctx, token))
+
+	// Re-subscribe cùng email → hồi sinh active, giữ token cũ.
+	require.NoError(t, repo.UpsertSubscriber(ctx, email))
+	subs, err := repo.ListSubscribers(ctx, "active", 0, 10)
+	require.NoError(t, err)
+	require.Len(t, subs, 1)
+	require.Equal(t, "active", subs[0].Status)
+	require.Equal(t, token, subscriberToken(t, db, email), "token không đổi khi hồi sinh")
+}
+
+// subscriberToken đọc unsubscribe_token của email (scan string rồi parse — tránh scan
+// thẳng vào uuid.UUID vì driver trả string).
+func subscriberToken(t *testing.T, db *gorm.DB, email string) uuid.UUID {
+	t.Helper()
+	var s string
+	require.NoError(t, db.Table("subscribers").Where("email = ?", email).Select("unsubscribe_token").Scan(&s).Error)
+	return uuid.MustParse(s)
+}
+
+func TestDeleteReader_CascadesBookmarks(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	r, _ := repo.UpsertReader(ctx, "sub-"+uuid.NewString(), "del@example.com", "Del")
+	require.NoError(t, repo.AddBookmark(ctx, r.ID, seedPost(t, db)))
+
+	require.NoError(t, repo.DeleteReader(ctx, r.ID))
+	// Reader biến mất.
+	_, err := repo.GetReader(ctx, r.ID)
+	require.ErrorIs(t, err, ErrReaderNotFound)
+	// Bookmark của reader cũng xoá.
+	ids, err := repo.ListBookmarks(ctx, r.ID)
+	require.NoError(t, err)
+	require.Empty(t, ids)
+	// Xoá lại → NotFound.
+	require.ErrorIs(t, repo.DeleteReader(ctx, r.ID), ErrReaderNotFound)
 }
 
 func TestListReaders_WithBookmarkCount(t *testing.T) {
@@ -114,7 +198,9 @@ func TestListReaders_WithBookmarkCount(t *testing.T) {
 	// reader thứ 2 không bookmark
 	repo.UpsertReader(ctx, "sub-"+uuid.NewString(), "reader2@example.com", "Reader2")
 
-	list, total, err := repo.ListReaders(ctx, 0, 10)
+	list, err := repo.ListReaders(ctx, 0, 10)
+	require.NoError(t, err)
+	total, err := repo.CountReaders(ctx)
 	require.NoError(t, err)
 	require.Equal(t, int64(2), total)
 	byEmail := map[string]int64{}

@@ -1,8 +1,20 @@
-import { Plus, Bell, LogOut } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { Plus, LogOut } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@ultimate/ui";
 import { Avatar, AvatarFallback } from "@ultimate/ui";
 import { useAuth, useSignOut } from "@/features/auth/hooks";
+
+const SLOT_ID = "topbar-actions";
+
+/** TopbarActions cắm action theo trang vào slot topbar (portal). Trang gọi:
+ *  <TopbarActions><Button…/></TopbarActions> — hiện bên trái nút "Thêm bài viết". */
+export function TopbarActions({ children }: { children: ReactNode }) {
+  const [node, setNode] = useState<HTMLElement | null>(null);
+  useEffect(() => setNode(document.getElementById(SLOT_ID)), []);
+  return node ? createPortal(children, node) : null;
+}
 
 export function Topbar({ title }: { title: string }) {
   const { user } = useAuth();
@@ -11,9 +23,7 @@ export function Topbar({ title }: { title: string }) {
     <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
       <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" aria-label="Thông báo">
-          <Bell className="size-5 text-muted-foreground" />
-        </Button>
+        <div id={SLOT_ID} className="flex items-center gap-3" />
         <Button asChild>
           <Link to="/posts/new">
             <Plus />

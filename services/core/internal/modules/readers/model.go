@@ -56,10 +56,14 @@ func (bookmarkRow) TableName() string { return "bookmarks" }
 
 // subscriberRow map bảng subscribers. Email dùng citext (unique không phân biệt hoa/thường).
 type subscriberRow struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Email     string    `gorm:"type:citext;not null;uniqueIndex"`
-	Status    string    `gorm:"type:text;not null;default:'active'"`
-	CreatedAt time.Time `gorm:"type:timestamptz;not null;default:now();index:idx_subscribers_created_at,sort:desc"`
+	ID               uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Email            string    `gorm:"type:citext;not null;uniqueIndex"`
+	Status           string    `gorm:"type:text;not null;default:'active'"`
+	UnsubscribeToken uuid.UUID `gorm:"column:unsubscribe_token;type:uuid;not null;default:gen_random_uuid();uniqueIndex:idx_subscribers_unsub_token"`
+	// DeletedAt: soft-delete (audit). Không dùng gorm.DeletedAt tự động vì muốn kiểm soát
+	// filter tường minh ở query — nil = còn sống.
+	DeletedAt *time.Time `gorm:"column:deleted_at;type:timestamptz"`
+	CreatedAt time.Time  `gorm:"type:timestamptz;not null;default:now();index:idx_subscribers_created_at,sort:desc"`
 }
 
 func (subscriberRow) TableName() string { return "subscribers" }

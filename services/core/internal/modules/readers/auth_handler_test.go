@@ -116,6 +116,43 @@ func TestReaderAuth_FullLoginFlow_MeAndLogout(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, meAfter.StatusCode)
 }
 
+// TestReaderAuth_DeleteMe: login → DELETE /auth/reader/me → 204 + session gỡ (me sau đó 401).
+func TestReaderAuth_DeleteMe(t *testing.T) {
+	srv, _ := newReaderTestServer(t, verifiedProvider())
+	c := newClient(t)
+
+	loginResp, err := c.Get(srv.URL + "/auth/reader/google/login")
+	require.NoError(t, err)
+	loginResp.Body.Close()
+	u, _ := url.Parse(loginResp.Header.Get("Location"))
+	state := u.Query().Get("state")
+	cbResp, err := c.Get(srv.URL + "/auth/reader/google/callback?code=abc&state=" + state)
+	require.NoError(t, err)
+	cbResp.Body.Close()
+
+	delReq, _ := http.NewRequest(http.MethodDelete, srv.URL+"/auth/reader/me", nil)
+	delResp, err := c.Do(delReq)
+	require.NoError(t, err)
+	delResp.Body.Close()
+	require.Equal(t, http.StatusNoContent, delResp.StatusCode)
+
+	meAfter, err := c.Get(srv.URL + "/auth/reader/me")
+	require.NoError(t, err)
+	meAfter.Body.Close()
+	require.Equal(t, http.StatusUnauthorized, meAfter.StatusCode)
+}
+
+// TestReaderAuth_DeleteMe_Unauth: không session → 401 (RequireReader chặn).
+func TestReaderAuth_DeleteMe_Unauth(t *testing.T) {
+	srv, _ := newReaderTestServer(t, verifiedProvider())
+	c := newClient(t)
+	delReq, _ := http.NewRequest(http.MethodDelete, srv.URL+"/auth/reader/me", nil)
+	delResp, err := c.Do(delReq)
+	require.NoError(t, err)
+	delResp.Body.Close()
+	require.Equal(t, http.StatusUnauthorized, delResp.StatusCode)
+}
+
 func TestReaderAuth_CallbackStateMismatch(t *testing.T) {
 	srv, _ := newReaderTestServer(t, verifiedProvider())
 	c := newClient(t)

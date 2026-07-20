@@ -10,6 +10,7 @@ export type ToastKey =
   | "unsaved"
   | "hello"
   | "loggedOut"
+  | "accountDeleted"
   | "saveError";
 export interface ToastMsg {
   key: ToastKey;
@@ -28,6 +29,7 @@ interface MagazineState {
   toggleSave(id: string): Promise<void>;
   hydrate(): Promise<void>;
   logout(): Promise<void>;
+  deleteAccount(): Promise<boolean>;
   openAuth(): void;
   closeAuth(): void;
   setToast(msg: ToastMsg): void;
@@ -93,6 +95,22 @@ export const useMagazineStore = create<MagazineState>((set, get) => ({
       // vẫn clear state cục bộ dù request lỗi/offline.
     }
     set({ user: null, saved: {}, toast: { key: "loggedOut" } });
+  },
+
+  // deleteAccount: GDPR — xoá tài khoản reader + bookmark (server cascade) rồi clear state.
+  // Trả false nếu request lỗi (giữ nguyên state, không báo đã xoá).
+  deleteAccount: async () => {
+    try {
+      const res = await fetch(`${PUBLIC_API_URL}/auth/reader/me`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) return false;
+    } catch {
+      return false;
+    }
+    set({ user: null, saved: {}, toast: { key: "accountDeleted" } });
+    return true;
   },
 
   openAuth: () => set({ authOpen: true }),

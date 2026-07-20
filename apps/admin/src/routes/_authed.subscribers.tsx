@@ -7,13 +7,16 @@ import { RouteError, RoutePending } from "@/app/route-states";
 
 const searchSchema = z.object({
   page: z.number().int().min(1).default(1).catch(1),
+  status: z.enum(["active", "unsubscribed"]).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/_authed/subscribers")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   loader: ({ context: { queryClient }, deps }) =>
-    queryClient.ensureQueryData(subscribersQueryOptions({ page: deps.page, pageSize: PAGE_SIZE })),
+    queryClient.ensureQueryData(
+      subscribersQueryOptions({ page: deps.page, pageSize: PAGE_SIZE, status: deps.status }),
+    ),
   pendingComponent: RoutePending,
   errorComponent: RouteError,
   component: SubscribersPage,

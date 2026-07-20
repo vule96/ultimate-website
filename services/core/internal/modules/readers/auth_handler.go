@@ -46,6 +46,8 @@ func (h *AuthHandler) RegisterRoutes(rg gin.IRouter, loginMW ...gin.HandlerFunc)
 	// không đi qua writeMW của /api/v1, phải tự bọc ở đây.
 	rg.POST("/auth/reader/logout", jsonmw.RequireJSON(), h.logout)
 	rg.GET("/auth/reader/me", h.me)
+	// GDPR: reader tự xoá tài khoản (+ bookmark cascade). RequireReader đảm bảo có session.
+	rg.DELETE("/auth/reader/me", RequireReader(h.sm), h.deleteMe)
 }
 
 func (h *AuthHandler) login(c *gin.Context) {
@@ -100,6 +102,22 @@ func (h *AuthHandler) logout(c *gin.Context) {
 	h.sm.Remove(ctx, SessionKeyReaderID)
 	if err := h.sm.RenewToken(ctx); err != nil {
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "could not log out")
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+// deleteMe xoá tài khoản reader hiện tại (GDPR) + bookmark, rồi gỡ reader session.
+func (h *AuthHandler) deleteMe(c *gin.Context) {
+	ctx := c.Request.Context()
+	id := c.MustGet(CtxReaderID).(uuid.UUID)
+	if err := h.svc.DeleteReader(ctx, id); err != nil && !errors.Is(err, ErrReaderNotFound) {
+		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "could not delete account")
+		return
+	}
+	h.sm.Remove(ctx, SessionKeyReaderID)
+	if err := h.sm.RenewToken(ctx); err != nil {
+		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "could not clear session")
 		return
 	}
 	c.Status(http.StatusNoContent)

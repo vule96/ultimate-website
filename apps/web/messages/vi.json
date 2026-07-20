@@ -65,7 +65,11 @@
     "subtitleLogin": "Đăng nhập để lưu bài viết yêu thích.",
     "closeAria": "Đóng",
     "googleCta": "Tiếp tục với Google",
-    "intro": "Đăng nhập bằng Google để lưu bài viết yêu thích và nhận bản tin."
+    "intro": "Đăng nhập bằng Google để lưu bài viết yêu thích và nhận bản tin.",
+    "deleteAccount": "Xoá tài khoản",
+    "deleteAccountConfirm": "Xoá tài khoản sẽ gỡ toàn bộ bài đã lưu và không thể hoàn tác. Tiếp tục?",
+    "deleteAccountCancel": "Huỷ",
+    "deleteError": "Không thể xoá tài khoản, vui lòng thử lại."
   },
   "toast": {
     "authRequired": "Đăng nhập để lưu bài viết yêu thích.",
@@ -73,7 +77,8 @@
     "unsaved": "Đã bỏ lưu.",
     "hello": "Xin chào, {name}!",
     "loggedOut": "Đã đăng xuất.",
-    "saveError": "Không thể lưu, vui lòng thử lại."
+    "saveError": "Không thể lưu, vui lòng thử lại.",
+    "accountDeleted": "Đã xoá tài khoản."
   },
   "detail": {
     "back": "Bài viết",
@@ -127,5 +132,15 @@
   },
   "meta": {
     "description": "Mạch — tin tức đa lĩnh vực cho người trẻ."
+  },
+  "unsubscribe": {
+    "title": "Huỷ đăng ký bản tin",
+    "intro": "Bạn sẽ không còn nhận bản tin từ Mạch nữa. Xác nhận huỷ đăng ký?",
+    "confirm": "Huỷ đăng ký",
+    "submitting": "Đang xử lý…",
+    "success": "Đã huỷ đăng ký. Cảm ơn bạn đã đồng hành cùng Mạch.",
+    "invalid": "Liên kết không hợp lệ hoặc đã hết hạn.",
+    "missingToken": "Thiếu mã huỷ đăng ký trong liên kết.",
+    "backHome": "Về trang chủ"
   }
 }

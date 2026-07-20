@@ -41,6 +41,19 @@ func TestAdmin_ListSubscribers(t *testing.T) {
 	require.Equal(t, "a@b.com", body.Data[0]["email"])
 }
 
+func TestAdmin_ListSubscribers_StatusFilter(t *testing.T) {
+	repo := newFakeRepo()
+	w := httptest.NewRecorder()
+	newAdminRouter(repo).ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/subscribers?status=unsubscribed", nil))
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, "unsubscribed", repo.lastSubStatus)
+
+	// status rác → bỏ qua (rỗng), không lộ ra query.
+	w2 := httptest.NewRecorder()
+	newAdminRouter(repo).ServeHTTP(w2, httptest.NewRequest(http.MethodGet, "/subscribers?status=bogus", nil))
+	require.Equal(t, "", repo.lastSubStatus)
+}
+
 func TestAdmin_DeleteSubscriber_NotFound(t *testing.T) {
 	repo := newFakeRepo()
 	repo.deleteErr = ErrSubscriberNotFound

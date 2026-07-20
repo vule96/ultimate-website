@@ -114,4 +114,32 @@ describe("magazine-store", () => {
     expect(useMagazineStore.getState().user).toBeNull();
     vi.unstubAllGlobals();
   });
+
+  it("deleteAccount: 204 → clear user/saved + toast accountDeleted, trả true", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+    useMagazineStore.setState({
+      user: { id: "1", email: "a@b.co", name: "A" },
+      saved: { a1: true },
+    });
+    const ok = await useMagazineStore.getState().deleteAccount();
+    expect(ok).toBe(true);
+    expect(useMagazineStore.getState().user).toBeNull();
+    expect(useMagazineStore.getState().saved).toEqual({});
+    expect(useMagazineStore.getState().toast).toEqual({ key: "accountDeleted" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/auth/reader/me"),
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it("deleteAccount: API lỗi → trả false, giữ nguyên user", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+    useMagazineStore.setState({ user: { id: "1", email: "a@b.co", name: "A" } });
+    const ok = await useMagazineStore.getState().deleteAccount();
+    expect(ok).toBe(false);
+    expect(useMagazineStore.getState().user).not.toBeNull();
+    vi.unstubAllGlobals();
+  });
 });

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   FileText,
@@ -11,10 +12,11 @@ import {
   PlusCircle,
   Search,
 } from "lucide-react";
+import { listPosts } from "@/features/posts/api";
 
-type Cmd = { label: string; to: string; icon: typeof LayoutDashboard; keywords?: string };
+type NavCmd = { label: string; to: string; icon: typeof LayoutDashboard; keywords?: string };
 
-const COMMANDS: Cmd[] = [
+const COMMANDS: NavCmd[] = [
   { label: "Tổng quan", to: "/", icon: LayoutDashboard, keywords: "dashboard home" },
   { label: "Viết bài mới", to: "/posts/new", icon: PlusCircle, keywords: "new post tạo" },
   { label: "Bài viết", to: "/posts", icon: FileText, keywords: "posts" },
@@ -25,19 +27,49 @@ const COMMANDS: Cmd[] = [
   { label: "Cài đặt", to: "/settings", icon: Settings, keywords: "settings" },
 ];
 
-/** Command palette ⌘K — điều hướng nhanh. Mở bằng ⌘/Ctrl+K hoặc event "open-command". */
+// Item phẳng để điều hướng phím gộp cả nav tĩnh + bài viết động.
+type Item =
+  | { kind: "nav"; label: string; icon: typeof LayoutDashboard; to: string }
+  | { kind: "post"; label: string; slug: string };
+
+/** Command palette ⌘K — điều hướng nhanh + tìm bài viết thật. Mở bằng ⌘/Ctrl+K hoặc event "open-command". */
 export function CommandPalette() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const results = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return COMMANDS;
-    return COMMANDS.filter((c) => `${c.label} ${c.keywords ?? ""}`.toLowerCase().includes(s));
+  // Debounce 250ms cho query bài viết (tránh gọi API mỗi phím).
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQ(q.trim()), 250);
+    return () => clearTimeout(id);
   }, [q]);
+
+  const navItems = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    const list = s
+      ? COMMANDS.filter((c) => `${c.label} ${c.keywords ?? ""}`.toLowerCase().includes(s))
+      : COMMANDS;
+    return list;
+  }, [q]);
+
+  const postsQuery = useQuery({
+    queryKey: ["cmdk-posts", debouncedQ],
+    queryFn: ({ signal }) => listPosts({ q: debouncedQ, pageSize: 5 }, signal),
+    enabled: open && debouncedQ.length > 0,
+  });
+
+  const items = useMemo<Item[]>(() => {
+    const nav: Item[] = navItems.map((c) => ({ kind: "nav", label: c.label, icon: c.icon, to: c.to }));
+    const posts: Item[] = (postsQuery.data?.data ?? []).map((p) => ({
+      kind: "post",
+      label: p.title,
+      slug: p.slug,
+    }));
+    return [...nav, ...posts];
+  }, [navItems, postsQuery.data]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -58,19 +90,23 @@ export function CommandPalette() {
   useEffect(() => {
     if (open) {
       setQ("");
+      setDebouncedQ("");
       setActive(0);
       queueMicrotask(() => inputRef.current?.focus());
     }
   }, [open]);
 
-  useEffect(() => setActive(0), [q]);
+  useEffect(() => setActive(0), [items.length]);
 
   if (!open) return null;
 
-  const go = (to: string) => {
+  const run = (item: Item) => {
     setOpen(false);
-    void navigate({ to });
+    if (item.kind === "nav") void navigate({ to: item.to });
+    else void navigate({ to: "/posts/$slug/edit", params: { slug: item.slug } });
   };
+
+  const showPostsHint = debouncedQ.length > 0;
 
   return (
     <div
@@ -94,37 +130,44 @@ export function CommandPalette() {
               if (e.key === "Escape") setOpen(false);
               else if (e.key === "ArrowDown") {
                 e.preventDefault();
-                setActive((i) => Math.min(i + 1, results.length - 1));
+                setActive((i) => Math.min(i + 1, items.length - 1));
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 setActive((i) => Math.max(i - 1, 0));
-              } else if (e.key === "Enter" && results[active]) {
-                go(results[active].to);
+              } else if (e.key === "Enter" && items[active]) {
+                run(items[active]);
               }
             }}
-            placeholder="Đi tới trang, thao tác…"
+            placeholder="Đi tới trang, tìm bài viết…"
             className="w-full bg-transparent py-3.5 text-[14px] outline-none placeholder:text-muted-foreground"
           />
           <kbd className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-[10.5px] text-muted-foreground">
             Esc
           </kbd>
         </div>
-        <ul className="max-h-[320px] overflow-y-auto p-1.5">
-          {results.map((c, i) => (
-            <li key={c.to}>
+        <ul className="max-h-[360px] overflow-y-auto p-1.5">
+          {items.map((c, i) => (
+            <li key={c.kind === "nav" ? `nav:${c.to}` : `post:${c.slug}`}>
               <button
                 onMouseEnter={() => setActive(i)}
-                onClick={() => go(c.to)}
+                onClick={() => run(c)}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13.5px] ${
                   i === active ? "bg-accent text-accent-foreground" : "text-foreground"
                 }`}
               >
-                <c.icon className="size-[17px] opacity-80" />
-                {c.label}
+                {c.kind === "nav" ? (
+                  <c.icon className="size-[17px] opacity-80" />
+                ) : (
+                  <FileText className="size-[17px] opacity-60" />
+                )}
+                <span className="truncate">{c.label}</span>
               </button>
             </li>
           ))}
-          {results.length === 0 && (
+          {showPostsHint && postsQuery.isFetching && (
+            <li className="px-3 py-2 text-[12.5px] text-muted-foreground">Đang tìm bài viết…</li>
+          )}
+          {items.length === 0 && !postsQuery.isFetching && (
             <li className="px-3 py-6 text-center text-[13px] text-muted-foreground">
               Không tìm thấy.
             </li>

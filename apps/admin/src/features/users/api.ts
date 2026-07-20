@@ -6,15 +6,19 @@ import {
 } from "@ultimate/types";
 import { apiFetch } from "@/lib/apiClient";
 
+export type SubscriberStatus = "active" | "unsubscribed";
+
 export interface ListParams {
   page?: number;
   pageSize?: number;
+  status?: SubscriberStatus | "" | undefined;
 }
 
-function pagingQuery({ page, pageSize }: ListParams): string {
+function pagingQuery({ page, pageSize, status }: ListParams): string {
   const sp = new URLSearchParams();
   if (page && page > 0) sp.set("page", String(page));
   if (pageSize && pageSize > 0) sp.set("page_size", String(pageSize));
+  if (status) sp.set("status", status);
   const s = sp.toString();
   return s ? `?${s}` : "";
 }

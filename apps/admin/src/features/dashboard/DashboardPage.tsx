@@ -4,8 +4,13 @@ import type { PostStatus } from "@ultimate/types";
 import { useStatsSuspense, usePostsListSuspense } from "@/features/posts/queries";
 import { useSubscribersSuspense, useReadersSuspense } from "@/features/users/queries";
 import { fmtDate } from "@/features/users/shared";
+import { lazy, Suspense } from "react";
 import { KpiTile } from "./widgets/KpiTile";
-import { PostsChart } from "./widgets/PostsChart";
+
+// Chart kéo theo recharts (nặng) → tách chunk riêng, chỉ tải khi dashboard render.
+const PostsChart = lazy(() =>
+  import("./widgets/PostsChart").then((m) => ({ default: m.PostsChart })),
+);
 
 function compact(n: number): string {
   if (n < 1000) return String(n);
@@ -141,7 +146,11 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <PostsChart />
+      <Suspense
+        fallback={<div className="h-[280px] animate-pulse rounded-xl border border-border bg-card" />}
+      >
+        <PostsChart />
+      </Suspense>
     </div>
   );
 }

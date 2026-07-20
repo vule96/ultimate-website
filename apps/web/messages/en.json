@@ -65,7 +65,11 @@
     "subtitleLogin": "Log in to save your favorite articles.",
     "closeAria": "Close",
     "googleCta": "Continue with Google",
-    "intro": "Sign in with Google to save your favorite articles and get the newsletter."
+    "intro": "Sign in with Google to save your favorite articles and get the newsletter.",
+    "deleteAccount": "Delete account",
+    "deleteAccountConfirm": "Deleting your account removes all saved articles and cannot be undone. Continue?",
+    "deleteAccountCancel": "Cancel",
+    "deleteError": "Could not delete account, please try again."
   },
   "toast": {
     "authRequired": "Log in to save your favorite articles.",
@@ -73,7 +77,8 @@
     "unsaved": "Removed from saved.",
     "hello": "Hello, {name}!",
     "loggedOut": "Logged out.",
-    "saveError": "Couldn't save, please try again."
+    "saveError": "Couldn't save, please try again.",
+    "accountDeleted": "Account deleted."
   },
   "detail": {
     "back": "Articles",
@@ -127,5 +132,15 @@
   },
   "meta": {
     "description": "Mạch — multi-topic news for the young."
+  },
+  "unsubscribe": {
+    "title": "Unsubscribe from newsletter",
+    "intro": "You will no longer receive the Mạch newsletter. Confirm unsubscribe?",
+    "confirm": "Unsubscribe",
+    "submitting": "Processing…",
+    "success": "Unsubscribed. Thanks for reading Mạch.",
+    "invalid": "This link is invalid or has expired.",
+    "missingToken": "Missing unsubscribe token in the link.",
+    "backHome": "Back to home"
   }
 }

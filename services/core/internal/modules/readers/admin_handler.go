@@ -66,9 +66,20 @@ func paging(c *gin.Context) (page, pageSize int) {
 	return page, pageSize
 }
 
+// allowedSubscriberStatus giới hạn filter status (tránh SQL injection dù đã bind param + giữ key cache gọn).
+func allowedSubscriberStatus(s string) string {
+	switch s {
+	case "active", "unsubscribed":
+		return s
+	default:
+		return ""
+	}
+}
+
 func (h *AdminHandler) listSubscribers(c *gin.Context) {
 	page, pageSize := paging(c)
-	subs, total, err := h.svc.ListSubscribers(c.Request.Context(), page, pageSize)
+	status := allowedSubscriberStatus(c.Query("status"))
+	subs, total, err := h.svc.ListSubscribers(c.Request.Context(), status, page, pageSize)
 	if err != nil {
 		httperr.Write(c, http.StatusInternalServerError, "INTERNAL", "could not list subscribers")
 		return

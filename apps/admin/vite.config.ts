@@ -14,6 +14,21 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Tách vendor lớn ra chunk riêng → cache tốt + bundle chính nhỏ.
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+          "tanstack-vendor": [
+            "@tanstack/react-router",
+            "@tanstack/react-query",
+            "@tanstack/react-table",
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     globals: true,

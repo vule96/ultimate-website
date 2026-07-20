@@ -152,7 +152,8 @@ func main() {
 	// Wiring module readers (auth người đọc — OAuth riêng, KHÔNG allowlist admin).
 	readerProvider := auth.NewGoogleProvider(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.ReaderRedirectURL)
 	readersRepo := readers.NewGormRepository(db)
-	readersSvc := readers.NewService(readersRepo, readerProvider)
+	readersSvc := readers.NewService(readersRepo, readerProvider).
+		WithCountCache(readers.NewCountCache(rdb))
 	readerAuthHandler := readers.NewAuthHandler(readersSvc, sm, cfg.WebBaseURL)
 	bookmarkHandler := readers.NewBookmarkHandler(readersSvc)
 	subscriberHandler := readers.NewSubscriberHandler(readersSvc)
