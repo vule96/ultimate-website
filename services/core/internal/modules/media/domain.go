@@ -31,7 +31,6 @@ func validationErrorf(format string, args ...any) error {
 
 // PresignInput là yêu cầu xin presigned URL để upload một ảnh.
 type PresignInput struct {
-	Filename    string
 	ContentType string
 	Size        int64
 }

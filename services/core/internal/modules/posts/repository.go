@@ -22,16 +22,25 @@ var sortColumns = map[string]string{
 	"views":      "posts.views",
 }
 
+// likeEscaper escape ký tự đặc biệt của LIKE/ILIKE (\ % _) để so khớp literal.
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
+// escapeLike bọc input người dùng cho ILIKE ... ESCAPE '\'.
+func escapeLike(s string) string { return likeEscaper.Replace(s) }
+
 // orderClause dựng mệnh đề ORDER BY an toàn từ field/order do client gửi.
 func orderClause(sort, order string) string {
 	col, ok := sortColumns[sort]
 	if !ok {
 		col = "posts.created_at"
 	}
+	// Tiebreaker posts.id ASC: khi giá trị cột sort trùng nhau (vd nhiều bài cùng
+	// created_at/status), thứ tự nếu không có khoá phụ là không xác định → pagination
+	// có thể lặp/nhảy bài giữa các trang. id (unique) đảm bảo tổng thứ tự ổn định.
 	if strings.ToLower(order) == "asc" {
-		return col + " ASC"
+		return col + " ASC, posts.id ASC"
 	}
-	return col + " DESC"
+	return col + " DESC, posts.id ASC"
 }
 
 // --- GORM models (tầng ngoài; chỉ file này biết về GORM) ---
@@ -217,7 +226,9 @@ func (r *GormRepository) List(ctx context.Context, f ListFilter) ([]Post, int64,
 				Where("t.slug = ?", f.Tag)
 		}
 		if f.Search != "" {
-			db = db.Where("posts.title ILIKE ?", "%"+f.Search+"%")
+			// Escape ký tự wildcard trong input để tìm đúng nghĩa literal (gõ "50%" tìm
+			// chuỗi "50%", không phải "50 + bất kỳ"). ESCAPE '\' + escape \ % _.
+			db = db.Where("posts.title ILIKE ? ESCAPE '\\'", "%"+escapeLike(f.Search)+"%")
 		}
 		return db
 	}

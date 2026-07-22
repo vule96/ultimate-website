@@ -80,12 +80,12 @@
 
 ### 🟢 Low (tóm tắt)
 
-- L1: `corsmw/cors.go:28` — `Vary: Origin` nên set vô điều kiện; thêm `Access-Control-Max-Age`.
-- L2: `auth/provider_google.go:64-83` — nên verify `exp/aud/iss` id_token (1 call `coreos/go-oidc`).
-- L3: sort thiếu tiebreaker → pagination không ổn định khi trùng giá trị; append `, posts.id ASC` (`posts/repository.go:24-33`).
-- L4: ILIKE không escape `%`/`_` (`repository.go:162`) — an toàn injection nhưng sai ngữ nghĩa search.
-- L5: `media` nhận `Filename` nhưng không dùng (`media/domain.go:33`) — bỏ hoặc lưu metadata. (Key gen `uploads/yyyy/mm/uuid.ext` đã tốt.)
-- L6: `main.go:29` panic vs `os.Exit(1)` không nhất quán.
+- L1: `corsmw/cors.go:28` — `Vary: Origin` nên set vô điều kiện; thêm `Access-Control-Max-Age`. ✅ **RESOLVED (2026-07-22, commit sắp tới)** — `Vary: Origin` set vô điều kiện (kể cả origin không phép/không có), `Access-Control-Max-Age: 600` trên preflight allowed. Verify: `TestCORS_VaryOriginAlways` + `TestCORS_MaxAgeOnAllowedPreflight`.
+- L2: `auth/provider_google.go:64-83` — nên verify `exp/aud/iss` id_token (1 call `coreos/go-oidc`). ✅ **RESOLVED (2026-07-22)** — `parseIDToken(raw, clientID, now)` verify `iss` ∈ {accounts.google.com, https://accounts.google.com}, `aud == clientID`, `exp > now`. KHÔNG thêm dep go-oidc/JWKS: id_token lấy trực tiếp từ token endpoint qua TLS (kênh tin cậy), chỉ thêm binding+freshness làm defense-in-depth. Verify: `provider_google_test.go` (Valid/WrongAudience/WrongIssuer/Expired).
+- L3: sort thiếu tiebreaker → pagination không ổn định khi trùng giá trị; append `, posts.id ASC` (`posts/repository.go:24-33`). ✅ **RESOLVED (2026-07-22)** — `orderClause` append `, posts.id ASC` cho cả ASC/DESC → tổng thứ tự ổn định.
+- L4: ILIKE không escape `%`/`_` (`repository.go:162`) — an toàn injection nhưng sai ngữ nghĩa search. ✅ **RESOLVED (2026-07-22)** — `escapeLike` (escape `\ % _`) + `ILIKE ? ESCAPE '\'` → search literal đúng nghĩa. Verify: `TestEscapeLike`.
+- L5: `media` nhận `Filename` nhưng không dùng (`media/domain.go:33`) — bỏ hoặc lưu metadata. (Key gen `uploads/yyyy/mm/uuid.ext` đã tốt.) ✅ **RESOLVED (2026-07-22)** — bỏ `Filename` khỏi `PresignInput` domain + mapping handler (giữ field trong `presignRequest` để không vỡ hợp đồng JSON — client vẫn gửi, server bỏ qua).
+- L6: `main.go:29` panic vs `os.Exit(1)` không nhất quán. ✅ **RESOLVED (2026-07-22)** — lỗi `config.Load` in stderr + `os.Exit(1)` (logger chưa dựng được vì phụ thuộc cfg), nhất quán với các lỗi khởi động khác.
 - L7: `/healthz` trả 200 kể cả khi Postgres chết (`main.go:79-81`) — ping DB / tách liveness–readiness. ✅ **RESOLVED (2026-07-11, commit 653f426)** — `/healthz` ping DB (timeout 2s) → 503 nếu DB down.
 - L8: `NewS3Storage` trả unexported type; `expires` 15' hardcode → đưa vào `S3Config`. ✅ **RESOLVED (2026-07-12, commit b2083a6)** — `NewS3Storage` trả interface `Storage`; `PresignExpires` cấu hình qua `S3Config`/env, default giữ 15'. Verify: `TestNewS3Storage_PresignExpiresConfigurable` + `TestNewS3Storage_PresignExpiresDefault15m` (xanh trong full suite Slice 5e).
 - L9: `ShouldBindJSON` `err.Error()` leak internals Go ra client (`posts/handler.go:166,196`). ✅ **RESOLVED (2026-07-12, commit 76da789)** — `bindJSON` trả message cố định `"invalid request body"` cho client, chi tiết lỗi Go chỉ ghi qua `reqlog`. Verify: `TestHandler_InvalidJSONBodyGenericMessage` (assert 400 + message generic + không leak `json:`/tên struct/field Go) xanh trong full suite Slice 5e.

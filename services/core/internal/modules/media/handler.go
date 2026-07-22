@@ -26,6 +26,8 @@ func (h *Handler) RegisterRoutes(rg gin.IRouter, writeMW ...gin.HandlerFunc) {
 }
 
 type presignRequest struct {
+	// Filename: client gửi tên gốc để tham khảo; server KHÔNG dùng (object key sinh từ
+	// uuid + ext theo content-type). Giữ field để không vỡ hợp đồng JSON hiện có.
 	Filename    string `json:"filename"`
 	ContentType string `json:"content_type"`
 	Size        int64  `json:"size"`
@@ -50,7 +52,6 @@ func (h *Handler) presign(c *gin.Context) {
 		return
 	}
 	res, err := h.svc.Presign(c.Request.Context(), PresignInput{
-		Filename:    req.Filename,
 		ContentType: req.ContentType,
 		Size:        req.Size,
 	})

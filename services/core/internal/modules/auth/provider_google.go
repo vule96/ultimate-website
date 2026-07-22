@@ -6,10 +6,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
+
+// googleIssuers là các giá trị iss hợp lệ Google phát cho id_token.
+var googleIssuers = map[string]struct{}{
+	"accounts.google.com":         {},
+	"https://accounts.google.com": {},
+}
 
 // GoogleProvider là cài đặt OAuthProvider dùng Google OAuth2/OIDC.
 type GoogleProvider struct {
@@ -47,7 +54,7 @@ func (g *GoogleProvider) Exchange(ctx context.Context, code, verifier string) (I
 	if !ok || raw == "" {
 		return Identity{}, fmt.Errorf("no id_token in token response")
 	}
-	return parseIDToken(raw)
+	return parseIDToken(raw, g.cfg.ClientID, time.Now())
 }
 
 // idTokenClaims là các claim OIDC cần dùng.
@@ -56,12 +63,16 @@ type idTokenClaims struct {
 	EmailVerified bool   `json:"email_verified"`
 	Sub           string `json:"sub"`
 	Name          string `json:"name"`
+	Aud           string `json:"aud"`
+	Iss           string `json:"iss"`
+	Exp           int64  `json:"exp"`
 }
 
-// parseIDToken decode phần payload của id_token JWT.
-// id_token lấy trực tiếp từ token endpoint của Google qua TLS nên tin cậy được
-// mà không cần verify chữ ký (kênh đã xác thực server-to-server).
-func parseIDToken(raw string) (Identity, error) {
+// parseIDToken decode payload id_token JWT rồi verify các claim binding/freshness.
+// id_token lấy trực tiếp từ token endpoint của Google qua TLS nên chữ ký không cần
+// verify (kênh server-to-server đã xác thực); nhưng vẫn kiểm iss/aud/exp làm
+// defense-in-depth: đảm bảo token do Google phát, đúng cho client này, còn hạn.
+func parseIDToken(raw, clientID string, now time.Time) (Identity, error) {
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {
 		return Identity{}, fmt.Errorf("malformed id_token")
@@ -73,6 +84,15 @@ func parseIDToken(raw string) (Identity, error) {
 	var c idTokenClaims
 	if err := json.Unmarshal(payload, &c); err != nil {
 		return Identity{}, fmt.Errorf("parse id_token claims: %w", err)
+	}
+	if _, ok := googleIssuers[c.Iss]; !ok {
+		return Identity{}, fmt.Errorf("id_token: unexpected issuer %q", c.Iss)
+	}
+	if c.Aud != clientID {
+		return Identity{}, fmt.Errorf("id_token: audience mismatch")
+	}
+	if c.Exp > 0 && now.Unix() >= c.Exp {
+		return Identity{}, fmt.Errorf("id_token: expired")
 	}
 	return Identity{
 		Email:         c.Email,

@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -58,7 +59,10 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		panic(err)
+		// Logger chưa dựng (phụ thuộc cfg) → in stderr rồi thoát 1, nhất quán với các
+		// lỗi khởi động khác (không panic in stack trace rối cho lỗi cấu hình).
+		fmt.Fprintln(os.Stderr, "config load failed:", err)
+		os.Exit(1)
 	}
 
 	log := logger.New(cfg.IsProduction(), cfg.LogLevel)

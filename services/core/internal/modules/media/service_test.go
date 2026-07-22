@@ -35,7 +35,6 @@ func TestPresign_ValidPNG(t *testing.T) {
 	svc := newTestService(st)
 
 	res, err := svc.Presign(context.Background(), PresignInput{
-		Filename:    "a.png",
 		ContentType: "image/png",
 		Size:        1024,
 	})

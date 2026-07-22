@@ -57,3 +57,26 @@ func TestCORS_PreflightShortCircuits(t *testing.T) {
 		t.Errorf("preflight Allow-Origin = %q", got)
 	}
 }
+
+func TestCORS_VaryOriginAlways(t *testing.T) {
+	r := newEngine()
+	// Kể cả origin không được phép, Vary: Origin vẫn phải có (đúng cache semantics).
+	req := httptest.NewRequest(http.MethodGet, "/x", nil)
+	req.Header.Set("Origin", "http://evil.com")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if got := w.Header().Get("Vary"); got != "Origin" {
+		t.Errorf("Vary = %q, want Origin", got)
+	}
+}
+
+func TestCORS_MaxAgeOnAllowedPreflight(t *testing.T) {
+	r := newEngine()
+	req := httptest.NewRequest(http.MethodOptions, "/x", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	if got := w.Header().Get("Access-Control-Max-Age"); got != "600" {
+		t.Errorf("Max-Age = %q, want 600", got)
+	}
+}
