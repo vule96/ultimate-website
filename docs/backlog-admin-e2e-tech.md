@@ -48,6 +48,8 @@ Quy trình từng mục: brainstorm (nếu lớn) → spec → TDD → verify �
 
 ## (4) E2E live — Slice 13 reader flow (KHÔNG phải code, thao tác tay)
 
+> **✅ DONE (2026-07-23):** verify live toàn bộ trên stack prod thật + R2 media + Google OAuth. **Admin `:5173`** (login `vuledev2905@gmail.com`): dashboard, /subscribers (filter chips + CSV topbar + soft-delete), /readers (bookmark_count), ⌘K search bài→edit, topbar không Bell — OK. **Web `:3000`** (reader): login Google, bookmark persist reload, newsletter + rate-limit 429, view dedupe +1, xoá tài khoản GDPR, trang /unsubscribe?token — OK. **L2 OAuth verify (iss/aud/exp) không chặn nhầm login.** Upload ảnh R2 (`blog-media`) hiển thị editor + web OK.
+
 **Chuẩn bị:**
 - Google Console: thêm reader redirect URI `http://localhost:8080/auth/reader/google/callback` (dev) + URL prod.
 - Stack có **Redis** (prod stack đã có): `.env` gồm `REDIS_URL`, `VIEW_DEDUP_SALT`, `CORS_ALLOWED_ORIGINS` (+`:3000`), `READER_REDIRECT_URL`, `WEB_BASE_URL`.
