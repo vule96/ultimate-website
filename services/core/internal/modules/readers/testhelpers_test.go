@@ -38,10 +38,41 @@ func TestMain(m *testing.M) {
 			fmt.Println("automigrate failed:", err)
 			os.Exit(1)
 		}
+		// AutoMigrate KHÔNG tạo FK — thêm ON DELETE CASCADE thủ công (khớp migration
+		// add_readers) để test harness phản ánh đúng hành vi cascade của prod. Idempotent.
+		if err := ensureBookmarkFKs(db); err != nil {
+			fmt.Println("add bookmark FKs failed:", err)
+			os.Exit(1)
+		}
 		db.Logger = gormlogger.Default.LogMode(gormlogger.Silent)
 		testGormDB = db
 	}
 	os.Exit(m.Run())
+}
+
+// ensureBookmarkFKs thêm FK ON DELETE CASCADE cho bookmarks (reader_id, post_id) nếu chưa
+// có — AutoMigrate không tạo FK. Idempotent qua IF NOT EXISTS pattern (DO block).
+func ensureBookmarkFKs(db *gorm.DB) error {
+	stmts := []string{
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='fk_bookmarks_reader') THEN
+				ALTER TABLE bookmarks ADD CONSTRAINT fk_bookmarks_reader
+					FOREIGN KEY (reader_id) REFERENCES readers(id) ON DELETE CASCADE;
+			END IF;
+		END $$;`,
+		`DO $$ BEGIN
+			IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='fk_bookmarks_post') THEN
+				ALTER TABLE bookmarks ADD CONSTRAINT fk_bookmarks_post
+					FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE;
+			END IF;
+		END $$;`,
+	}
+	for _, s := range stmts {
+		if err := db.Exec(s).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // newTestDB trả về *gorm.DB chạy trong 1 transaction sẽ được rollback sau test (cô lập giữa các test).
