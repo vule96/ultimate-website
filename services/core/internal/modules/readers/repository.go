@@ -92,13 +92,21 @@ func (r *GormRepository) ListBookmarks(ctx context.Context, readerID uuid.UUID) 
 	return ids, err
 }
 
-// UpsertSubscriber tạo mới, hoặc HỒI SINH row cũ khi trùng email (đã unsubscribe/soft-delete)
-// → set lại active + gỡ deleted_at. Giữ nguyên unsubscribe_token cũ (không đổi).
+// UpsertSubscriber tạo mới, hoặc hồi sinh row đã bị admin soft-delete khi người dùng tự
+// đăng ký lại (deleted_at → NULL, active). Giữ token cũ.
+//
+// SECURITY (consent): KHÔNG reactivate row có status='unsubscribed' — đó là opt-out rõ
+// ràng của người dùng. Endpoint này public (ai cũng POST được), nên nếu revive vô điều
+// kiện thì bất kỳ ai biết/đoán email đều re-subscribe được người đã huỷ (consent bypass).
+// Điều kiện WHERE ở DO UPDATE đảm bảo row unsubscribed đứng yên; vẫn luôn 201 (không leak).
 func (r *GormRepository) UpsertSubscriber(ctx context.Context, email string) error {
 	return r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "email"}},
 			DoUpdates: clause.Assignments(map[string]any{"status": "active", "deleted_at": nil}),
+			Where: clause.Where{Exprs: []clause.Expression{
+				clause.Expr{SQL: "subscribers.status <> ?", Vars: []any{"unsubscribed"}},
+			}},
 		}).
 		Create(&subscriberRow{Email: email}).Error
 }

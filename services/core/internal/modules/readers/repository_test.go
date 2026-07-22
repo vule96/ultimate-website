@@ -142,7 +142,8 @@ func TestUnsubscribeByToken(t *testing.T) {
 	require.ErrorIs(t, repo.UnsubscribeByToken(ctx, uuid.New()), ErrSubscriberNotFound)
 }
 
-func TestUpsertSubscriber_RevivesUnsubscribed(t *testing.T) {
+// Consent: re-subscribe (public POST) KHÔNG được reactivate người đã unsubscribe.
+func TestUpsertSubscriber_DoesNotReactivateUnsubscribed(t *testing.T) {
 	db := newTestDB(t)
 	repo := NewGormRepository(db)
 	ctx := context.Background()
@@ -151,12 +152,34 @@ func TestUpsertSubscriber_RevivesUnsubscribed(t *testing.T) {
 	token := subscriberToken(t, db, email)
 	require.NoError(t, repo.UnsubscribeByToken(ctx, token))
 
-	// Re-subscribe cùng email → hồi sinh active, giữ token cũ.
+	// Public re-subscribe cùng email → phải GIỮ unsubscribed (honor opt-out), không lỗi.
 	require.NoError(t, repo.UpsertSubscriber(ctx, email))
-	subs, err := repo.ListSubscribers(ctx, "active", 0, 10)
+	active, err := repo.ListSubscribers(ctx, "active", 0, 10)
 	require.NoError(t, err)
-	require.Len(t, subs, 1)
-	require.Equal(t, "active", subs[0].Status)
+	require.Empty(t, active, "không được reactivate người đã huỷ")
+	unsub, err := repo.ListSubscribers(ctx, "unsubscribed", 0, 10)
+	require.NoError(t, err)
+	require.Len(t, unsub, 1)
+	require.Equal(t, "unsubscribed", unsub[0].Status)
+}
+
+// Row admin soft-delete (chưa opt-out) thì người dùng tự đăng ký lại được hồi sinh active, giữ token.
+func TestUpsertSubscriber_RevivesSoftDeleted(t *testing.T) {
+	db := newTestDB(t)
+	repo := NewGormRepository(db)
+	ctx := context.Background()
+	email := uuid.NewString() + "@example.com"
+	require.NoError(t, repo.UpsertSubscriber(ctx, email))
+	token := subscriberToken(t, db, email)
+	subs, err := repo.ListSubscribers(ctx, "", 0, 10)
+	require.NoError(t, err)
+	require.NoError(t, repo.DeleteSubscriber(ctx, subs[0].ID)) // soft-delete
+
+	require.NoError(t, repo.UpsertSubscriber(ctx, email)) // đăng ký lại
+	active, err := repo.ListSubscribers(ctx, "active", 0, 10)
+	require.NoError(t, err)
+	require.Len(t, active, 1)
+	require.Equal(t, "active", active[0].Status)
 	require.Equal(t, token, subscriberToken(t, db, email), "token không đổi khi hồi sinh")
 }
 

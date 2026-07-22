@@ -11,7 +11,7 @@ Trả 7 nợ admin: unsubscribe flow, GDPR delete reader, ⌘K search bài thậ
 
 1. **Unsubscribe = POST-confirm**, không GET one-click → tránh email-client prefetch tự huỷ. Web page render nút xác nhận, POST core.
 2. **Count cache TTL-only 30s, fail-open**, không bump-on-write → chấp nhận stale ≤30s, khỏi luồn invalidation qua mọi write path.
-3. **Re-subscribe hồi sinh row cũ**: `UpsertSubscriber` `ON CONFLICT DO UPDATE SET deleted_at=NULL, status='active'`.
+3. **Re-subscribe hồi sinh row cũ** (chỉ soft-deleted): `UpsertSubscriber` `ON CONFLICT DO UPDATE SET deleted_at=NULL, status='active' WHERE status <> 'unsubscribed'`. **Consent (fix security review):** endpoint public → KHÔNG reactivate row `unsubscribed` (opt-out rõ ràng) để tránh bất kỳ ai re-subscribe người đã huỷ. Chỉ hồi sinh row admin soft-delete.
 
 ## A. BE schema — migration `add_subscriber_lifecycle`
 
